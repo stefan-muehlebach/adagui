@@ -198,12 +198,12 @@ func NewDefaultProps() (*DefaultProps) {
     }
 
     p.fontMap = map[FontPropertyName]*opentype.Font{
-        RegularFont:            font.GoRegular,
-        BoldFont:               font.GoBold,
-        ItalicFont:             font.GoItalic,
-        BoldItalicFont:         font.GoBoldItalic,
-        MonoFont:               font.GoMono,
-        MonoBoldFont:           font.GoMonoBold,
+        RegularFont:            fonts.GoRegular,
+        BoldFont:               fonts.GoBold,
+        ItalicFont:             fonts.GoItalic,
+        BoldItalicFont:         fonts.GoBoldItalic,
+        MonoFont:               fonts.GoMono,
+        MonoBoldFont:           fonts.GoMonoBold,
     }
 
     p.sizeMap = map[SizePropertyName]float64{

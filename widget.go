@@ -126,7 +126,7 @@ func (g *Panel) Paint(gc *gg.Context) {
     //log.Printf("Panel.Paint()")
     gc.SetFillColor(g.FillColor)
     gc.SetStrokeColor(g.StrokeColor)
-    gc.SetLineWidth(g.LineWidth)
+    gc.SetStrokeWidth(g.LineWidth)
     gc.DrawRectangle(g.Bounds().AsCoord())
     if g.Clip {
         gc.ClipPreserve()
@@ -195,7 +195,7 @@ func NewSeparator(orient Orientation) (*Separator) {
 
 func (s *Separator) Paint(gc *gg.Context) {
     gc.SetStrokeColor(s.StrokeColor)
-    gc.SetLineWidth(s.LineWidth)
+    gc.SetStrokeWidth(s.LineWidth)
     gc.MoveTo(s.Bounds().W().AsCoord())
     gc.LineTo(s.Bounds().E().AsCoord())
     gc.Stroke()
@@ -352,7 +352,7 @@ func (l *Label) Paint(gc *gg.Context) {
     gc.DrawString(l.text.Get(), l.rPt.X, l.rPt.Y)
     // Groesse des Labels als graues Rechteck
     //gc.SetStrokeColor(utils.Lightgray)
-    //gc.SetLineWidth(1.0)
+    //gc.SetStrokeWidth(1.0)
     //gc.DrawRectangle(l.Bounds().AsCoord())
     //gc.Stroke()
     // Referenzpunkt fuer den Text
@@ -397,7 +397,7 @@ func (b *Button) Paint(gc *gg.Context) {
         gc.SetFillColor(b.FillColor)
         gc.SetStrokeColor(b.BorderColor)
     }
-    gc.SetLineWidth(b.LineWidth)
+    gc.SetStrokeWidth(b.LineWidth)
     gc.FillStroke()
 }
 
@@ -530,7 +530,7 @@ func (b *ListButton) Paint(gc *gg.Context) {
     pt := geom.Point{0.6*b.Size().Y+2*pr.Size(InnerPaddingSize), 0.5*b.Size().Y}
     gc.DrawStringAnchored(b.Selected, pt.X, pt.Y, 0.0, 0.5)
 
-    gc.SetLineWidth(b.LineWidth)
+    gc.SetStrokeWidth(b.LineWidth)
     if b.pushed {
         gc.SetStrokeColor(b.BorderFocusColor)
     } else {
@@ -685,7 +685,7 @@ func (b *IconButton) Paint(gc *gg.Context) {
     }
     b.Button.Paint(gc)
     cp := b.Bounds().Center()
-    gc.DrawImageAnchored(b.img, int(cp.X), int(cp.Y), 0.5, 0.5)
+    gc.DrawImageAnchored(b.img, cp.X, cp.Y, 0.5, 0.5)
 }
 
 func (b *IconButton) DataChanged(data binding.DataItem) {
@@ -751,10 +751,10 @@ func (c *Checkbox) Paint(gc *gg.Context) {
         gc.SetStrokeColor(c.BorderColor)
         gc.SetFillColor(c.FillColor)
     }
-    gc.SetLineWidth(c.LineWidth)
+    gc.SetStrokeWidth(c.LineWidth)
     gc.FillStroke()
     if c.Checked() {
-        gc.SetLineWidth(pr.Size(CheckLineSize))
+        gc.SetStrokeWidth(pr.Size(CheckLineSize))
         gc.SetStrokeColor(pr.Color(ArrowColor))
         gc.MoveTo(4, 9)
         gc.LineTo(8, 14)
@@ -830,7 +830,7 @@ func (b *RadioButton) Paint(gc *gg.Context) {
         gc.SetStrokeColor(b.BorderColor)
         gc.SetFillColor(b.FillColor)
     }
-    gc.SetLineWidth(b.LineWidth)
+    gc.SetStrokeWidth(b.LineWidth)
     gc.FillStroke()
     if b.checked {
         gc.DrawCircle(mp.X, mp.Y, 0.5*pr.Size(RadioDotSize))
@@ -961,7 +961,7 @@ func (s *Scrollbar) Paint(gc *gg.Context) {
     } else {
         gc.SetStrokeColor(s.BarColor)
     }
-    gc.SetLineWidth(pr.Size(ScrollBarSize))
+    gc.SetStrokeWidth(pr.Size(ScrollBarSize))
     gc.DrawLine(s.barStart.X, s.barStart.Y, s.barEnd.X, s.barEnd.Y)
     gc.Stroke()
 
@@ -983,7 +983,7 @@ func (s *Scrollbar) Paint(gc *gg.Context) {
     } else {
         gc.SetStrokeColor(s.CtrlColor)
     }
-    gc.SetLineWidth(pr.Size(ScrollCtrlSize))
+    gc.SetStrokeWidth(pr.Size(ScrollCtrlSize))
     gc.DrawLine(pt1.X, pt1.Y, pt2.X, pt2.Y)
     gc.Stroke()
 }
@@ -1091,7 +1091,7 @@ func (s *Slider) Paint(gc *gg.Context) {
     } else {
         gc.SetStrokeColor(s.BarColor)
     }
-    gc.SetLineWidth(pr.Size(SliderBarSize))
+    gc.SetStrokeWidth(pr.Size(SliderBarSize))
     gc.DrawLine(s.barStart.X, s.barStart.Y, s.barEnd.X, s.barEnd.Y)
     gc.Stroke()
 
@@ -1108,7 +1108,7 @@ func (s *Slider) Paint(gc *gg.Context) {
     } else {
         gc.SetStrokeColor(s.CtrlColor)
     }
-    gc.SetLineWidth(pr.Size(SliderCtrlSize))
+    gc.SetStrokeWidth(pr.Size(SliderCtrlSize))
     gc.DrawLine(pt0.X, pt0.Y, pt1.X, pt1.Y)
     gc.Stroke()
 }
@@ -1211,7 +1211,7 @@ func (c *Circle) Paint(gc *gg.Context) {
     //gc.Multiply(gg.Matrix(c.Matrix()))
     w := c.Size().X
     gc.DrawCircle(0.5*w, 0.5*w, 0.5*w)
-    gc.SetLineWidth(c.LineWidth)
+    gc.SetStrokeWidth(c.LineWidth)
     gc.SetFillColor(c.FillColor)
     gc.SetStrokeColor(c.StrokeColor)
     gc.FillStroke()
@@ -1270,7 +1270,7 @@ func (e *Ellipse) Paint(gc *gg.Context) {
     //gc.Multiply(gg.Matrix(e.Matrix()))
     w, h := e.Size().AsCoord()
     gc.DrawEllipse(0.5*w, 0.5*h, 0.5*w, 0.5*h)
-    gc.SetLineWidth(e.LineWidth)
+    gc.SetStrokeWidth(e.LineWidth)
     gc.SetFillColor(e.FillColor)
     gc.SetStrokeColor(e.StrokeColor)
     gc.FillStroke()
@@ -1328,7 +1328,7 @@ func (r *Rectangle) Paint(gc *gg.Context) {
     //gc.Push()
     //gc.Multiply(gg.Matrix(r.Matrix()))
     gc.DrawRectangle(r.Bounds().AsCoord())
-    gc.SetLineWidth(r.LineWidth)
+    gc.SetStrokeWidth(r.LineWidth)
     gc.SetFillColor(r.FillColor)
     gc.SetStrokeColor(r.StrokeColor)
     gc.FillStroke()
@@ -1370,7 +1370,7 @@ func (s *Sprite) Paint(gc *gg.Context) {
     s.Marks.UnmarkNeedsPaint()
     gc.Push()
     gc.Multiply(s.Matrix())
-    gc.DrawImage(s.imgList[s.curImg], int(s.Rect().Min.X), int(s.Rect().Min.Y))
+    gc.DrawImage(s.imgList[s.curImg], s.Rect().Min.X, s.Rect().Min.Y)
     gc.Pop()
 }
 
@@ -1443,7 +1443,7 @@ func (c *Canvas) Paint(gc *gg.Context) {
     gc.Multiply(c.Matrix())
     gc.SetFillColor(c.FillColor)
     gc.SetStrokeColor(c.StrokeColor)
-    gc.SetLineWidth(c.LineWidth)
+    gc.SetStrokeWidth(c.LineWidth)
     gc.DrawRectangle(c.LocalBounds().AsCoord())
     if c.Clip {
         gc.ClipPreserve()
