@@ -2,7 +2,7 @@ package binding
 
 import (
     "log"
-    "reflect"
+//    "reflect"
     "sync"
 )
 
@@ -120,6 +120,7 @@ func (b *base) trigger() {
 
 // Untyped---------------------------------------------------------------------
 
+/*
 type Untyped interface {
     DataItem
     Get() (interface{})
@@ -203,4 +204,5 @@ func (b *boundExternalUntyped) Set(val interface{}) {
 func (b *boundExternalUntyped) Reload() {
     b.Set(b.val.Interface())
 }
+*/
 

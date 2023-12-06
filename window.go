@@ -3,13 +3,13 @@ package adagui
 import (
     "image"
     "image/color"
-    _ "log"
+    //"log"
     "sync"
     _ "time"
-    "mju.net/adatft"
-    "mju.net/adagui/touch"
-    "mju.net/geom"
-    "mju.net/gg"
+    "github.com/stefan-muehlebach/adatft"
+    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/gg/geom"
+    "github.com/stefan-muehlebach/gg"
 )
 
 //----------------------------------------------------------------------------
@@ -68,8 +68,8 @@ func (w *Window) SetRoot(root Node) {
     }
     w.root = root
     n.Win = w
-    n.SetPos(w.Rect.Min)
-    n.SetSize(w.Rect.Size())
+    root.SetPos(w.Rect.Min)
+    root.SetSize(w.Rect.Size())
 }
 
 func (w *Window) Root() (Node) {
@@ -115,9 +115,10 @@ func (w *Window) eventThread() {
 
     for evt := range w.eventQ {
 
+        //log.Printf("window: event from screen received\n")
         if evt.Type == touch.TypePress {
             target = w.root.SelectTarget(evt.Pos)
-            // log.Printf("SelectTarget: %T, %v, %v", target, newPt, newRefPt)
+            //log.Printf("SelectTarget: %T, %v\n", target, evt.Pos)
             if target == nil {
                 continue
             }
@@ -125,6 +126,7 @@ func (w *Window) eventThread() {
         }
         evt.InitPos = target.Screen2Local(evt.InitPos)
         evt.Pos = target.Screen2Local(evt.Pos)
+        //log.Printf("SelectTarget: local coord %v\n", evt.Pos)
 
         if evt.Type == touch.TypeDrag {
             if !target.Contains(evt.Pos) {

@@ -480,3 +480,82 @@ func (b *boundExternalString) Set(val string) {
 func (b *boundExternalString) Reload() {
 	b.Set(*b.val)
 }
+
+// Untyped supports binding a interface{} value.
+type Untyped interface {
+	DataItem
+	Get() (interface{})
+	Set(interface{})
+}
+
+type boundUntyped struct {
+	base
+	val *interface{}
+}
+
+// NewUntyped returns a bindable interface{} value that is managed internally.
+func NewUntyped() Untyped {
+	var blank interface{} = nil
+	b := &boundUntyped{val: &blank}
+        b.Init(b)
+        return b
+}
+
+func (b *boundUntyped) Get() (interface{}) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+	if b.val == nil {
+		return nil
+	}
+	return *b.val
+}
+
+func (b *boundUntyped) Set(val interface{}) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	if *b.val == val {
+		return
+	}
+	*b.val = val
+	b.trigger()
+}
+
+// ExternalUntyped supports binding a interface{} value to an external value.
+type ExternalUntyped interface {
+	Untyped
+	Reload()
+}
+
+type boundExternalUntyped struct {
+	boundUntyped
+	old interface{}
+}
+
+// BindUntyped returns a new bindable value that controls the contents of the provided interface{} variable.
+// If your code changes the content of the variable this refers to you should call Reload() to inform the bindings.
+func BindUntyped(v *interface{}) ExternalUntyped {
+	if v == nil {
+		var blank interface{} = nil
+		v = &blank // never allow a nil value pointer
+	}
+	b := &boundExternalUntyped{}
+	b.val = v
+	b.old = *v
+        b.Init(b)
+	return b
+}
+
+func (b *boundExternalUntyped) Set(val interface{}) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	if b.old == val {
+		return
+	}
+	*b.val = val
+	b.old = val
+	b.trigger()
+}
+
+func (b *boundExternalUntyped) Reload() {
+	b.Set(*b.val)
+}

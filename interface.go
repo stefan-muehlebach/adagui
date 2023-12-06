@@ -2,9 +2,9 @@ package adagui
 
 import (
     "container/list"
-    "mju.net/adagui/touch"
-    "mju.net/geom"
-    "mju.net/gg"
+    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/gg/geom"
+    "github.com/stefan-muehlebach/gg"
 )
 
 // Alle Elemente im Scenegraph des GUI haben dieses Interface zu

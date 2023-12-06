@@ -4,9 +4,9 @@ import (
     "flag"
     "log"
     "time"
-    "mju.net/adatft"
-    "mju.net/adagui/touch"
-    "mju.net/geom"
+    "github.com/stefan-muehlebach/adatft"
+    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/gg/geom"
 )
 
 var (
@@ -76,6 +76,10 @@ func (s *Screen) SetWindow(w *Window) {
     s.window.Repaint()
 }
 
+func (s *Screen) Window() (*Window) {
+    return s.window
+}
+
 // Mit Run schliesslich wird der MainEvent-Loop der Applikation gestartet,
 // das aktive Fenster wird dargestellt und mit Touch-Events beliefert.
 // Wichtig: diese Methode kehrt nicht zurück, solange die Applikation läuft.
@@ -108,6 +112,7 @@ func (s *Screen) eventThread() {
     var seqNumber int = 0
 
     for tchEvt := range s.touch.EventQ {
+        //log.Printf("screen: receive new event from queue\n")
         switch tchEvt.Type {
         case adatft.PenPress:
             seqNumber++

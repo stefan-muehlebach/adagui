@@ -3,9 +3,9 @@ package adagui
 import (
     "container/list"
     "log"
-    "mju.net/adagui/touch"
-    "mju.net/geom"
-    "mju.net/gg"
+    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/gg/geom"
+    "github.com/stefan-muehlebach/gg"
 )
 
 //----------------------------------------------------------------------------
@@ -159,7 +159,7 @@ func (m *Embed) Paint(gc *gg.Context) {
     //log.Printf("Embed.Paint() of %T", m.Wrapper)
     m.Marks.UnmarkNeedsPaint()
     gc.Push()
-    gc.Multiply(gg.Matrix(m.Matrix()))
+    gc.Multiply(m.Matrix())
     m.Wrapper.Paint(gc)
     gc.Pop()
 }
@@ -246,7 +246,7 @@ type LeafEmbed struct {
 }
 
 func (m *LeafEmbed) Paint(gc *gg.Context) {
-    log.Printf("LeafEmbed.Paint() of %T", m.Wrapper)
+    //log.Printf("LeafEmbed.Paint() of %T", m.Wrapper)
 }
 
 func (m *LeafEmbed) OnChildMarked(child Node, newMarks Marks) {}

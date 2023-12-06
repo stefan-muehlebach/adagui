@@ -1,17 +1,17 @@
 package adagui
 
 import (
+    "image/color"
     "time"
-    "mju.net/geom"
-    "mju.net/utils"
+    "github.com/stefan-muehlebach/gg/geom"
 )
 
-// Als nächstes folgend die Typen, mit welchen man Animation in die Bude
+// Als nächstes folgen die Typen, mit welchen man Animation in die Bude
 // bringen kann.
 type AnimationCurve func(float64) float64
 
 const (
-    AnimationRepeatForever = 1
+    AnimationRepeatForever = -1
     DurationStandard       = time.Millisecond * 300
     DurationShort          = time.Millisecond * 150
 )
@@ -24,15 +24,15 @@ var (
 )
 
 type Animation struct {
-    autoReverse bool
-    curve       AnimationCurve
-    duration    time.Duration
-    repeatCnt   int
-    tick        func(float64)
+    AutoReverse bool
+    Curve       AnimationCurve
+    Duration    time.Duration
+    RepeatCount int
+    Tick        func(float64)
 }
 
 func NewAnimation(d time.Duration, fn func(float64)) (*Animation) {
-    return &Animation{duration: d, tick: fn}
+    return &Animation{Duration: d, Tick: fn}
 }
 
 func (a *Animation) Start() {
@@ -62,7 +62,8 @@ func animationLinear(val float64) (float64) {
     return val
 }
 
-func NewColorAnimation(start, stop utils.Color, d time.Duration, fn func(utils.Color)) (*Animation) {
+func NewColorAnimation(start, stop color.Color, d time.Duration,
+        fn func(color.Color)) (*Animation) {
     r1, g1, b1, a1 := start.RGBA()
     r2, g2, b2, a2 := stop.RGBA()
 
@@ -76,9 +77,9 @@ func NewColorAnimation(start, stop utils.Color, d time.Duration, fn func(utils.C
     aDelta := float64(int(a2 >> 8) - aStart)
 
     return &Animation{
-        duration: d,
-        tick: func(done float64) {
-                  fn(utils.Color{
+        Duration: d,
+        Tick: func(done float64) {
+                  fn(color.NRGBA{
                       R: scaleChannel(rStart, rDelta, done),
                       G: scaleChannel(gStart, gDelta, done),
                       B: scaleChannel(bStart, bDelta, done),
@@ -86,25 +87,27 @@ func NewColorAnimation(start, stop utils.Color, d time.Duration, fn func(utils.C
                   })}}
 }
 
-func NewPositionAnimation(start, stop geom.Point, d time.Duration, fn func(geom.Point)) (*Animation) {
+func NewPositionAnimation(start, stop geom.Point, d time.Duration,
+        fn func(geom.Point)) (*Animation) {
     xDelta := float64(stop.X - start.X)
     yDelta := float64(stop.Y - start.Y)
 
     return &Animation{
-        duration: d,
-        tick: func(done float64) {
+        Duration: d,
+        Tick: func(done float64) {
                   fn(geom.Point{scaleVal(start.X, xDelta, done),
                                 scaleVal(start.Y, yDelta, done)})
         }}
 }
 
-func NewSizeAnimation(start, stop geom.Point, d time.Duration, fn func(geom.Point)) (*Animation) {
+func NewSizeAnimation(start, stop geom.Point, d time.Duration,
+        fn func(geom.Point)) (*Animation) {
     widthDelta  := float64(stop.X - start.X)
     heightDelta := float64(stop.Y - start.Y)
 
     return &Animation{
-        duration: d,
-        tick: func(done float64) {
+        Duration: d,
+        Tick: func(done float64) {
                   fn(geom.Point{scaleVal(start.X, widthDelta, done),
                                 scaleVal(start.Y, heightDelta, done)})
         }}

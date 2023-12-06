@@ -4,7 +4,7 @@ import (
     "fmt"
     //"log"
     "time"
-    "mju.net/geom"
+    "github.com/stefan-muehlebach/gg/geom"
 )
 
 // Mit diesem Datentyp werden die unterschiedlichen Event-Arten abgebildet,
@@ -26,6 +26,8 @@ import (
 //   ...
 //    |
 //   TypeRelease
+//    |
+//   (TypeTap)
 //
 type Type uint32
 
