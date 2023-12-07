@@ -2,7 +2,6 @@ package binding
 
 import (
     "log"
-//    "reflect"
     "sync"
 )
 
@@ -117,92 +116,4 @@ func (b *base) trigger() {
         return true
     })
 }
-
-// Untyped---------------------------------------------------------------------
-
-/*
-type Untyped interface {
-    DataItem
-    Get() (interface{})
-    Set(interface{})
-}
-
-type boundUntyped struct {
-    base
-    val reflect.Value
-}
-
-// Mit NewUntyped wird ein neues Bind-Objekt fuer einen interface{}-Wert erzeugt.
-// Der Wert selber ist dabei von aussen nur ueber die Methoden Get und Set
-// zugreifbar.
-func NewUntyped() Untyped {
-    var blank interface{} = nil
-    b := &boundUntyped{val: reflect.ValueOf(&blank).Elem()}
-    b.Init(b)
-    return b
-}
-
-func (b *boundUntyped) Get() (interface{}) {
-    b.lock.RLock()
-    defer b.lock.RUnlock()
-    return b.val.Interface()
-}
-
-func (b *boundUntyped) Set(val interface{}) {
-    b.lock.Lock()
-    defer b.lock.Unlock()
-    if b.val.Interface() == val {
-        return
-    }
-    b.val.Set(reflect.ValueOf(val))
-    b.trigger()
-}
-
-// ExternalUntyped
-
-type ExternalUntyped interface {
-    Untyped
-    Reload()
-}
-
-type boundExternalUntyped struct {
-    boundUntyped
-    old interface{}
-}
-
-// Mit BindUntyped kann ein Bind-Objekt ueber eine bereits bestehende
-// interface{}-Variable erstellt werden. Dabei muss der Programmierer
-// dafuer sorgen, dass Veraenderungen an der Variable mit der Methode
-// Reload nach aussen bekannt gemacht werden.
-func BindUntyped(v interface{}) ExternalUntyped {
-    t := reflect.TypeOf(v)
-    if t.Kind() != reflect.Ptr {
-        log.Fatalf("Invalid type passed to BindUntyped, must be a pointer")
-    }
-    if v == nil {
-        var blank interface{}
-        v = &blank
-    }
-    b := &boundExternalUntyped{}
-    b.val = reflect.ValueOf(v).Elem()
-    b.old = b.val.Interface()
-    b.Init(b)
-    return b
-}
-
-func (b *boundExternalUntyped) Set(val interface{}) {
-    b.lock.Lock()
-    defer b.lock.Unlock()
-    if b.old == val {
-        return
-    }
-    b.val.Set(reflect.ValueOf(val))
-    b.old = val
-    b.trigger()
-}
-
-func (b *boundExternalUntyped) Reload() {
-    b.Set(b.val.Interface())
-}
-*/
 
