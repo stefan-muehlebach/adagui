@@ -223,9 +223,6 @@ func (s *Spacer) ExpandVertical() (bool) {
     return !s.fixVertical
 }
 
-// Unter einem Label verstehen wird einfach eine Konserve fuer Text. Kurzen
-// Text! Fuer die Darstellung von groesseren Textmengen, bitte Widget Text
-// beruecksichtigen.
 type AlignType int
 
 const (
@@ -237,6 +234,9 @@ const (
     AlignBottom         = (1 << 5)
 )
 
+// Unter einem Label verstehen wir einfach eine Konserve für Text. Kurzen
+// Text! Für die Darstellung von grösseren Textmengen, bitte Widget Text
+// berücksichtigen.
 type Label struct {
     LeafEmbed
     text binding.String
