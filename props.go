@@ -1,11 +1,10 @@
 package adagui
 
 import (
-    // "image/color"
-    "golang.org/x/image/font/opentype"
     "github.com/stefan-muehlebach/gg/color"
     "github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/fonts"
+    "golang.org/x/image/font/opentype"
 )
 
 type ColorPropertyName int
@@ -21,13 +20,16 @@ const (
     GrayColor
     BlackColor
     WhiteColor
-    FillColor
-    StrokeColor
     ActiveColor
     TranspWhite
 
+    MainColor
+    FillColor
+    StrokeColor
+
     TextColor
     TextFocusColor
+    TextDimColor
 
     ButtonColor
     ButtonFocusColor
@@ -40,6 +42,13 @@ const (
     IconButtonBorderColor
     IconButtonBorderFocusColor
     IconButtonBorderSelColor
+
+    TabButtonColor
+    TabButtonFocusColor
+    TabButtonSelColor
+    TabButtonBorderColor
+    TabButtonBorderFocusColor
+    TabButtonBorderSelColor
 
     ScrollBarColor
     ScrollBarFocusColor
@@ -72,24 +81,6 @@ type SizePropertyName int
 
 const (
     LineWidth SizePropertyName = iota
-    //PanelLineWidth
-    //ButtonHeight
-    //ButtonInsetHorizontal
-    //ButtonInset
-    //ButtonLineWidth
-    //ButtonCornerRad
-    //RadioBtnSize
-    //RadioBtnLineWidth
-    //RadioBtnDotSize
-    //CheckboxSize
-    //CheckboxLineWidth
-    //CheckboxCornerRad
-    //SliderWidth
-    //SliderBarWidth
-    //SliderCtrlWidth
-    //ScrollWidth
-    //ScrollBarWidth
-    //ScrollCtrlWidth
 
     PanelBorderSize
 
@@ -111,6 +102,12 @@ const (
     CheckCornerRad
 
     IconInlineSize
+
+    TabButtonWidth
+    TabButtonHeight
+    TabButtonBorderSize
+    TabButtonCornerRad
+    TabButtonTextSize
 
     TextSize
     TextHeadingSize
@@ -138,127 +135,120 @@ type Properties interface {
 // ----------------------------------------------------------------------------
 
 type DefaultProps struct {
-     colorMap map[ColorPropertyName]color.Color
-     fontMap map[FontPropertyName]*opentype.Font
-     sizeMap map[SizePropertyName]float64
+    colorMap map[ColorPropertyName]color.Color
+    fontMap  map[FontPropertyName]*opentype.Font
+    sizeMap  map[SizePropertyName]float64
 }
 
-func NewDefaultProps() (*DefaultProps) {
+func NewDefaultProps() *DefaultProps {
     p := &DefaultProps{}
 
+    mainColor := colornames.Darkcyan
+
     p.colorMap = map[ColorPropertyName]color.Color{
-        RedColor:      colornames.Red,
-        OrangeColor:   colornames.Orange,
-        YellowColor:   colornames.Yellow,
-        GreenColor:    colornames.Green,
-        BlueColor:     colornames.Blue,
-        PurpleColor:   colornames.Purple,
-        BrownColor:    colornames.Brown,
-        GrayColor:     colornames.Gray,
-        BlackColor:    colornames.Black,
-        WhiteColor:    colornames.Whitesmoke,
-        FillColor:     colornames.Darkcyan,
-        StrokeColor:   colornames.Darkcyan,
-        ActiveColor:   colornames.Darkcyan.Bright(2),
-        TranspWhite:   colornames.Whitesmoke.Alpha(0.5),
+        RedColor:    colornames.Red,
+        OrangeColor: colornames.Orange,
+        YellowColor: colornames.Yellow,
+        GreenColor:  colornames.Green,
+        BlueColor:   colornames.Blue,
+        PurpleColor: colornames.Purple,
+        BrownColor:  colornames.Brown,
+        GrayColor:   colornames.Gray,
+        BlackColor:  colornames.Black,
+        WhiteColor:  colornames.Whitesmoke,
+        ActiveColor: mainColor.Bright(0.2),
+        TranspWhite: colornames.Whitesmoke.Alpha(0.5),
 
-        ArrowColor:             colornames.Whitesmoke,
+        MainColor:   mainColor,
+        FillColor:   mainColor,
+        StrokeColor: mainColor,
 
-        TextColor:              colornames.Whitesmoke,
-        TextFocusColor:         colornames.White,
-    
-        ButtonColor:            colornames.Darkcyan,
-        ButtonFocusColor:       colornames.Darkcyan.Bright(2),
-        ButtonBorderColor:      colornames.Darkcyan,
-        ButtonBorderFocusColor: colornames.Darkcyan.Bright(2),
-    
-        IconButtonColor:        colornames.Darkcyan,
-        IconButtonFocusColor:   colornames.Darkcyan.Bright(2),
-        IconButtonSelColor:     colornames.Darkcyan.Bright(2),
-        IconButtonBorderColor:  colornames.Darkcyan,
-        IconButtonBorderFocusColor: colornames.Darkcyan.Bright(2),
-        IconButtonBorderSelColor: colornames.Darkcyan.Bright(2),
+        ArrowColor: colornames.Whitesmoke,
 
-        //IconButtonColor:        colornames.White,
-        //IconButtonFocusColor:   colornames.Darkgray,
-        //IconButtonSelColor:     color.RGBAF64{0.353, 0.627, 1.0, 1.0},
-        //IconButtonBorderColor:  colornames.Silver,
-        //IconButtonBorderFocusColor: colornames.Darkgray,
-        //IconButtonBorderSelColor: colornames.Silver,
+        TextColor:      colornames.Whitesmoke,
+        TextFocusColor: colornames.White,
+        TextDimColor:   colornames.Silver,
 
-        ScrollBarColor:         colornames.Silver.Alpha(0.3),
-        ScrollBarFocusColor:    colornames.Silver,
-        ScrollCtrlColor:        colornames.Darkcyan,
-        ScrollCtrlFocusColor:   colornames.Darkcyan.Bright(2),
-    
-        SliderBarColor:         colornames.Silver.Alpha(0.3),
-        SliderBarFocusColor:    colornames.Silver,
-        SliderCtrlColor:        colornames.Darkcyan,
-        SliderCtrlFocusColor:   colornames.Darkcyan.Bright(2),
+        ButtonColor:            mainColor,
+        ButtonFocusColor:       mainColor.Bright(0.2),
+        ButtonBorderColor:      mainColor,
+        ButtonBorderFocusColor: mainColor.Bright(0.2),
+
+        IconButtonColor:            mainColor,
+        IconButtonFocusColor:       mainColor.Bright(0.2),
+        IconButtonSelColor:         mainColor.Bright(0.2),
+        IconButtonBorderColor:      mainColor,
+        IconButtonBorderFocusColor: mainColor.Bright(0.2),
+        IconButtonBorderSelColor:   mainColor.Bright(0.2),
+
+        TabButtonColor:            mainColor.Alpha(0.3),
+        TabButtonFocusColor:       mainColor.Bright(0.2),
+        TabButtonSelColor:         mainColor,
+        TabButtonBorderColor:      colornames.Whitesmoke,
+        TabButtonBorderFocusColor: colornames.White,
+        TabButtonBorderSelColor:   colornames.White,
+
+        ScrollBarColor:       colornames.Silver.Alpha(0.3),
+        ScrollBarFocusColor:  colornames.Silver,
+        ScrollCtrlColor:      mainColor,
+        ScrollCtrlFocusColor: mainColor.Bright(0.2),
+
+        SliderBarColor:       colornames.Silver.Alpha(0.3),
+        SliderBarFocusColor:  colornames.Silver,
+        SliderCtrlColor:      mainColor,
+        SliderCtrlFocusColor: mainColor.Bright(0.2),
     }
 
     p.fontMap = map[FontPropertyName]*opentype.Font{
-        RegularFont:            fonts.GoRegular,
-        BoldFont:               fonts.GoBold,
-        ItalicFont:             fonts.GoItalic,
-        BoldItalicFont:         fonts.GoBoldItalic,
-        MonoFont:               fonts.GoMono,
-        MonoBoldFont:           fonts.GoMonoBold,
+        RegularFont:    fonts.GoRegular,
+        BoldFont:       fonts.GoBold,
+        ItalicFont:     fonts.GoItalic,
+        BoldItalicFont: fonts.GoBoldItalic,
+        MonoFont:       fonts.GoMono,
+        MonoBoldFont:   fonts.GoMonoBold,
     }
 
     p.sizeMap = map[SizePropertyName]float64{
-        LineWidth:              2.0,
-//        PanelLineWidth:         0.0,
-//        ButtonHeight:          32.0,
-//        ButtonInsetHorizontal: 15.0,
-//        ButtonInset:   	        5.0,
-//        ButtonCornerRad:        6.0,
-//        RadioBtnSize:          18.0,
-//        RadioBtnLineWidth:      4.0,
-//        RadioBtnDotSize:        8.0,
-//        CheckboxSize:          18.0,
-//        CheckboxLineWidth:      4.0,
-//        CheckboxCornerRad:      5.0,
-//        SliderWidth:           18.0,
-//        SliderBarWidth:        14.0,
-//        SliderCtrlWidth:       18.0,
-//        ScrollWidth:           18.0,
-//        ScrollBarWidth:        14.0,
-//        ScrollCtrlWidth:       18.0,
+        LineWidth: 2.0,
 
+        PanelBorderSize: 0.0,
 
-        PanelBorderSize:        0.0,
+        InnerPaddingSize: 5.0,
+        PaddingSize:      5.0,
 
-        InnerPaddingSize:       5.0,
-        PaddingSize:            5.0,
-    
-        ButtonSize:            32.0,
-        ButtonBorderSize:       0.0,
-        ButtonCornerRad:        6.0,
+        ButtonSize:       32.0,
+        ButtonBorderSize: 0.0,
+        ButtonCornerRad:  6.0,
 
         TextButtonPaddingSize: 15.0,
-    
-        RadioSize:             18.0,
-        RadioBorderSize:        4.0,
-        RadioDotSize:           8.0,
 
-        CheckSize:             18.0,
-        CheckLineSize:          4.0,
-        CheckCornerRad:         5.0,
+        RadioSize:       18.0,
+        RadioBorderSize: 4.0,
+        RadioDotSize:    8.0,
 
-        IconInlineSize:        24.0,
-    
-        TextSize:              15.0,
-        TextHeadingSize:       15.0,
-        TextSubHeadingSize:    15.0,
+        CheckSize:      18.0,
+        CheckLineSize:  4.0,
+        CheckCornerRad: 5.0,
 
-        ScrollSize:            18.0,
-        ScrollBarSize:         14.0,
-        ScrollCtrlSize:        18.0,
-    
-        SliderSize:            18.0,
-        SliderBarSize:         14.0,
-        SliderCtrlSize:        18.0,
+        IconInlineSize: 24.0,
+
+        TabButtonWidth:      32.0,
+        TabButtonHeight:     20.0,
+        TabButtonBorderSize:  0.0,
+        TabButtonCornerRad:   8.0,
+        TabButtonTextSize:   12.0,
+
+        TextSize:           15.0,
+        TextHeadingSize:    15.0,
+        TextSubHeadingSize: 15.0,
+
+        ScrollSize:     18.0,
+        ScrollBarSize:  14.0,
+        ScrollCtrlSize: 18.0,
+
+        SliderSize:     18.0,
+        SliderBarSize:  14.0,
+        SliderCtrlSize: 18.0,
     }
 
     return p
@@ -275,4 +265,3 @@ func (p *DefaultProps) Font(n FontPropertyName) *opentype.Font {
 func (p *DefaultProps) Size(n SizePropertyName) float64 {
     return p.sizeMap[n]
 }
-

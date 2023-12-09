@@ -91,6 +91,7 @@ type Node interface {
 // Container agieren koennen, d.h. eine Liste von weiteren Nodes fuehren.
 type Container interface {
     Add(n ...Node)
+    Del(n Node)
 }
 
 // LayoutManager eben...

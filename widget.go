@@ -44,10 +44,11 @@ import (
     "time"
     "github.com/stefan-muehlebach/adagui/binding"
     "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/gg"
     "github.com/stefan-muehlebach/gg/color"
+    //"github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/fonts"
     "github.com/stefan-muehlebach/gg/geom"
-    "github.com/stefan-muehlebach/gg"
     "golang.org/x/image/font"
     "golang.org/x/image/font/opentype"
 )
@@ -105,7 +106,7 @@ type Panel struct {
     FillColor, StrokeColor color.Color
     LineWidth float64
     Clip bool
-    virtSize, viewPort geom.Point
+    virtSize, sizeDiff, viewPort, refPt geom.Point
 }
 
 func NewPanel(w, h float64) (*Panel) {
@@ -117,8 +118,9 @@ func NewPanel(w, h float64) (*Panel) {
     g.StrokeColor = pr.Color(BlackColor)
     g.LineWidth   = pr.Size(PanelBorderSize)
     g.Clip        = true
-    g.virtSize    = geom.Point{0, 0}
+    g.SetVirtualSize(g.Size())
     g.viewPort    = geom.Point{0, 0}
+    g.refPt       = geom.Point{0, 0}
     return g
 }
 
@@ -132,12 +134,18 @@ func (g *Panel) Paint(gc *gg.Context) {
         gc.ClipPreserve()
     }
     gc.FillStroke()
+
+/*
     if g.virtSize.X != 0.0 && g.virtSize.Y != 0.0 {
         refPt := g.Size().Sub(g.virtSize)
         refPt.X *= g.viewPort.X
         refPt.Y *= g.viewPort.Y
         gc.Translate(refPt.AsCoord())
     }
+*/
+    //gc.Multiply(g.Matrix())
+
+    gc.Translate(g.refPt.AsCoord())
     g.ContainerEmbed.Paint(gc)
     if g.Clip {
         gc.ResetClip()
@@ -156,10 +164,12 @@ func (p *Panel) VisibleRange() (geom.Point) {
 
 func (p *Panel) SetXView(vx float64) {
     p.viewPort.X = vx
+    p.refPt.X = p.sizeDiff.X * p.viewPort.X
 }
 
 func (p *Panel) SetYView(vy float64) {
     p.viewPort.Y = vy
+    p.refPt.Y = p.sizeDiff.Y * p.viewPort.Y
 }
 
 func (p *Panel) ViewPort() (geom.Point) {
@@ -168,6 +178,7 @@ func (p *Panel) ViewPort() (geom.Point) {
 
 func (p *Panel) SetVirtualSize(sz geom.Point) {
     p.virtSize = sz
+    p.sizeDiff = p.Size().Sub(p.virtSize)
 }
 
 func (p *Panel) VirtualSize() (geom.Point) {
@@ -382,7 +393,7 @@ func NewButton(w, h float64) (*Button) {
     b.BorderColor      = pr.Color(ButtonBorderColor)
     b.BorderFocusColor = pr.Color(ButtonBorderFocusColor)
     b.LineWidth        = pr.Size(ButtonBorderSize)
-    b.pushed      = false
+    b.pushed           = false
     return b
 }
 
@@ -440,7 +451,6 @@ func NewTextButton(label string) (*TextButton) {
     b.fontSize         = pr.Size(TextSize)
     b.fontFace         = fonts.NewFace(pr.Font(BoldFont), b.fontSize)
     b.TextColor        = pr.Color(TextColor)
-    //b.align       = AlignCenter | AlignMiddle
     b.updateSize()
     return b
 }
@@ -694,6 +704,121 @@ func (b *IconButton) DataChanged(data binding.DataItem) {
         b.checked = true
     } else {
         b.checked = false
+    }
+}
+
+// Buttons sind neutrale Knoepfe, ohne spezifischen Inhalt, d.h. ohne Text
+// oder Icons. Sie werden selten direkt verwendet, sondern dienen als
+// generische Grundlage fuer die weiter unten definierten Text- oder Icon-
+// Buttons.
+type TabButton struct {
+    Button
+    selected bool
+    label string
+    fontSize float64
+    fontFace font.Face
+    textColor color.Color
+    data binding.Int
+    tabIndex int
+}
+
+func NewTabButton(label string) (*TabButton) {
+    b := &TabButton{}
+    b.Wrapper = b
+    b.Init()
+    b.SetMinSize(geom.Point{pr.Size(TabButtonWidth), pr.Size(TabButtonHeight)})
+    b.FillColor        = pr.Color(TabButtonColor)
+    b.FillFocusColor   = pr.Color(TabButtonFocusColor)
+    b.BorderColor      = pr.Color(TabButtonBorderColor)
+    b.BorderFocusColor = pr.Color(TabButtonBorderFocusColor)
+    b.LineWidth        = pr.Size(TabButtonBorderSize)
+    b.pushed           = false
+    b.selected         = false
+    b.label            = label
+    b.fontSize         = pr.Size(TabButtonTextSize)
+    b.fontFace         = fonts.NewFace(pr.Font(BoldFont), b.fontSize)
+    b.textColor        = pr.Color(TextColor)
+    b.data             = binding.NewInt()
+    b.tabIndex         = -1
+    return b
+}
+
+func NewTabButtonWithData(label string, data binding.Int) (*TabButton) {
+    b := NewTabButton(label)
+    b.data = data
+    b.data.AddListener(b)
+    return b
+}
+
+func (b *TabButton) Paint(gc *gg.Context) {
+    //log.Printf("Button.Paint()")
+    gc.DrawRectangle(b.Bounds().AsCoord())
+    gc.Clip()
+    gc.DrawRoundedRectangle(0.0, 0.0,
+            b.Size().X, b.Size().Y+pr.Size(TabButtonCornerRad),
+            pr.Size(TabButtonCornerRad))
+    if b.selected {
+        b.FillColor   = pr.Color(TabButtonSelColor)
+        b.BorderColor = pr.Color(TabButtonBorderSelColor)
+    } else {
+        b.FillColor   = pr.Color(TabButtonColor)
+        b.BorderColor = pr.Color(TabButtonBorderColor)
+    }
+    if b.pushed {
+        gc.SetFillColor(b.FillFocusColor)
+        gc.SetStrokeColor(b.BorderFocusColor)
+    } else {
+        gc.SetFillColor(b.FillColor)
+        gc.SetStrokeColor(b.BorderColor)
+    }
+    gc.SetStrokeWidth(b.LineWidth)
+    gc.FillStroke()
+    gc.ResetClip()
+
+    mp := b.Bounds().Center()
+    if b.selected || b.pushed {
+        gc.SetStrokeColor(b.textColor)
+    } else {
+        gc.SetStrokeColor(pr.Color(TextDimColor))
+    }
+    gc.SetFontFace(b.fontFace)
+    gc.DrawStringAnchored(b.label, mp.X, mp.Y, 0.5, 0.5)
+}
+
+func (b *TabButton) OnInputEvent(evt touch.Event) {
+    //log.Printf("%T: %v", b, evt)
+    switch evt.Type {
+    case touch.TypePress, touch.TypeEnter:
+        b.pushed = true
+        b.Mark(MarkNeedsPaint)
+    case touch.TypeRelease, touch.TypeLeave:
+        b.pushed = false
+        b.Mark(MarkNeedsPaint)
+    case touch.TypeTap:
+        if !b.selected {
+            b.data.Set(b.tabIndex)
+        } else {
+            b.data.Set(-1)
+        }
+        b.Mark(MarkNeedsPaint)
+    }
+    b.CallTouchFunc(evt)
+}
+
+func (b *TabButton) SetTabIndex(idx int) {
+    b.tabIndex = idx
+}
+
+func (b *TabButton) TabIndex() (int) {
+    return b.tabIndex
+}
+
+func (b *TabButton) DataChanged(data binding.DataItem) {
+    value := data.(binding.Int).Get()
+    if b.tabIndex == value {
+        b.selected = true
+    } else {
+        b.selected = false
     }
 }
 

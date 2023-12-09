@@ -313,15 +313,40 @@ func (c *ContainerEmbed) Init() {
 
 func (c *ContainerEmbed) Add(n ...Node) {
     for _, node := range n {
-        e := node.Wrappee()
-        if e.Parent != nil {
+        embed := node.Wrappee()
+        if embed.Parent != nil {
             log.Fatal("Container: Add called for an attached child")
         }
-        e.Win = c.Win
-        e.Parent = c
-        c.ChildList.PushBack(e)
+        embed.Win = c.Win
+        embed.Parent = c
+        c.ChildList.PushBack(embed)
         c.layout()
     }
+}
+
+func (c *ContainerEmbed) Del(n Node) {
+    for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
+        node := elem.Value.(Node)
+        if n != node {
+            continue
+        }
+        embed := node.Wrappee()
+        embed.Win =  nil
+        embed.Parent = nil
+        c.ChildList.Remove(elem)
+        break
+    }
+    c.layout()
+}
+
+func (c *ContainerEmbed) DelAll() {
+    for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
+        embed := elem.Value.(*Embed)
+        embed.Parent = nil
+        embed.Win = nil
+    }
+    c.ChildList.Init()
+    c.layout()
 }
 
 func (c *ContainerEmbed) SetSize(s geom.Point) {
