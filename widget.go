@@ -637,6 +637,7 @@ type IconButton struct {
     img image.Image
     checked bool
     data binding.Untyped
+    UserData int
 }
 
 func NewIconButton(imgFile string) (*IconButton) {

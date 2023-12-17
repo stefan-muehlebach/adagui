@@ -1,15 +1,12 @@
 package adagui
 
 import (
-    "image"
-    "image/color"
-    //"log"
     "sync"
-    _ "time"
     "github.com/stefan-muehlebach/adatft"
     "github.com/stefan-muehlebach/adagui/touch"
-    "github.com/stefan-muehlebach/gg/geom"
     "github.com/stefan-muehlebach/gg"
+    "github.com/stefan-muehlebach/gg/color"
+    "github.com/stefan-muehlebach/gg/geom"
 )
 
 //----------------------------------------------------------------------------
@@ -102,7 +99,7 @@ func (w *Window) paintThread() {
         w.mutex.Lock()
         w.root.Wrappee().Paint(w.gc)
         w.mutex.Unlock()
-        w.s.disp.Draw(w.s.disp.Bounds(), w.gc.Image(), image.Point{})
+        w.s.disp.Draw(w.gc.Image())
     }
     w.quitQ <- true
 }
