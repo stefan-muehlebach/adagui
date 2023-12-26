@@ -216,7 +216,7 @@ func (s *Separator) Paint(gc *gg.Context) {
 // ein.
 type Spacer struct {
     LeafEmbed
-    fixHorizontal, fixVertical bool
+    FixHorizontal, FixVertical bool
 }
 
 func NewSpacer() (*Spacer) {
@@ -227,11 +227,11 @@ func NewSpacer() (*Spacer) {
 }
 
 func (s *Spacer) ExpandHorizontal() (bool) {
-    return !s.fixHorizontal
+    return !s.FixHorizontal
 }
 
 func (s *Spacer) ExpandVertical() (bool) {
-    return !s.fixVertical
+    return !s.FixVertical
 }
 
 type AlignType int
@@ -430,6 +430,7 @@ func (b *Button) OnInputEvent(evt touch.Event) {
 type TextButton struct {
     Button
     label string
+    fontFont *opentype.Font
     fontSize float64
     fontFace font.Face
     TextColor color.Color
@@ -448,8 +449,8 @@ func NewTextButton(label string) (*TextButton) {
     b.BorderColor      = pr.Color(ButtonBorderColor)
     b.BorderFocusColor = pr.Color(ButtonBorderFocusColor)
     b.LineWidth        = pr.Size(ButtonBorderSize)
+    b.fontFont         = pr.Font(BoldFont)
     b.fontSize         = pr.Size(TextSize)
-    b.fontFace         = fonts.NewFace(pr.Font(BoldFont), b.fontSize)
     b.TextColor        = pr.Color(TextColor)
     b.updateSize()
     return b
@@ -461,10 +462,9 @@ func (b *TextButton) SetSize(size geom.Point) {
 }
 
 func (b *TextButton) updateSize() {
+    b.fontFace = fonts.NewFace(b.fontFont, b.fontSize)
     w := float64(font.MeasureString(b.fontFace, b.label)) / 64.0
     h := pr.Size(ButtonSize)
-    //h := float64(b.fontFace.Metrics().Ascent +
-    //        b.fontFace.Metrics().Descent) / 64.0
     b.desc = float64(b.fontFace.Metrics().Descent) / 64.0
     b.SetMinSize(geom.Point{w+2*pr.Size(TextButtonPaddingSize), h})
     b.updateRefPoint()
@@ -482,6 +482,33 @@ func (b *TextButton) Paint(gc *gg.Context) {
     gc.DrawStringAnchored(b.label, b.rPt.X, b.rPt.Y, 0.5, 0.5)
 }
 
+func (b *TextButton) SetText(str string) {
+    b.label = str
+    b.updateSize()
+}
+
+func (b *TextButton) Text() (string) {
+    return b.label
+}
+
+func (b *TextButton) SetFont(fontFont *opentype.Font) {
+    b.fontFont = fontFont
+    b.updateSize()
+}
+
+func (b *TextButton) Font() (*opentype.Font) {
+    return b.fontFont
+}
+
+func (b *TextButton) SetFontSize(fontSize float64) {
+    b.fontSize = fontSize
+    b.updateSize()
+}
+
+func (b *TextButton) FontSize() (float64) {
+    return b.fontSize
+}
+
 // Der Versuch, ein ListButton zu implementieren...
 type ListButton struct {
     Button
@@ -495,7 +522,6 @@ type ListButton struct {
 
 func NewListButton(options []string) (*ListButton) {
     b := &ListButton{}
-    //b.TextButton  = *NewTextButton(label)
     b.Wrapper     = b
     b.Init()
     b.FillColor        = pr.Color(ButtonColor)

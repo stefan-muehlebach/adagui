@@ -46,7 +46,7 @@ var (
         },
     }
     pgBtnFillColor = flapFillColor
-    drwFillColor   = colornames.Lightgray
+    drwFillColor   = colornames.LightGray
 )
 
 func DrawArrow(gc *gg.Context, dst geom.Rectangle, border Border) {

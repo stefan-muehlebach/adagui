@@ -299,14 +299,20 @@ type BoxLayout struct {
     padding float64
 }
 
-func NewHBoxLayout() LayoutManager {
-    l := &BoxLayout{Horizontal, pr.Size(PaddingSize)}
-    return l
+func NewHBoxLayout(pads... float64) *BoxLayout {
+    pad := pr.Size(PaddingSize)
+    if len(pads) > 0 {
+        pad = pads[0]
+    }
+    return &BoxLayout{Horizontal, pad}
 }
 
-func NewVBoxLayout() LayoutManager {
-    l := &BoxLayout{Vertical, pr.Size(PaddingSize)}
-    return l
+func NewVBoxLayout(pads... float64) *BoxLayout {
+    pad := pr.Size(PaddingSize)
+    if len(pads) > 0 {
+        pad = pads[0]
+    }
+    return &BoxLayout{Vertical, pad}
 }
 
 func (l *BoxLayout) isSpacer(obj Node) (bool) {
@@ -414,8 +420,12 @@ type PaddedLayout struct {
     padding float64
 }
 
-func NewPaddedLayout() LayoutManager {
-    return &PaddedLayout{pr.Size(PaddingSize)}
+func NewPaddedLayout(pads... float64) *PaddedLayout {
+    pad := pr.Size(PaddingSize)
+    if len(pads) > 0 {
+        pad = pads[0]
+    }
+    return &PaddedLayout{pad}
 }
 
 func (l *PaddedLayout) Layout(childList *list.List, size geom.Point) {

@@ -143,7 +143,7 @@ type DefaultProps struct {
 func NewDefaultProps() *DefaultProps {
     p := &DefaultProps{}
 
-    mainColor := colornames.Darkcyan
+    mainColor := colornames.DarkCyan
 
     p.colorMap = map[ColorPropertyName]color.Color{
         RedColor:    colornames.Red,
@@ -155,48 +155,48 @@ func NewDefaultProps() *DefaultProps {
         BrownColor:  colornames.Brown,
         GrayColor:   colornames.Gray,
         BlackColor:  colornames.Black,
-        WhiteColor:  colornames.Whitesmoke,
-        ActiveColor: mainColor.Bright(0.2),
-        TranspWhite: colornames.Whitesmoke.Alpha(0.5),
+        WhiteColor:  colornames.WhiteSmoke,
+        ActiveColor: mainColor.Bright(0.5),
+        TranspWhite: colornames.WhiteSmoke.Alpha(0.5),
 
         MainColor:   mainColor,
         FillColor:   mainColor,
         StrokeColor: mainColor,
 
-        ArrowColor: colornames.Whitesmoke,
+        ArrowColor: colornames.WhiteSmoke,
 
-        TextColor:      colornames.Whitesmoke,
+        TextColor:      colornames.WhiteSmoke,
         TextFocusColor: colornames.White,
         TextDimColor:   colornames.Silver,
 
         ButtonColor:            mainColor,
-        ButtonFocusColor:       mainColor.Bright(0.2),
+        ButtonFocusColor:       mainColor.Bright(0.5),
         ButtonBorderColor:      mainColor,
-        ButtonBorderFocusColor: mainColor.Bright(0.2),
+        ButtonBorderFocusColor: mainColor.Bright(0.5),
 
         IconButtonColor:            mainColor,
-        IconButtonFocusColor:       mainColor.Bright(0.2),
-        IconButtonSelColor:         mainColor.Bright(0.2),
+        IconButtonFocusColor:       mainColor.Bright(0.5),
+        IconButtonSelColor:         mainColor.Bright(0.5),
         IconButtonBorderColor:      mainColor,
-        IconButtonBorderFocusColor: mainColor.Bright(0.2),
-        IconButtonBorderSelColor:   mainColor.Bright(0.2),
+        IconButtonBorderFocusColor: mainColor.Bright(0.5),
+        IconButtonBorderSelColor:   mainColor.Bright(0.5),
 
         TabButtonColor:            mainColor.Alpha(0.3),
-        TabButtonFocusColor:       mainColor.Bright(0.2),
+        TabButtonFocusColor:       mainColor.Bright(0.5),
         TabButtonSelColor:         mainColor,
-        TabButtonBorderColor:      colornames.Whitesmoke,
+        TabButtonBorderColor:      colornames.WhiteSmoke,
         TabButtonBorderFocusColor: colornames.White,
         TabButtonBorderSelColor:   colornames.White,
 
-        ScrollBarColor:       colornames.Silver.Alpha(0.3),
-        ScrollBarFocusColor:  colornames.Silver,
+        ScrollBarColor:       colornames.DarkSlateGray.Dark(0.5),
+        ScrollBarFocusColor:  colornames.DarkSlateGray.Dark(0.5),
         ScrollCtrlColor:      mainColor,
-        ScrollCtrlFocusColor: mainColor.Bright(0.2),
+        ScrollCtrlFocusColor: mainColor.Bright(0.5),
 
-        SliderBarColor:       colornames.Silver.Alpha(0.3),
-        SliderBarFocusColor:  colornames.Silver,
+        SliderBarColor:       colornames.DarkSlateGray.Dark(0.5),
+        SliderBarFocusColor:  colornames.DarkSlateGray.Dark(0.5),
         SliderCtrlColor:      mainColor,
-        SliderCtrlFocusColor: mainColor.Bright(0.2),
+        SliderCtrlFocusColor: mainColor.Bright(0.5),
     }
 
     p.fontMap = map[FontPropertyName]*opentype.Font{
@@ -243,11 +243,11 @@ func NewDefaultProps() *DefaultProps {
         TextSubHeadingSize: 15.0,
 
         ScrollSize:     18.0,
-        ScrollBarSize:  14.0,
+        ScrollBarSize:  18.0,
         ScrollCtrlSize: 18.0,
 
         SliderSize:     18.0,
-        SliderBarSize:  14.0,
+        SliderBarSize:  18.0,
         SliderCtrlSize: 18.0,
     }
 
