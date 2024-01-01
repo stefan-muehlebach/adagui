@@ -4,7 +4,7 @@
 package main
 
 import (
-        "log"
+    "log"
     "os"
     "path"
     "runtime"
@@ -28,8 +28,8 @@ type bound{{ .Name }} struct {
 func New{{ .Name }}() {{ .Name }} {
     var blank {{ .Type }} = {{ .Default }}
     b := &bound{{ .Name }}{val: &blank}
-        b.Init(b)
-        return b
+    b.Init(b)
+    return b
 }
 
 func (b *bound{{ .Name }}) Get() ({{ .Type }}) {
@@ -78,7 +78,7 @@ func Bind{{ .Name }}(v *{{ .Type }}) External{{ .Name }} {
     b := &boundExternal{{ .Name }}{}
     b.val = v
     b.old = *v
-        b.Init(b)
+    b.Init(b)
     return b
 }
 

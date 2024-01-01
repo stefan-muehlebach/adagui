@@ -13,24 +13,21 @@ func init() {
     log.SetPrefix(": ")
 }
 
-// Als erstes folgen hier allgemeine, resp. generische Typen und Interfaces
-//fuer das Binding.
-
 // Mit DataItem ist das minimale Interface definiert welches ein Bind-Objekt
-// implementieren muss. Einem Bind-Objekt koennen einerseits Objekte
-// hinzugefuegt werden, die das DataListener Interface implementieren,
+// implementieren muss. Einem Bind-Objekt können einerseits Objekte
+// hinzugefügt werden, die das DataListener Interface implementieren,
 // andererseits aber auch direkt Funktionen vom Typ CallbackFunc. Diese beiden
-// Moeglichkeiten koennen auch zusammen, d.h. synchron verwendet werden.
+// Möglichkeiten können auch zusammen, d.h. synchron verwendet werden.
 type DataItem interface {
-    AddListener(DataListener)
-    AddCallback(CallbackFunc)
-    RemoveListener(DataListener)
-    RemoveCallback(CallbackFunc)
+    AddListener(l DataListener)
+    RemoveListener(l DataListener)
+    AddCallback(f CallbackFunc)
+    RemoveCallback(f CallbackFunc)
 }
 
-// Alle Typen, welche ueber die Aenderungen von Bind-Objekten informiert werden
-// wollen, muessen das DataListener-Interface implementieren. Im Wesentlichen
-// eine einzige Methode (DataChanged), welche als Argument das veraenderte
+// Alle Typen, welche über die Aenderungen von Bind-Objekten informiert werden
+// wollen, müssen das DataListener-Interface implementieren. Im Wesentlichen
+// eine einzige Methode (DataChanged), welche als Argument das veränderte
 // Bind-Objekt hat.
 type DataListener interface {
     DataChanged(data DataItem)
@@ -42,7 +39,7 @@ func NewDataListener(fn func(data DataItem)) (DataListener) {
     return &listener{fn}
 }
 
-// Der (private) Typ listener ist nun eine der moeglichen Implementationen des
+// Der (private) Typ listener ist nun eine der möglichen Implementationen des
 // DataListener-Interfaces...
 type listener struct {
     callback func(data DataItem)
@@ -54,13 +51,13 @@ func (l *listener) DataChanged(data DataItem) {
 }
 
 // Neben den DataListeners gibt es noch eine schlanke Variante seinen Code bei
-// Veraenderungen eines Bind-Objektes aufrufen zu lassen: man kann einfach eine
+// Veränderungen eines Bind-Objektes aufrufen zu lassen: man kann einfach eine
 // Funktion/Methode, welche dem Typ CallbackFunc entspricht, mit AddCallback
-// hinzufuegen.
+// hinzufügen.
 type CallbackFunc func(data DataItem)
 
 // base ist der Basistyp, welche die Methoden des DataItem-Interfaces
-// implementiert. Er ist nicht oeffentlich, sondern wird von den weiter
+// implementiert. Er ist nicht öffentlich, sondern wird von den weiter
 // unten gezeigten konkreten Bind-Type verwendet.
 type base struct {
     super DataItem
@@ -68,7 +65,7 @@ type base struct {
     // DataListener-Objekte oder Callback-Funktionen hinterlegt werden.
     listeners sync.Map
     callbacks sync.Map
-    // Der Zugriff auf weitere Strukturen dieses Typs wird ueber das Mutex
+    // Der Zugriff auf weitere Strukturen dieses Typs wird über das Mutex
     // lock gesteuert.
     lock sync.RWMutex
 }
@@ -79,33 +76,33 @@ func (b *base) Init(super DataItem) {
     b.super = super
 }
 
-// AddListener fuegt ein DataListener hinzu und ruft die DataChanged-Methode
+// AddListener fügt ein DataListener hinzu und ruft die DataChanged-Methode
 // auch gleich auf!
 func (b *base) AddListener(l DataListener) {
     b.listeners.Store(l, true)
     l.DataChanged(b.super)
 }
 
-// Mit RemoveListener koennen DataListener wieder entfernt werden.
+// Mit RemoveListener können DataListener wieder entfernt werden.
 func (b *base) RemoveListener(l DataListener) {
     b.listeners.Delete(l)
 }
 
-// AddCallback fuegt eine Callback-Funktion hinzu und ruft diese auch gleich
+// AddCallback fügt eine Callback-Funktion hinzu und ruft diese auch gleich
 // das erste mal auf.
 func (b *base) AddCallback(f CallbackFunc) {
     b.callbacks.Store(&f, true)
     f(b.super)
 }
 
-// Mit RemoveCallback schliesslich koennen Callback-Funktionen wieder
+// Mit RemoveCallback schliesslich können Callback-Funktionen wieder
 // entfernt werden.
 func (b *base) RemoveCallback(f CallbackFunc) {
     b.callbacks.Delete(&f)
 }
 
 // Die (private) Methode trigger wird immer dann aufgerufen, wenn sich der
-// Wert des Bind-Objektes aendert. Diese Methode ruft die registrierten
+// Wert des Bind-Objektes ändert. Diese Methode ruft die registrierten
 // Listener-, resp. Callback-Methoden auf.
 func (b *base) trigger() {
     b.listeners.Range(func(key, _ any) bool {

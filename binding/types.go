@@ -23,8 +23,8 @@ type boundBool struct {
 func NewBool() Bool {
     var blank bool = false
     b := &boundBool{val: &blank}
-        b.Init(b)
-        return b
+    b.Init(b)
+    return b
 }
 
 func (b *boundBool) Get() (bool) {
@@ -67,7 +67,7 @@ func BindBool(v *bool) ExternalBool {
     b := &boundExternalBool{}
     b.val = v
     b.old = *v
-        b.Init(b)
+    b.Init(b)
     return b
 }
 
@@ -102,8 +102,8 @@ type boundBytes struct {
 func NewBytes() Bytes {
     var blank []byte = nil
     b := &boundBytes{val: &blank}
-        b.Init(b)
-        return b
+    b.Init(b)
+    return b
 }
 
 func (b *boundBytes) Get() ([]byte) {
@@ -146,7 +146,7 @@ func BindBytes(v *[]byte) ExternalBytes {
     b := &boundExternalBytes{}
     b.val = v
     b.old = *v
-        b.Init(b)
+    b.Init(b)
     return b
 }
 
@@ -181,8 +181,8 @@ type boundFloat struct {
 func NewFloat() Float {
     var blank float64 = 0.0
     b := &boundFloat{val: &blank}
-        b.Init(b)
-        return b
+    b.Init(b)
+    return b
 }
 
 func (b *boundFloat) Get() (float64) {
@@ -225,7 +225,7 @@ func BindFloat(v *float64) ExternalFloat {
     b := &boundExternalFloat{}
     b.val = v
     b.old = *v
-        b.Init(b)
+    b.Init(b)
     return b
 }
 
@@ -260,8 +260,8 @@ type boundInt struct {
 func NewInt() Int {
     var blank int = 0
     b := &boundInt{val: &blank}
-        b.Init(b)
-        return b
+    b.Init(b)
+    return b
 }
 
 func (b *boundInt) Get() (int) {
@@ -304,7 +304,7 @@ func BindInt(v *int) ExternalInt {
     b := &boundExternalInt{}
     b.val = v
     b.old = *v
-        b.Init(b)
+    b.Init(b)
     return b
 }
 
@@ -339,8 +339,8 @@ type boundRune struct {
 func NewRune() Rune {
     var blank rune = rune(0)
     b := &boundRune{val: &blank}
-        b.Init(b)
-        return b
+    b.Init(b)
+    return b
 }
 
 func (b *boundRune) Get() (rune) {
@@ -383,7 +383,7 @@ func BindRune(v *rune) ExternalRune {
     b := &boundExternalRune{}
     b.val = v
     b.old = *v
-        b.Init(b)
+    b.Init(b)
     return b
 }
 
@@ -418,8 +418,8 @@ type boundString struct {
 func NewString() String {
     var blank string = ""
     b := &boundString{val: &blank}
-        b.Init(b)
-        return b
+    b.Init(b)
+    return b
 }
 
 func (b *boundString) Get() (string) {
@@ -462,7 +462,7 @@ func BindString(v *string) ExternalString {
     b := &boundExternalString{}
     b.val = v
     b.old = *v
-        b.Init(b)
+    b.Init(b)
     return b
 }
 
@@ -497,8 +497,8 @@ type boundUntyped struct {
 func NewUntyped() Untyped {
     var blank interface{} = nil
     b := &boundUntyped{val: &blank}
-        b.Init(b)
-        return b
+    b.Init(b)
+    return b
 }
 
 func (b *boundUntyped) Get() (interface{}) {
@@ -541,7 +541,7 @@ func BindUntyped(v *interface{}) ExternalUntyped {
     b := &boundExternalUntyped{}
     b.val = v
     b.old = *v
-        b.Init(b)
+    b.Init(b)
     return b
 }
 
