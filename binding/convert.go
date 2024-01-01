@@ -5,7 +5,7 @@ import (
 )
 
 func IntToStringWithFormat(v Int, format string) (String) {
-    if format == "%d%" {
+    if format == "%d" {
         return IntToString(v)
     }
     s := NewString()

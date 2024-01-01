@@ -36,7 +36,6 @@ package adagui
 import (
     "container/list"
     "image"
-    // "image/color"
     "log"
     "math"
     "os"
@@ -46,7 +45,6 @@ import (
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg"
     "github.com/stefan-muehlebach/gg/color"
-    //"github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/fonts"
     "github.com/stefan-muehlebach/gg/geom"
     "golang.org/x/image/font"

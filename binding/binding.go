@@ -1,3 +1,4 @@
+// Enthält eine Sammlung von gebundenen Datentypen.
 package binding
 
 import (
