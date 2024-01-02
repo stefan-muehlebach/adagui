@@ -1,7 +1,6 @@
 package adagui
 
 import (
-    //"log"
     "math"
     "container/list"
     "github.com/stefan-muehlebach/gg/geom"
@@ -68,7 +67,6 @@ func NewCenterLayout() LayoutManager {
 }
 
 func (l *CenterLayout) Layout(childList *list.List, size geom.Point) {
-    //log.Printf("CenterLayout.Layout(), size: %v", size)
     for elem := childList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed).Wrapper
         childMin := child.MinSize()
@@ -79,7 +77,6 @@ func (l *CenterLayout) Layout(childList *list.List, size geom.Point) {
 }
 
 func (l *CenterLayout) MinSize(childList *list.List) (geom.Point) {
-    //log.Printf("CenterLayout.MinSize()")
     minSize := geom.Point{0.0, 0.0}
     for elem := childList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed).Wrapper

@@ -18,14 +18,19 @@ type Embed struct {
     transl, rotate, scale, transf geom.Matrix
     Marks Marks
     visible bool
+    Prop *Properties
 }
 
-func (m *Embed) Init() {
+func (m *Embed) Init(parentProp *Properties) {
     m.transl  = geom.Identity()
     m.rotate  = geom.Identity()
     m.scale   = geom.Identity()
     m.transf  = geom.Identity()
     m.visible = true
+    if parentProp == nil {
+        parentProp = DefProp
+    }
+    m.Prop    = NewProperties(parentProp)
 }
 
 func (m *Embed) Wrappee() (*Embed) {
@@ -305,8 +310,8 @@ type ContainerEmbed struct {
     Layout LayoutManager
 }
 
-func (c *ContainerEmbed) Init() {
-    c.Embed.Init()
+func (c *ContainerEmbed) Init(parentProp *Properties) {
+    c.Embed.Init(parentProp)
     c.ChildList = list.New()
     c.Layout = &NullLayout{}
 }

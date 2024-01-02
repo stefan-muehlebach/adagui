@@ -18,8 +18,8 @@ var (
     flapRectRad          =  6.0
     flapFillColor        = colornames.Gray.Alpha(0.5)
     flapPushedFillColor  = colornames.Gray.Alpha(0.5)
-    flapArrowColor       = pr.Color(FillColor)
-    flapPushedArrowColor = pr.Color(ActiveColor)
+    flapArrowColor       = pr.Color(Color)
+    flapPushedArrowColor = pr.Color(PressedColor)
     flapArrowWidth       =  8.0
     flapSize = []geom.Point{
 	    geom.Point{flapWidth, flapHeight},
@@ -83,7 +83,7 @@ type PageButton struct {
 func NewPageButton(border Border) (*PageButton) {
     b := &PageButton{}
     b.Wrapper = b
-    b.Init()
+    b.Init(nil)
     b.SetMinSize(geom.Point{flapWidth, flapHeight})
     b.border = border
     b.pushed = false
@@ -191,9 +191,9 @@ type Drawer struct {
 func NewDrawer(pos Border) (*Drawer) {
     d := &Drawer{}
     d.Wrapper = d
-    d.Init()
+    d.Init(nil)
     d.pos = pos
-    d.FillColor = pr.Color(FillColor)
+    d.FillColor = pr.Color(Color)
     d.ActiveColor = pr.Color(ActiveColor)
     d.pushed = false
     d.isOpen = false
