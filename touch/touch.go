@@ -1,18 +1,6 @@
-// Sammlung von Methoden und Typen, mit denen der 'Input' des Users ueber
-// den TouchScreen bequemer verarbeitet werden kann.
-package touch
-
-import (
-    "fmt"
-    "time"
-    "github.com/stefan-muehlebach/gg/geom"
-)
-
-// Mit diesem Datentyp werden die unterschiedlichen Event-Arten abgebildet,
-// welche durch das Druecken auf den Bildschirm an die GUI-Elemente gesendet
-// werden koennen. Es ist Aufgabe der Objekte 'Screen' und 'Window', aus den
-// rohen Ereginisse vom Touchscreen (Press, Drag, Release) diese Events zu
-// erzeugen.
+// Das Package touch enthaelt alles, um Events vom Touchscreen bequemer zu
+// verarbeiten.
+//
 // Eine Interaktion auf dem Bildschirm laeuft grundsaetzlich wie folgt ab.
 // In Klammern sind Events gesetzt, die optional erzeugt werden:
 //
@@ -30,6 +18,19 @@ import (
 //    |
 //   (TypeTap)
 //
+package touch
+
+import (
+    "fmt"
+    "time"
+    "github.com/stefan-muehlebach/gg/geom"
+)
+
+// Mit diesem Datentyp werden die unterschiedlichen Event-Arten abgebildet,
+// welche durch das Druecken auf den Bildschirm an die GUI-Elemente gesendet
+// werden koennen. Es ist Aufgabe der Objekte 'Screen' und 'Window', aus den
+// rohen Ereginisse vom Touchscreen (Press, Drag, Release) diese Events zu
+// erzeugen.
 type Type uint32
 
 const (
@@ -49,7 +50,7 @@ const (
     // und NearThreshold).
     TypeLongPress
     // Verlaesst oder Betritt der Druckpunkt beim Wandern ein Objekt, dann
-    // werden die Events TypeEnter, resp. TypeLeave gesendet.
+    // werden die Events TypeLeave, resp. TypeEnter gesendet.
     TypeEnter
     TypeLeave
     // Ein Tap, bzw. DoubleTap entspricht dem Klicken resp. Doppelklicken mit
@@ -60,24 +61,24 @@ const (
     numEvents
 
     // TapDuration ist die Zeit, welche max. zwischen Press und Release
-    // vergehen darf, damit dieses Ereignis als Tap interpretiert werden kann.
+    // vergehen darf, damit dieses Ereignis als Tap interpretiert wird.
     TapDuration          = 200 * time.Millisecond
     // Analog dazu ist DoubleTapDuration die max. Dauer welche zwischen zwei
     // Tap-Ereignissen vergehen darf, damit sie zusammen als DoubleTap inter-
     // pretiert werden.
     DoubleTapDuration    = 200 * time.Millisecond
-    // Haelt der Benutzer fuer mehr als LongPressThreshold den Fingern auf dem
-    // Touchscreen, wird ein LongPress-Event erzeugt.
+    // Drueckt der Benutzer fuer mehr als LongPressThreshold auf ein Objekt,
+    // wird ein LongPress-Event erzeugt.
     LongPressThreshold   = 400 * time.Millisecond
     // Fuer die Ereignisse Tap, DoubleTap und auch LongPress darf sich der
     // Finger auf dem TouchScreen nicht zu stark bewegen. Der maximale Abstand
     // zwischen dem Press-Event und der aktuellen Position darf nicht mehr
     // NearThreshold betragen.
     NearThreshold        = 8.0
-    // (Die Verwendung der folgeenden Konstante ist unklar/unbekannt/vergessen)
-    //DragRadThreshold     = 3.0
 )
 
+// Damit beim Debuggen klar ist, um welchen Event-Typ es sich handelt,
+// implementiert Type das Stringer-Interface.
 func (t Type) String() (string) {
     switch t {
     case TypePress:
@@ -103,8 +104,6 @@ func (t Type) String() (string) {
 
 // In diesem Datentyp ist alles zusammengefasst, was an Touch-Events an die
 // applikatorischen Elemente gesendet werden kann.
-// (to think about): Ev. sollte das Ziel des Events auch in dieser Struktur
-// abgelegt werden..
 type Event struct {
     // Der Typ des Events (moegliche Typen: die die Konstanten TypeXXX).
     Type Type
@@ -125,7 +124,7 @@ type Event struct {
     Pos  geom.Point
 }
 
-// Fuer Debugging implementiert dieser Datentyp das Stringer-Interface.
+// Fuer das Debugging implementiert Event das Stringer-Interface.
 func (evt Event) String() (string) {
     return fmt.Sprintf("%v %d %v %s %v %s %v", evt.Type, evt.SeqNumber,
             evt.LongPressed, evt.InitTime.Format("15:04:05.000000"),
@@ -140,15 +139,17 @@ type TouchFunction func(evt Event)
 // muesssen diesen Datentyp einbetten. Damit werden auch alle unten
 // aufgefuehrten Methoden geerbt und es koennen Handler fuer die diversen
 // Touchscreen-Ereignisse hinterlegt werden. Im Array touchFuncList kann
-// fuer jedes Ereginis eine (1) Funktion hinterlegt werden.
+// fuer jedes Ereginis max. eine Funktion hinterlegt werden.
 type TouchEmbed struct {
     touchFuncList [numEvents]TouchFunction
 }
 
-// Diese Methode wird durch AdaGui selber aufgerufen - auf diese Weise
-// gelangen die Ereignisse zu den GUI-Elementen. Praktisch in allen Faellen
-// wird diese Methode jedoch ueberschrieben/erweitert, da sich ein GUI-Element
-// bei entsprechenden Ereignissen visuell veraendert.
+// Diese Methode wird durch AdaGui aufgerufen, um ein Touch-Ereignis an
+// ein GUI-Element zu senden. Es gibt eine Default-Implementation, welche das
+// Event via CallTouchFunc an registrierte Event-Handler sendet.
+// Es ist jedoch ueblich, dass ein GUI-Element diese Methode ueberschreibt
+// um bspw. visuelle Anpassungen zu machen und dann selber CallTouchFunc
+// aufruft.
 func (m *TouchEmbed) OnInputEvent(evt Event) {
     m.CallTouchFunc(evt)
 }
@@ -164,43 +165,48 @@ func (m *TouchEmbed) CallTouchFunc(evt Event) {
     }
 }
 
-// Mit SetTouchFunc wird die Funktion fnc mit dem Touch-Event typ verbunden,
-// d.h. bei jedem Auftreten eines Ereignisses vom Typ typ wird fnc aufgerufen.
-// Mit SetTouchFunc koennen Handler fuer alle Touch-Events hinterlegt werden...
+// Mit SetTouchFunc wird die Funktion fnc als Handler fuer den Event typ
+// registriert. Eine bereits registrierte Funktion wird damit ueberschrieben.
 func (m *TouchEmbed) SetTouchFunc(typ Type, fnc TouchFunction) {
     m.touchFuncList[typ] = fnc
 }
 
-// ... waehrend sich die restlichen SetOnXXX-Methoden auf einen bestimmten
-// Event-Typ beziehen und im Wesentlichen syntaktische Hilfen sind.
+// Registriert fnc als Handler fuer den Press-Event.
 func (m *TouchEmbed) SetOnPress(fnc TouchFunction) {
     m.SetTouchFunc(TypePress, fnc)
 }
 
+// Registriert fnc als Handler fuer den Release-Event.
 func (m *TouchEmbed) SetOnRelease(fnc TouchFunction) {
     m.SetTouchFunc(TypeRelease, fnc)
 }
 
+// Registriert fnc als Handler fuer den Drag-Event.
 func (m *TouchEmbed) SetOnDrag(fnc TouchFunction) {
     m.SetTouchFunc(TypeDrag, fnc)
 }
 
+// Registriert fnc als Handler fuer den LongPress-Event.
 func (m *TouchEmbed) SetOnLongPress(fnc TouchFunction) {
     m.SetTouchFunc(TypeLongPress, fnc)
 }
 
+// Registriert fnc als Handler fuer den Enter-Event.
 func (m *TouchEmbed) SetOnEnter(fnc TouchFunction) {
     m.SetTouchFunc(TypeEnter, fnc)
 }
 
+// Registriert fnc als Handler fuer den Leave-Event.
 func (m *TouchEmbed) SetOnLeave(fnc TouchFunction) {
     m.SetTouchFunc(TypeLeave, fnc)
 }
 
+// Registriert fnc als Handler fuer den Tap-Event.
 func (m *TouchEmbed) SetOnTap(fnc TouchFunction) {
     m.SetTouchFunc(TypeTap, fnc)
 }
 
+// Registriert fnc als Handler fuer den DoubleTap-Event.
 func (m *TouchEmbed) SetOnDoubleTap(fnc TouchFunction) {
     m.SetTouchFunc(TypeDoubleTap, fnc)
 }
