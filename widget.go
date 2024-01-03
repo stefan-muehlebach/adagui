@@ -730,14 +730,15 @@ func (p *TabPanel) Paint(gc *gg.Context) {
 var (
     TabButtonProps = newProps(ButtonProps,
         map[ColorPropertyName]color.Color{
-            Color:         DefProps.Color(Color).Alpha(0.4),
-            BorderColor:   DefProps.Color(BorderColor).Alpha(0.4),
-            TextColor:     DefProps.Color(TextColor).Alpha(0.4),
+            Color:             DefProps.Color(Color).Alpha(0.4),
+            BorderColor:       DefProps.Color(BorderColor).Alpha(0.4),
+            TextColor:         DefProps.Color(TextColor).Alpha(0.4),
+            SelectedTextColor: colornames.Black,
         },
         nil,
         map[SizePropertyName]float64{
-            Width:        32.0,
-            Height:       20.0,
+            Width:        30.0,
+            Height:       18.0,
             CornerRadius:  8.0,
             FontSize:     12.0,
         })
