@@ -6,8 +6,9 @@ import (
     "github.com/stefan-muehlebach/gg/geom"
 )
 
-//----------------------------------------------------------------------------
-
+// Mit dem NullLayout werden die verwalteten Nodes per SetPos platziert und
+// werden durch den Container nicht mehr weiter verwaltet. MinSize liefert
+// die maximale Grösse aller verwalteten Nodes.
 type NullLayout struct { }
 
 func (l *NullLayout) Layout(childList *list.List, size geom.Point) { }
@@ -22,8 +23,66 @@ func (l *NullLayout) MinSize(childList *list.List) (geom.Point) {
     return minSize
 }
 
-//----------------------------------------------------------------------------
+// Mit PaddedLayout kann sinnvollerweise nur ein Node verwaltet werden, der
+// mit einem konfigurierbaren Abstand auf die ganze Grösse des Containers
+// expandiert wird.
+type PaddedLayout struct {
+    pad [4]float64
+}
 
+// Mit den variablen Parametern pads können die Ränder definiert werden.
+// Dabei gilt:
+//   -       : verwende das Property 'InnerPadding'
+//   a       : verwende a für alle Ränder
+//   a,b     : verwende a für die horizontalen und b für die vertikalen
+//             Ränder
+//   a,b,c   : verwende a für links, b für oben und unten c für rechts
+//   a,b,c,d : (dito) und d für den unteren Rand.
+func NewPaddedLayout(pads... float64) *PaddedLayout {
+    var l, t, r, b float64
+    switch len(pads) {
+    case 0:
+        p := DefProps.Size(InnerPadding)
+        l, t, r, b = p, p, p, p
+    case 1:
+        l, t, r, b = pads[0], pads[0], pads[0], pads[0]
+    case 2:
+        l, t, r, b = pads[0], pads[1], pads[0], pads[1]
+    case 3:
+        l, t, r, b = pads[0], pads[1], pads[2], pads[1]
+    case 4:
+        l, t, r, b = pads[0], pads[1], pads[2], pads[3]
+    }
+    return &PaddedLayout{[4]float64{l, t, r, b}}
+}
+
+func (l *PaddedLayout) Layout(childList *list.List, size geom.Point) {
+    pos := geom.Point{l.pad[Left], l.pad[Top]}
+    siz := geom.Point{size.X-(l.pad[Left]+l.pad[Right]),
+            size.Y-(l.pad[Top]+l.pad[Bottom])}
+    for elem := childList.Front(); elem != nil; elem = elem.Next() {
+        child := elem.Value.(*Embed).Wrapper
+        child.SetSize(siz)
+        child.SetPos(pos)
+    }
+}
+
+func (l *PaddedLayout) MinSize(childList *list.List) (geom.Point) {
+    minSize := geom.Point{}
+    for elem := childList.Front(); elem != nil; elem = elem.Next() {
+        child := elem.Value.(*Embed).Wrapper
+        if !child.Visible() {
+            continue
+        }
+        minSize = minSize.Max(child.MinSize())
+    }
+    return minSize.Add(geom.Point{l.pad[Left]+l.pad[Right],
+        l.pad[Top]+l.pad[Bottom]})
+}
+
+// Wie beim PaddedLayout wird man mit Stack- oder Max-Layout sinnvollerweise
+// auch nur ein einziges Child verwalten können. Dieses wird auf die ganze
+// Grösse des Containers ausgedehnt - einfach ohne Ränder.
 type StackLayout struct { }
 
 func NewStackLayout() LayoutManager {
@@ -45,7 +104,6 @@ func (l *StackLayout) Layout(childList *list.List, size geom.Point) {
 }
 
 func (l *StackLayout) MinSize(childList *list.List) (geom.Point) {
-    //log.Printf("StackLayout.MinSize()")
     minSize := geom.Point{0.0, 0.0}
     for elem := childList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed).Wrapper
@@ -57,8 +115,8 @@ func (l *StackLayout) MinSize(childList *list.List) (geom.Point) {
     return minSize
 }
 
-//----------------------------------------------------------------------------
-
+// CenterLayout zentiert alle Kinder, verändert ihre Grössen jedoch nicht.
+// Auch hier gilt das gleiche wie oben: nur für ein Kind zu verwenden.
 type CenterLayout struct { }
 
 func NewCenterLayout() LayoutManager {
@@ -88,8 +146,8 @@ func (l *CenterLayout) MinSize(childList *list.List) (geom.Point) {
     return minSize
 }
 
-//----------------------------------------------------------------------------
-
+// GridLayout ordnet die Kinder in Spalten oder Zeilen an - je nachdem ob
+// NewColumn... oder NewRow... aufgerufen wird.
 type GridLayout struct {
     Cols   int
     orient Orientation
@@ -190,19 +248,24 @@ func (l *GridLayout) MinSize(childList *list.List) (geom.Point) {
         minSize = minSize.Max(child.MinSize())
     }
 
+    pad := DefProps.Size(InnerPadding)
     if l.horizontal() {
-        minContentSize := geom.Point{minSize.X*float64(l.Cols), minSize.Y*float64(rows)}
-        return minContentSize.Add(geom.Point{DefProps.Size(InnerPadding)*math.Max(float64(l.Cols-1), 0.0),
-                DefProps.Size(InnerPadding)*math.Max(float64(rows-1), 0.0)})
+        minContentSize := geom.Point{minSize.X*float64(l.Cols),
+                minSize.Y*float64(rows)}
+        return minContentSize.Add(geom.Point{pad*math.Max(float64(l.Cols-1), 0),
+                pad*math.Max(float64(rows-1), 0.0)})
     }
 
-    minContentSize := geom.Point{minSize.X*float64(rows), minSize.Y*float64(l.Cols)}
-    return minContentSize.Add(geom.Point{DefProps.Size(InnerPadding)*math.Max(float64(rows-1), 0.0),
-            DefProps.Size(InnerPadding)*math.Max(float64(l.Cols-1), 0.0)})
+    minContentSize := geom.Point{minSize.X*float64(rows),
+            minSize.Y*float64(l.Cols)}
+    return minContentSize.Add(geom.Point{pad*math.Max(float64(rows-1), 0.0),
+            pad*math.Max(float64(l.Cols-1), 0.0)})
 }
 
-//----------------------------------------------------------------------------
-
+// Das BorderLayout ist ein rechtes Monster. Damit können Fenster mit
+// Titel- oder Menuzeile, rechter und linker Randspalte sowie Fusszeile
+// verwaltet werden. Die einzelnen Zeilen können auch leer gelassen werden
+// (verwende nil).
 type BorderLayout struct {
     top, bottom, left, right Node
     padding float64
@@ -289,8 +352,12 @@ func (l *BorderLayout) MinSize(childList *list.List) (geom.Point) {
     return minSize
 }
 
-//----------------------------------------------------------------------------
-
+// Die BoxLayouts gibt es in zwei Varianten: horizontal oder vertikal.
+// Alle verwalteten Kinder werden neben oder untereinander angeordnet und
+// auf die gleiche Höhe, resp. gleiche Breite getrimmt. Bei diesem Layout
+// kommen auch die Spacer-Widgets zum Einsatz: sie dehnen sich auf die
+// maximale Breite, resp. Höhe aus, haben aber sonst keinen Inhalt oder
+// Einfluss.
 type BoxLayout struct {
     orient Orientation
     padding float64
@@ -346,9 +413,11 @@ func (l *BoxLayout) Layout(childList *list.List, size geom.Point) {
     extra, extraCell := 0.0, 0.0
     switch l.orient {
     case Horizontal:
-        extra = size.X - total - l.padding * float64(childList.Len() - spacers - 1)
+        extra = size.X - total - l.padding * float64(childList.Len() -
+                spacers - 1)
     case Vertical:
-        extra = size.Y - total - l.padding * float64(childList.Len() - spacers - 1)
+        extra = size.Y - total - l.padding * float64(childList.Len() -
+                spacers - 1)
     }
     if spacers > 0 {
         extraCell = extra / float64(spacers)
@@ -411,39 +480,26 @@ func (l *BoxLayout) MinSize(childList *list.List) (geom.Point) {
     return minSize
 }
 
-//----------------------------------------------------------------------------
-
-type PaddedLayout struct {
-    padding float64
+// Nimmt den verfügbaren Platz (vertikal oder horizontal) in Box-Layouts
+// ein. Ist zwar ein Widget, passt aber irgendwie besser zum Layout-Zeugs.
+type Spacer struct {
+    LeafEmbed
+    FixHorizontal, FixVertical bool
 }
 
-func NewPaddedLayout(pads... float64) *PaddedLayout {
-    pad := DefProps.Size(InnerPadding)
-    if len(pads) > 0 {
-        pad = pads[0]
-    }
-    return &PaddedLayout{pad}
+func NewSpacer() (*Spacer) {
+    s := &Spacer{}
+    s.Wrapper = s
+    s.Init(DefProps)
+    return s
 }
 
-func (l *PaddedLayout) Layout(childList *list.List, size geom.Point) {
-    pos := geom.Point{l.padding, l.padding}
-    siz := geom.Point{size.X-2*l.padding, size.Y-2*l.padding}
-    for elem := childList.Front(); elem != nil; elem = elem.Next() {
-        child := elem.Value.(*Embed).Wrapper
-        child.SetSize(siz)
-        child.SetPos(pos)
-    }
+func (s *Spacer) ExpandHorizontal() (bool) {
+    return !s.FixHorizontal
 }
 
-func (l *PaddedLayout) MinSize(childList *list.List) (geom.Point) {
-    minSize := geom.Point{}
-    for elem := childList.Front(); elem != nil; elem = elem.Next() {
-        child := elem.Value.(*Embed).Wrapper
-        if !child.Visible() {
-            continue
-        }
-        minSize = minSize.Max(child.MinSize())
-    }
-    return minSize.Add(geom.Point{2*l.padding, 2*l.padding})
+func (s *Spacer) ExpandVertical() (bool) {
+    return !s.FixVertical
 }
+
 

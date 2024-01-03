@@ -25,14 +25,14 @@ type Node interface {
     // des Widgets. Da jedes Widget seine 'Position' grundsätzlich selber
     // interpretieren kann, ist die Position nur über Methoden veränderbar,
     // resp. abrufbar.
-    SetPos(p geom.Point)
     Pos() (geom.Point)
+    SetPos(p geom.Point)
 
-    SetSize(s geom.Point)
     Size() (geom.Point)
+    SetSize(s geom.Point)
 
-    SetMinSize(s geom.Point)
     MinSize() (geom.Point)
+    SetMinSize(s geom.Point)
 
     // LocalBounds, resp. Bounds liefert das umfassende Rechteck des Nodes
     // in lokalen Koordinaten.
@@ -92,6 +92,7 @@ type Node interface {
 type Container interface {
     Add(n ...Node)
     Del(n Node)
+    DelAll()
 }
 
 // LayoutManager eben...
@@ -103,13 +104,4 @@ type LayoutManager interface {
 type CanvasObject interface {
     Paint(gc *gg.Context)
 }
-
-/*
-type Checkable interface {
-    SetCheck(checked bool)
-    Checked() (bool)
-    SetValue(value interface {})
-    Value() (interface {})
-}
-*/
 

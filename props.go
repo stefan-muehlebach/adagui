@@ -17,23 +17,18 @@ const (
     Color ColorPropertyName = iota
     PressedColor
     SelectedColor
-
     BorderColor
     PressedBorderColor
     SelectedBorderColor
-
     TextColor
     PressedTextColor
     SelectedTextColor
-
     LineColor
     PressedLineColor
     SelectedLineColor
-
     BarColor
     PressedBarColor
-
-    // Out
+    // Old
     RedColor
     OrangeColor
     YellowColor
@@ -44,7 +39,6 @@ const (
     GrayColor
     BlackColor
     WhiteColor
-
     numColorProperties
 )
 
@@ -52,14 +46,12 @@ type FontPropertyName int
 
 const (
     Font FontPropertyName = iota
-
     RegularFont
     BoldFont
     ItalicFont
     BoldItalicFont
     MonoFont
     MonoBoldFont
-
     numFontProperties
 )
 
@@ -69,22 +61,16 @@ const (
     Width SizePropertyName = iota
     Height
     Size
-
-    LineWidth
-
     BorderWidth
     PressedBorderWidth
     SelectedBorderWidth
-
+    LineWidth
     InnerPadding
     Padding
-
     CornerRadius
-
     FontSize
     BarSize
     CtrlSize
-
     numSizeProperties
 )
 
@@ -94,7 +80,8 @@ const (
 // zu verwalten. In einem Properties-Objekt können drei Arten von Eigenschaften
 // verwaltet werden: Farben (Datentyp: color.Color), Schriftarten (Datentyp:
 // *opentype.Font) und Zahlen (Datentyp: float64). Durch die Hierarchie ist
-// es möglich für einzelne Widgets besondere Eigenschaften 
+// es möglich für einzelne Widgets vom Standard abweichende Eigenschaften
+// zu definieren.
 type Properties struct {
     parent   *Properties
     colorMap map[ColorPropertyName]color.Color
@@ -114,6 +101,8 @@ func NewProperties(parent *Properties) (*Properties) {
     return p
 }
 
+// Interne Funktion. Damit werden die Properties für Widget-Kategorien
+// (Buttons, Labels, etc) erzeugt.
 func newProps(parent *Properties, colorMap map[ColorPropertyName]color.Color,
         fontMap map[FontPropertyName]*opentype.Font,
         sizeMap map[SizePropertyName]float64) (*Properties) {
@@ -206,6 +195,9 @@ func (p *Properties) DelSize(name SizePropertyName) {
 
 // ----------------------------------------------------------------------------
 
+// Erstellt ein neues Default-Property Objekt. Die Default Properties muessen
+// fur jedes Property einen Wert bereitstellen. Mit den Tests in props_test.go
+// kann geprüft werden, ob dies erfüllt ist.
 func NewDefaultProps() (*Properties) {
     p := &Properties{}
 
@@ -213,7 +205,6 @@ func NewDefaultProps() (*Properties) {
     c2 := c1.Interpolate(colornames.YellowGreen, 0.9)
     c3 := c1.Interpolate(colornames.YellowGreen, 0.7)
 
-    p.parent = nil
     p.colorMap = map[ColorPropertyName]color.Color{
         Color:               c1,
         PressedColor:        c2,
@@ -262,19 +253,15 @@ func NewDefaultProps() (*Properties) {
         Height:              0.0,
         Size:                0.0,
 
-        LineWidth:           2.0,
-
         BorderWidth:         0.0,
         PressedBorderWidth:  0.0,
         SelectedBorderWidth: 0.0,
 
+        LineWidth:           2.0,
         InnerPadding:        5.0,
         Padding:            15.0,
-
         CornerRadius:        6.0,
-
         FontSize:           15.0,
-
         BarSize:            18.0,
         CtrlSize:           18.0,
     }

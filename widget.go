@@ -194,33 +194,11 @@ func NewSeparator(orient Orientation) (*Separator) {
 }
 
 func (s *Separator) Paint(gc *gg.Context) {
-    gc.SetStrokeColor(s.Prop.Color(Color))
+    gc.SetStrokeColor(s.Prop.Color(BarColor))
     gc.SetStrokeWidth(s.Prop.Size(LineWidth))
     gc.MoveTo(s.Bounds().W().AsCoord())
     gc.LineTo(s.Bounds().E().AsCoord())
     gc.Stroke()
-}
-
-// Nimmt den verfuegbaren Platz (vertikal oder horizontal) in Box-Layouts
-// ein.
-type Spacer struct {
-    LeafEmbed
-    FixHorizontal, FixVertical bool
-}
-
-func NewSpacer() (*Spacer) {
-    s := &Spacer{}
-    s.Wrapper = s
-    s.Init(DefProps)
-    return s
-}
-
-func (s *Spacer) ExpandHorizontal() (bool) {
-    return !s.FixHorizontal
-}
-
-func (s *Spacer) ExpandVertical() (bool) {
-    return !s.FixVertical
 }
 
 type AlignType int
@@ -865,7 +843,7 @@ func (b *TabButton) DataChanged(data binding.DataItem) {
     }
 }
 
-// Checkboxen verhalten sich sehr aehnlich zu RadioButtons, sind jeoch eigen-
+// Checkboxen verhalten sich sehr aehnlich zu RadioButtons, sind jedoch eigen-
 // staendig und nicht Teil einer Gruppe.
 var (
     CheckboxProps = newProps(ButtonProps, nil,

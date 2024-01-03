@@ -13,6 +13,7 @@ var (
     objProps *Properties
     c1, c2, c3 color.Color
     f *opentype.Font
+    s1 float64
     colorPropName = Color
 )
 
@@ -104,21 +105,46 @@ func TestGetFont(t *testing.T) {
     t.Logf("Def.BoldFont: %T", f)
 }
 
-func BenchmarkGetColorDef(b *testing.B) {
+// Direkter Zugriff auf Default-Property.
+func BenchmarkGetDefColor(b *testing.B) {
     for i:=0; i<b.N; i++ {
         c1 = defProps.Color(BorderColor)
     }
 }
 
-func BenchmarkGetColorTyp2(b *testing.B) {
+// Indirekter Zugriff via Type-Property.
+func BenchmarkGetTypeColor(b *testing.B) {
     for i:=0; i<b.N; i++ {
         c1 = typeProps.Color(BorderColor)
     }
 }
 
-func BenchmarkGetColorObj(b *testing.B) {
+// Doppelt indirekter Zugriff via Object-Property.
+func BenchmarkGetObjColor(b *testing.B) {
     for i:=0; i<b.N; i++ {
         c1 = objProps.Color(BorderColor)
     }
 }
+
+// Direkter Zugriff auf Default-Property.
+func BenchmarkGetDefSize(b *testing.B) {
+    for i:=0; i<b.N; i++ {
+        s1 = defProps.Size(BorderWidth)
+    }
+}
+
+// Indirekter Zugriff via Type-Property.
+func BenchmarkGetTypeSize(b *testing.B) {
+    for i:=0; i<b.N; i++ {
+        s1 = typeProps.Size(BorderWidth)
+    }
+}
+
+// Doppelt indirekter Zugriff via Object-Property.
+func BenchmarkGetObjSize(b *testing.B) {
+    for i:=0; i<b.N; i++ {
+        s1 = objProps.Size(BorderWidth)
+    }
+}
+
 

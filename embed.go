@@ -8,8 +8,10 @@ import (
     "github.com/stefan-muehlebach/gg"
 )
 
-//----------------------------------------------------------------------------
-
+// Dieser Typ ist die Basis für alle graphischen Typen von AdaGui. Er kann
+// jedoch nicht direkt verwendet werden, sondern dient als Basis für zwei
+// weitere Embed-Typen (siehe weiter unten), welche für eigene Typen
+// verwendet werden können.
 type Embed struct {
     Win *Window
     Wrapper Node
@@ -100,29 +102,24 @@ func (m *Embed) Remove() {
     p.ChildList.Remove(e)
 }
 
+func (m *Embed) Pos() (geom.Point) {
+    return m.pos
+}
 func (m *Embed) SetPos(p geom.Point) {
     m.pos = p
     m.Translate(p)
 }
-
-func (m *Embed) Pos() (geom.Point) {
-    return m.pos
-}
-
-func (m *Embed) SetSize(s geom.Point) {
-    m.size = s
-}
-
 func (m *Embed) Size() (geom.Point) {
     return m.size.Max(m.Wrapper.MinSize())
 }
-
-func (m *Embed) SetMinSize(s geom.Point) {
-    m.minSize = s
+func (m *Embed) SetSize(s geom.Point) {
+    m.size = s
 }
-
 func (m *Embed) MinSize() (geom.Point) {
     return m.minSize
+}
+func (m *Embed) SetMinSize(s geom.Point) {
+    m.minSize = s
 }
 
 func (m *Embed) LocalBounds() (geom.Rectangle) {
@@ -142,7 +139,6 @@ func (m *Embed) Rect() (geom.Rectangle) {
 func (m *Embed) Visible() (bool) {
     return m.visible
 }
-
 func (m *Embed) SetVisible(v bool) {
     m.visible = v
 }
@@ -169,16 +165,11 @@ func (m *Embed) Paint(gc *gg.Context) {
 // Contains ermittelt, ob sich der Punkt pt innerhalb des Widgets befindet.
 // Die Koordianten in pt muessen relativ zum Bezugssystem von m sein.
 func (m *Embed) Contains(pt geom.Point) (bool) {
-    //stackLevel.Inc()
-    //defer stackLevel.Dec()
-
-    //log.Printf("<Embed.Contains> %T, %v", m.Wrapper, pt)
     pt = m.Parent2Local(pt)
-    //log.Printf("> transformed point: %v", pt)
     return pt.In(m.Wrapper.Bounds())
 }
 
-// Umrechnungsmethoden fuer Koordinaten.
+// Rechnet die lokalen Koordianten pt in Bildschirmkoordinaten um.
 func (m *Embed) Local2Screen(pt geom.Point) (geom.Point) {
     pt = m.Matrix().Transform(pt)
     if m.Parent == nil {
@@ -187,6 +178,7 @@ func (m *Embed) Local2Screen(pt geom.Point) (geom.Point) {
     return m.Parent.Local2Screen(pt)
 }
 
+// Rechnet die Bildschirmkoordinaten pt in lokale Koordianten um.
 func (m *Embed) Screen2Local(pt geom.Point) (geom.Point) {
     if m.Parent != nil {
         pt = m.Parent.Screen2Local(pt)
@@ -194,6 +186,7 @@ func (m *Embed) Screen2Local(pt geom.Point) (geom.Point) {
     return m.Matrix().Inv().Transform(pt)
 }
 
+// Rechnet die Koordinaten in pt relativ zum Parent-Node um.
 func (m *Embed) Local2Parent(pt geom.Point) (geom.Point) {
     if m.Parent == nil {
         return pt
@@ -201,6 +194,8 @@ func (m *Embed) Local2Parent(pt geom.Point) (geom.Point) {
     return m.Matrix().Transform(pt)
 }
 
+// Rechnet die Koordinaten in pt vom relativen Bezugsystem des Parent-Nodes
+// zu lokalen Koordinaten um.
 func (m *Embed) Parent2Local(pt geom.Point) (geom.Point) {
     if m.Parent == nil {
         return pt
@@ -208,30 +203,39 @@ func (m *Embed) Parent2Local(pt geom.Point) (geom.Point) {
     return m.Matrix().Inv().Transform(pt)
 }
 
-// Koordinatentransformationen des aktuellen Nodes.
+// Ersetzt die aktuelle Translation des Nodes durch eine Translation um dp.
 func (m *Embed) Translate(dp geom.Point) {
     m.transl = geom.Translate(dp)
     m.Mark(MarkNeedsRecalc)
 }
 
+// Ersetzt die aktuelle Rotation des Nodes durch eine Rotation um a um den
+// Mittelpunkt des Nodes.
 func (m *Embed) Rotate(a float64) {
     m.RotateAbout(m.Size().Mul(0.5), a)
 }
 
+// Ersetzt die aktuelle Rotation des Nodes durch eine Rotation um a um den
+// angegebenen Drehpunkt.
 func (m *Embed) RotateAbout(rp geom.Point, a float64) {
     m.rotate = geom.RotateAbout(rp, a)
     m.Mark(MarkNeedsRecalc)
 }
 
+// Ersetzt die aktuelle Skalierung des Nodes durch eine Skalierung um
+// sx, sy. Zentrum der Skalierung ist der Mittelpunkt des Nodes.
 func (m *Embed) Scale(sx, sy float64) {
     m.ScaleAbout(m.Size().Mul(0.5), sx, sy)
 }
 
+// Ersetzt die aktuelle Skalierung des Nodes durch eine Skalierung um
+// sx, sy mit sp als Zentrum der Skalierung.
 func (m *Embed) ScaleAbout(sp geom.Point, sx, sy float64) {
     m.scale = geom.ScaleAbout(sp, sx, sy)
     m.Mark(MarkNeedsRecalc)
 }
 
+// Liefert die aktuelle Transformationsmatrix des Nodes.
 func (m *Embed) Matrix() (geom.Matrix) {
     if m.Marks.NeedsRecalc() {
         m.Marks.UnmarkNeedsRecalc()
@@ -240,8 +244,8 @@ func (m *Embed) Matrix() (geom.Matrix) {
     return m.transf
 }
 
-//----------------------------------------------------------------------------
-
+// Jeder GUI-Typ, der selber keine weiteren Kinder verwaltet, muss diesen
+// Typ einbetten.
 type LeafEmbed struct {
     Embed
     touch.TouchEmbed
@@ -298,8 +302,12 @@ func (m *LeafEmbed) Parent2Local(pt geom.Point) (geom.Point) {
     return m.Parent.Parent2Local(pt)
 }
 
-//----------------------------------------------------------------------------
-
+// Alle GUI-Typen, welche weitere Nodes verwalten können (Fenster, Panels,
+// etc.) müssen dagegen diesen Typ einbetten. Damit kann über die ChildList
+// die angehängten Nodes verwaltet werden. Ebenso kann ein LayoutManager
+// verwendet werden, der für die Platzierung der Nodes zuständig ist.
+// Per Default wird das NullLayout verwendet, d.h. die Kinder müssen per
+// SetPos platziert werden und bleiben an dieser Stelle.
 type ContainerEmbed struct {
     Embed
     touch.TouchEmbed
