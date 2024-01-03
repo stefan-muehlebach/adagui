@@ -124,16 +124,16 @@ func (l *GridLayout) countRows(childList *list.List) (int) {
 }
 
 func getLeading(size float64, offset int) (float64) {
-    return (size + float64(pr.Size(PaddingSize))) * float64(offset)
+    return (size + float64(DefProps.Size(InnerPadding))) * float64(offset)
 }
 
 func getTrailing(size float64, offset int) (float64) {
-    return getLeading(size, offset+1) - pr.Size(PaddingSize)
+    return getLeading(size, offset+1) - DefProps.Size(InnerPadding)
 }
 
 func (l *GridLayout) Layout(childList *list.List, size geom.Point) {
     rows := l.countRows(childList)
-    padding    := pr.Size(PaddingSize)
+    padding    := DefProps.Size(InnerPadding)
     padWidth   := float64(l.Cols-1) * padding
     padHeight  := float64(rows-1) * padding
     cellWidth  := float64(size.X-padWidth) / float64(l.Cols)
@@ -192,13 +192,13 @@ func (l *GridLayout) MinSize(childList *list.List) (geom.Point) {
 
     if l.horizontal() {
         minContentSize := geom.Point{minSize.X*float64(l.Cols), minSize.Y*float64(rows)}
-        return minContentSize.Add(geom.Point{pr.Size(PaddingSize)*math.Max(float64(l.Cols-1), 0.0),
-                pr.Size(PaddingSize)*math.Max(float64(rows-1), 0.0)})
+        return minContentSize.Add(geom.Point{DefProps.Size(InnerPadding)*math.Max(float64(l.Cols-1), 0.0),
+                DefProps.Size(InnerPadding)*math.Max(float64(rows-1), 0.0)})
     }
 
     minContentSize := geom.Point{minSize.X*float64(rows), minSize.Y*float64(l.Cols)}
-    return minContentSize.Add(geom.Point{pr.Size(PaddingSize)*math.Max(float64(rows-1), 0.0),
-            pr.Size(PaddingSize)*math.Max(float64(l.Cols-1), 0.0)})
+    return minContentSize.Add(geom.Point{DefProps.Size(InnerPadding)*math.Max(float64(rows-1), 0.0),
+            DefProps.Size(InnerPadding)*math.Max(float64(l.Cols-1), 0.0)})
 }
 
 //----------------------------------------------------------------------------
@@ -209,7 +209,7 @@ type BorderLayout struct {
 }
 
 func NewBorderLayout(top, bottom, left, right Node) LayoutManager {
-    l := &BorderLayout{top, bottom, left, right, pr.Size(PaddingSize)}
+    l := &BorderLayout{top, bottom, left, right, DefProps.Size(InnerPadding)}
     return l
 }
 
@@ -297,7 +297,7 @@ type BoxLayout struct {
 }
 
 func NewHBoxLayout(pads... float64) *BoxLayout {
-    pad := pr.Size(PaddingSize)
+    pad := DefProps.Size(InnerPadding)
     if len(pads) > 0 {
         pad = pads[0]
     }
@@ -305,7 +305,7 @@ func NewHBoxLayout(pads... float64) *BoxLayout {
 }
 
 func NewVBoxLayout(pads... float64) *BoxLayout {
-    pad := pr.Size(PaddingSize)
+    pad := DefProps.Size(InnerPadding)
     if len(pads) > 0 {
         pad = pads[0]
     }
@@ -418,7 +418,7 @@ type PaddedLayout struct {
 }
 
 func NewPaddedLayout(pads... float64) *PaddedLayout {
-    pad := pr.Size(PaddingSize)
+    pad := DefProps.Size(InnerPadding)
     if len(pads) > 0 {
         pad = pads[0]
     }

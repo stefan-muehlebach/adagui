@@ -1,7 +1,6 @@
 package adagui
 
 import (
-    "image/color"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/geom"
@@ -18,8 +17,8 @@ var (
     flapRectRad          =  6.0
     flapFillColor        = colornames.Gray.Alpha(0.5)
     flapPushedFillColor  = colornames.Gray.Alpha(0.5)
-    flapArrowColor       = pr.Color(Color)
-    flapPushedArrowColor = pr.Color(PressedColor)
+    flapArrowColor       = DefProps.Color(LineColor)
+    flapPushedArrowColor = DefProps.Color(PressedColor)
     flapArrowWidth       =  8.0
     flapSize = []geom.Point{
 	    geom.Point{flapWidth, flapHeight},
@@ -83,7 +82,7 @@ type PageButton struct {
 func NewPageButton(border Border) (*PageButton) {
     b := &PageButton{}
     b.Wrapper = b
-    b.Init(nil)
+    b.Init(DefProps)
     b.SetMinSize(geom.Point{flapWidth, flapHeight})
     b.border = border
     b.pushed = false
@@ -181,7 +180,6 @@ var (
 type Drawer struct {
     ContainerEmbed
     pos Border
-    FillColor, ActiveColor color.Color
     pushed bool
     handle geom.Rectangle
     isOpen bool
@@ -191,10 +189,8 @@ type Drawer struct {
 func NewDrawer(pos Border) (*Drawer) {
     d := &Drawer{}
     d.Wrapper = d
-    d.Init(nil)
+    d.Init(DefProps)
     d.pos = pos
-    d.FillColor = pr.Color(Color)
-    d.ActiveColor = pr.Color(ActiveColor)
     d.pushed = false
     d.isOpen = false
     d.SetSize(flapSize[d.pos])
@@ -230,9 +226,9 @@ func (d *Drawer) Paint(gc *gg.Context) {
             d.ExtRect.Dx(), d.ExtRect.Dy(), flapRectRad)
     //log.Printf("Drawer.Paint():")
     if d.pushed {
-        gc.SetFillColor(d.ActiveColor)
+        gc.SetFillColor(d.Prop.Color(PressedColor))
     } else {
-        gc.SetFillColor(d.FillColor)
+        gc.SetFillColor(d.Prop.Color(Color))
     }
     gc.Fill()
 

@@ -9,35 +9,94 @@ import (
 
 var (
     defProps *Properties
-    typProps *Properties
+    typeProps *Properties
     objProps *Properties
-    c color.Color
+    c1, c2, c3 color.Color
     f *opentype.Font
+    colorPropName = Color
 )
 
 func init() {
     defProps = NewDefaultProps()
-    typProps = NewButtonProps(defProps)
-    objProps = NewProperties(typProps)
+    typeProps = NewProperties(defProps)
+    objProps = NewProperties(typeProps)
 }
 
-func TestGetColor(t *testing.T) {
-    c = defProps.Color(Color)
-    t.Logf("Def.Color: %v", c)
-    c = typProps.Color(Color)
-    t.Logf("Typ.Color: %v", c)
-    c = objProps.Color(Color)
-    t.Logf("Obj.Color: %v", c)
+// Prüft, ob in den Default-Properties zu allen Property-Namen ein Eintrag
+// vorhanden ist.
+func TestDefaultProperties(t *testing.T) {
+    for name:=ColorPropertyName(0); name < numColorProperties; name++ {
+        _, ok := defProps.colorMap[name]
+        if !ok {
+            t.Errorf("Color property '%+v' not in defaults", name)
+        }
+    }
 
-    typProps.SetColor(Color, colornames.FireBrick)
-    objProps.SetColor(Color, colornames.Yellow)
+    for name:=FontPropertyName(0); name < numFontProperties; name++ {
+        _, ok := defProps.fontMap[name]
+        if !ok {
+            t.Errorf("Font property '%+v' not in defaults", name)
+        }
+    }
 
-    c = defProps.Color(Color)
-    t.Logf("Def.Color: %v", c)
-    c = typProps.Color(Color)
-    t.Logf("Typ.Color: %v", c)
-    c = objProps.Color(Color)
-    t.Logf("Obj.Color: %v", c)
+    for name:=SizePropertyName(0); name < numSizeProperties; name++ {
+        _, ok := defProps.sizeMap[name]
+        if !ok {
+            t.Errorf("Size property '%+v' not in defaults", name)
+        }
+    }
+}
+
+// Prüft, ob die hierarchische Vererbung über drei Stufen (Default, Type,
+// Object) funktioniert, übersteuert und wieder gelöscht werden kann.
+func TestColorHierarchy(t *testing.T) {
+    c1 = defProps.Color(colorPropName)
+    c2 = typeProps.Color(colorPropName)
+    c3 = objProps.Color(colorPropName)
+    t.Logf("Default color   : %+v", c1)
+    t.Logf("  Type color    : %+v", c2)
+    t.Logf("    Object color: %+v", c3)
+
+    if c2 != c1 {
+        t.Errorf("Default and type prop differ (got '%v', want '%v'", c2, c1)
+    }
+    if c3 != c1 {
+        t.Errorf("Default and object prop differ (got '%v', want '%v'", c3, c1)
+    }
+
+    typeProps.SetColor(colorPropName, colornames.FireBrick)
+    objProps.SetColor(colorPropName, colornames.Yellow)
+
+    c1 = defProps.Color(colorPropName)
+    c2 = typeProps.Color(colorPropName)
+    c3 = objProps.Color(colorPropName)
+    t.Logf("Default color   : %+v", c1)
+    t.Logf("  Type color    : %+v", c2)
+    t.Logf("    Object color: %+v", c3)
+
+    if c2 == c1 {
+        t.Errorf("Default and type prop are equal (got '%v', want '%v'", c2, c1)
+    }
+    if c3 == c1 {
+        t.Errorf("Default and object prop are equal (got '%v', want '%v'", c3, c1)
+    }
+
+    typeProps.DelColor(colorPropName)
+    objProps.DelColor(colorPropName)
+
+    c1 = defProps.Color(colorPropName)
+    c2 = typeProps.Color(colorPropName)
+    c3 = objProps.Color(colorPropName)
+    t.Logf("Default color   : %+v", c1)
+    t.Logf("  Type color    : %+v", c2)
+    t.Logf("    Object color: %+v", c3)
+
+    if c2 != c1 {
+        t.Errorf("Default and type prop differ (got '%v', want '%v'", c2, c1)
+    }
+    if c3 != c1 {
+        t.Errorf("Default and object prop differ (got '%v', want '%v'", c3, c1)
+    }
 }
 
 func TestGetFont(t *testing.T) {
@@ -47,19 +106,19 @@ func TestGetFont(t *testing.T) {
 
 func BenchmarkGetColorDef(b *testing.B) {
     for i:=0; i<b.N; i++ {
-        c = defProps.Color(BorderColor)
+        c1 = defProps.Color(BorderColor)
     }
 }
 
-func BenchmarkGetColorTyp(b *testing.B) {
+func BenchmarkGetColorTyp2(b *testing.B) {
     for i:=0; i<b.N; i++ {
-        c = typProps.Color(BorderColor)
+        c1 = typeProps.Color(BorderColor)
     }
 }
 
 func BenchmarkGetColorObj(b *testing.B) {
     for i:=0; i<b.N; i++ {
-        c = objProps.Color(BorderColor)
+        c1 = objProps.Color(BorderColor)
     }
 }
 

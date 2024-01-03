@@ -8,38 +8,13 @@ import (
 )
 
 var (
-    DefProp = NewDefaultProps()
-    Pr = DefProp
-    pr = DefProp
-
-    panelProps  = NewPanelProps(DefProp)
-    buttonProps = NewButtonProps(DefProp)
-    checkProps  = NewCheckProps(buttonProps)
-    radioProps  = NewRadioProps(buttonProps)
-    tabProps    = NewTabProps(DefProp)
-    gaugeProps  = NewGaugeProps(DefProp)
+    DefProps = NewDefaultProps()
 )
-
-func init() {
-}
 
 type ColorPropertyName int
 
 const (
-    RedColor ColorPropertyName = iota
-    OrangeColor
-    YellowColor
-    GreenColor
-    BlueColor
-    PurpleColor
-    BrownColor
-    GrayColor
-    BlackColor
-    WhiteColor
-    ActiveColor
-    TranspWhite
-
-    Color
+    Color ColorPropertyName = iota
     PressedColor
     SelectedColor
 
@@ -53,25 +28,22 @@ const (
 
     LineColor
     PressedLineColor
+    SelectedLineColor
 
-    SeparatorColor
+    BarColor
+    PressedBarColor
 
-    StrokeColor
-
-    TextFocusColor
-    TextDimColor
-
-//    ScrollBarColor
-//    ScrollBarFocusColor
-//    ScrollCtrlColor
-//    ScrollCtrlFocusColor
-
-//    SliderBarColor
-//    SliderBarFocusColor
-//    SliderCtrlColor
-//    SliderCtrlFocusColor
-
-    ArrowColor
+    // Out
+    RedColor
+    OrangeColor
+    YellowColor
+    GreenColor
+    BlueColor
+    PurpleColor
+    BrownColor
+    GrayColor
+    BlackColor
+    WhiteColor
 
     numColorProperties
 )
@@ -79,12 +51,15 @@ const (
 type FontPropertyName int
 
 const (
-    RegularFont FontPropertyName = iota
+    Font FontPropertyName = iota
+
+    RegularFont
     BoldFont
     ItalicFont
     BoldItalicFont
     MonoFont
     MonoBoldFont
+
     numFontProperties
 )
 
@@ -107,55 +82,19 @@ const (
     CornerRadius
 
     FontSize
-
-
-
-
-
-    PanelBorderSize
-
-    InnerPaddingSize
-    PaddingSize
-
-    ButtonSize
-    ButtonBorderSize
-    ButtonCornerRad
-
-    TextButtonPaddingSize
-
-    RadioSize
-    RadioBorderSize
-    RadioDotSize
-
-    CheckSize
-    CheckLineSize
-    CheckCornerRad
-
-    IconInlineSize
-
-    TabButtonWidth
-    TabButtonHeight
-    TabButtonBorderSize
-    TabButtonCornerRad
-    TabButtonTextSize
-
-    TextSize
-    TextHeadingSize
-    TextSubHeadingSize
-
-    ScrollSize
-    ScrollBarSize
-    ScrollCtrlSize
-
-    SliderSize
-    SliderBarSize
-    SliderCtrlSize
+    BarSize
+    CtrlSize
 
     numSizeProperties
 )
 
 // ----------------------------------------------------------------------------
 
+// Properties dienen dazu, graphische Eigenschaften von Widgets hierarchisch
+// zu verwalten. In einem Properties-Objekt können drei Arten von Eigenschaften
+// verwaltet werden: Farben (Datentyp: color.Color), Schriftarten (Datentyp:
+// *opentype.Font) und Zahlen (Datentyp: float64). Durch die Hierarchie ist
+// es möglich für einzelne Widgets besondere Eigenschaften 
 type Properties struct {
     parent   *Properties
     colorMap map[ColorPropertyName]color.Color
@@ -163,8 +102,7 @@ type Properties struct {
     sizeMap  map[SizePropertyName]float64
 }
 
-// Erzeugt ein neues Property-Objekt und hinterlegt parent als Vater-Property
-//
+// Erzeugt ein neues Property-Objekt und hinterlegt parent als Vater-Property.
 func NewProperties(parent *Properties) (*Properties) {
     p := &Properties{}
 
@@ -176,10 +114,32 @@ func NewProperties(parent *Properties) (*Properties) {
     return p
 }
 
+func newProps(parent *Properties, colorMap map[ColorPropertyName]color.Color,
+        fontMap map[FontPropertyName]*opentype.Font,
+        sizeMap map[SizePropertyName]float64) (*Properties) {
+    p := &Properties{}
+
+    p.parent   = parent
+
+    if colorMap == nil {
+        colorMap = make(map[ColorPropertyName]color.Color)
+    }
+    p.colorMap = colorMap
+    if fontMap == nil {
+        fontMap = make(map[FontPropertyName]*opentype.Font)
+    }
+    p.fontMap  = fontMap
+    if sizeMap == nil {
+        sizeMap = make(map[SizePropertyName]float64)
+    }
+    p.sizeMap  = sizeMap
+
+    return p
+}
+
 // Das sind die Hauptmethoden, um Farben, Font oder Groessen aus den
 // Properties zu lesen. Kann ein Property nicht gefunden werden, dann
 // wird (falls vorhanden) das Parent-Property angefragt.
-//
 func (p *Properties) Color(name ColorPropertyName) (color.Color) {
     if col, ok := p.colorMap[name]; !ok && p.parent != nil {
         return p.parent.Color(name)
@@ -204,9 +164,8 @@ func (p *Properties) Size(name SizePropertyName) (float64) {
     }
 }
 
-// Ueber diese Methoden koennen einzelne Properties auf Objekt-Ebene
-// veraendert werden.
-//
+// Über diese Methoden können einzelne Eigenschaften auf Typen- oder Objekt-
+// ebene definiert werden.
 func (p *Properties) SetColor(name ColorPropertyName, col color.Color) {
     p.colorMap[name] = col
 }
@@ -219,20 +178,50 @@ func (p *Properties) SetSize(name SizePropertyName, size float64) {
     p.sizeMap[name] = size
 }
 
+// Auf Typen- oder Objekt-Stufe definierte Eigenschaften können mit den
+// Del-Methoden wieder entfernt werden, so dass der Eintrag des Parents wieder
+// aktiviert wird. Existiert die Eigenschaft in den Properties nicht, sind
+// die Methoden no-op. Auf Properties der obersten Hierarchiestufe (d.h. mit
+// parent == nil) haben die Methoden keinen Einfluss.
+func (p *Properties) DelColor(name ColorPropertyName) {
+    if p.parent == nil {
+        return
+    }
+    delete(p.colorMap, name)
+}
+
+func (p *Properties) DelFont(name FontPropertyName) {
+    if p.parent == nil {
+        return
+    }
+    delete(p.fontMap, name)
+}
+
+func (p *Properties) DelSize(name SizePropertyName) {
+    if p.parent == nil {
+        return
+    }
+    delete(p.sizeMap, name)
+}
+
 // ----------------------------------------------------------------------------
 
 func NewDefaultProps() (*Properties) {
     p := &Properties{}
 
+    c1 := colornames.DarkGreen
+    c2 := c1.Interpolate(colornames.YellowGreen, 0.9)
+    c3 := c1.Interpolate(colornames.YellowGreen, 0.7)
+
     p.parent = nil
     p.colorMap = map[ColorPropertyName]color.Color{
-        Color:               colornames.DarkGreen,
-        PressedColor:        colornames.GreenYellow,
-        SelectedColor:       colornames.LimeGreen,
+        Color:               c1,
+        PressedColor:        c2,
+        SelectedColor:       c3,
 
-        BorderColor:         colornames.DarkGreen,
-        PressedBorderColor:  colornames.GreenYellow,
-        SelectedBorderColor: colornames.LimeGreen,
+        BorderColor:         c1,
+        PressedBorderColor:  c2,
+        SelectedBorderColor: c3,
 
         TextColor:           colornames.WhiteSmoke,
         PressedTextColor:    colornames.Black,
@@ -240,31 +229,26 @@ func NewDefaultProps() (*Properties) {
 
         LineColor:           colornames.WhiteSmoke,
         PressedLineColor:    colornames.Black,
+        SelectedLineColor:   colornames.WhiteSmoke,
+
+        BarColor:            colornames.DarkSlateGray.Dark(0.5),
+        PressedBarColor:     colornames.DarkSlateGray.Dark(0.5),
 
         // Out
-        RedColor:    colornames.Red,
-        OrangeColor: colornames.Orange,
-        YellowColor: colornames.Yellow,
-        GreenColor:  colornames.Green,
-        BlueColor:   colornames.Blue,
-        PurpleColor: colornames.Purple,
-        BrownColor:  colornames.Brown,
-        GrayColor:   colornames.Gray,
-        BlackColor:  colornames.Black,
-        WhiteColor:  colornames.WhiteSmoke,
-
-        TranspWhite: colornames.WhiteSmoke.Alpha(0.5),
-
-
-        SeparatorColor:      colornames.Gray,
-
-        ArrowColor:          colornames.WhiteSmoke,
-
-        TextFocusColor:      colornames.White,
-        TextDimColor:        colornames.Silver,
+        RedColor:            colornames.Red,
+        OrangeColor:         colornames.Orange,
+        YellowColor:         colornames.Yellow,
+        GreenColor:          colornames.Green,
+        BlueColor:           colornames.Blue,
+        PurpleColor:         colornames.Purple,
+        BrownColor:          colornames.Brown,
+        GrayColor:           colornames.Gray,
+        BlackColor:          colornames.Black,
+        WhiteColor:          colornames.WhiteSmoke,
     }
 
     p.fontMap = map[FontPropertyName]*opentype.Font{
+        Font:           fonts.GoRegular,
         RegularFont:    fonts.GoRegular,
         BoldFont:       fonts.GoBold,
         ItalicFont:     fonts.GoItalic,
@@ -291,96 +275,8 @@ func NewDefaultProps() (*Properties) {
 
         FontSize:           15.0,
 
-
-
-
-
-
-
-
-        PanelBorderSize: 0.0,
-
-        InnerPaddingSize: 5.0,
-        PaddingSize:      5.0,
-
-        ButtonSize:       32.0,
-        ButtonBorderSize: 0.0,
-        ButtonCornerRad:  6.0,
-
-        TextButtonPaddingSize: 15.0,
-
-        IconInlineSize: 24.0,
-
-        TextSize:           15.0,
-        TextHeadingSize:    15.0,
-        TextSubHeadingSize: 15.0,
-
-        ScrollSize:     18.0,
-        ScrollBarSize:  18.0,
-        ScrollCtrlSize: 18.0,
-
-        SliderSize:     18.0,
-        SliderBarSize:  18.0,
-        SliderCtrlSize: 18.0,
-
-
-
-    }
-    return p
-}
-
-func NewPanelProps(parent *Properties) (*Properties) {
-    p := NewProperties(parent)
-    p.colorMap = map[ColorPropertyName]color.Color{
-        Color:         colornames.Black,
-        BorderColor:         colornames.Black,
-    }
-    return p
-}
-
-func NewButtonProps(parent *Properties) (*Properties) {
-    p := NewProperties(parent)
-    p.sizeMap = map[SizePropertyName]float64{
-        Size:         32.0,
-    }
-    return p
-}
-
-func NewCheckProps(parent *Properties) (*Properties) {
-    p := NewProperties(parent)
-    p.sizeMap = map[SizePropertyName]float64{
-        Size:         18.0,
-        LineWidth:     4.0,
-        CornerRadius:  5.0,
-    }
-    return p
-}
-
-func NewRadioProps(parent *Properties) (*Properties) {
-    p := NewProperties(parent)
-    p.sizeMap = map[SizePropertyName]float64{
-        Size:         18.0,
-        LineWidth:     8.0,
-    }
-    return p
-}
-
-func NewTabProps(parent *Properties) (*Properties) {
-    p := NewProperties(parent)
-    p.sizeMap = map[SizePropertyName]float64{
-        Width:        32.0,
-        Height:       20.0,
-        CornerRadius:  8.0,
-        FontSize:     12.0,
-    }
-    return p
-}
-
-func NewGaugeProps(parent *Properties) (*Properties) {
-    p := NewProperties(parent)
-    p.colorMap = map[ColorPropertyName]color.Color{
-        BorderColor:         colornames.DarkSlateGray.Dark(0.5),
-        PressedBorderColor:  colornames.DarkSlateGray.Dark(0.5),
+        BarSize:            18.0,
+        CtrlSize:           18.0,
     }
     return p
 }

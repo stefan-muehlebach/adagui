@@ -21,16 +21,13 @@ type Embed struct {
     Prop *Properties
 }
 
-func (m *Embed) Init(parentProp *Properties) {
+func (m *Embed) Init(parentProps *Properties) {
     m.transl  = geom.Identity()
     m.rotate  = geom.Identity()
     m.scale   = geom.Identity()
     m.transf  = geom.Identity()
     m.visible = true
-    if parentProp == nil {
-        parentProp = DefProp
-    }
-    m.Prop    = NewProperties(parentProp)
+    m.Prop    = NewProperties(parentProps)
 }
 
 func (m *Embed) Wrappee() (*Embed) {
@@ -310,8 +307,8 @@ type ContainerEmbed struct {
     Layout LayoutManager
 }
 
-func (c *ContainerEmbed) Init(parentProp *Properties) {
-    c.Embed.Init(parentProp)
+func (c *ContainerEmbed) Init(parentProps *Properties) {
+    c.Embed.Init(parentProps)
     c.ChildList = list.New()
     c.Layout = &NullLayout{}
 }
