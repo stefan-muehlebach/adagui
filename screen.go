@@ -12,11 +12,11 @@ import (
 var (
     numScreen int = 0
     screen *Screen
-    rotation adatft.RotationType
+    rotation adatft.RotationType = adatft.Rotate000
 )
 
 func init() {
-    flag.Var(&rotation, "rot", "display rotation")
+    flag.Var(&rotation, "rotation", "display rotation")
 }
 
 // Dies ist die Datenstruktur, welche das TFT-Display aus einer hoeheren

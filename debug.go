@@ -8,23 +8,23 @@ import (
 // Das ist ein Ueberbleibsel einer Debug-Session, als ich ohne klare
 // Darstellung der Stack-Level einfach nicht begriffen haben, wo das Problem
 // liegt. Vielleicht wird daraus mal noch etwas...?
-type LevelType int
+type DebugLevel int
 
-func (l *LevelType) Inc() {
+func (l *DebugLevel) Inc() {
     *l += 3
     log.SetPrefix(":" + l.String())
 }
 
-func (l *LevelType) Dec() {
+func (l *DebugLevel) Dec() {
     *l -= 3
     log.SetPrefix(":" + l.String())
 }
 
-func (l LevelType) String() (string) {
+func (l DebugLevel) String() (string) {
     return fmt.Sprintf("%*s", l, " ")
 }
 
 var (
-    stackLevel LevelType = 0
+    stackLevel DebugLevel = 0
 )
 

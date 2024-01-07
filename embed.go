@@ -264,12 +264,12 @@ func (m *LeafEmbed) SelectTarget(pt geom.Point) (Node) {
     if !m.Visible() {
         return nil
     }
-    //log.Printf("<Leaf.SelectTarget> %T, %v", m.Wrapper, pt)
+    //log.Printf("Leaf.SelectTarget on %T, size %v, %v", m.Wrapper, m.Wrapper.Size(), pt)
     if !m.Wrapper.Contains(pt) {
-        //log.Printf("> point is outside my rect %v", m.Bounds())
+        //log.Printf("   > point is outside my rect %v", m.Bounds())
         return nil
     }
-    //log.Printf("> target found: %T!", m.Wrapper)
+    //log.Printf("   > target found: %T!", m.Wrapper)
     return m.Wrapper
 }
 
@@ -316,12 +316,20 @@ type ContainerEmbed struct {
 }
 
 func (c *ContainerEmbed) Init(parentProps *Properties) {
+    //stackLevel.Inc()
+    //defer stackLevel.Dec()
+    //log.Printf("ContainerEmbed.Init()")
+
     c.Embed.Init(parentProps)
     c.ChildList = list.New()
     c.Layout = &NullLayout{}
 }
 
 func (c *ContainerEmbed) Add(n ...Node) {
+    //stackLevel.Inc()
+    //defer stackLevel.Dec()
+    //log.Printf("ContainerEmbed.Add()")
+
     for _, node := range n {
         embed := node.Wrappee()
         if embed.Parent != nil {
@@ -360,21 +368,35 @@ func (c *ContainerEmbed) DelAll() {
 }
 
 func (c *ContainerEmbed) SetSize(s geom.Point) {
-    //log.Printf("ContainerEmbed.SetSize()")
+    //stackLevel.Inc()
+    //defer stackLevel.Dec()
+    //log.Printf("ContainerEmbed.SetSize(%v)", s)
+
     c.Embed.SetSize(s)
     c.layout()
 }
 
 func (c *ContainerEmbed) MinSize() (geom.Point) {
+    //stackLevel.Inc()
+    //defer stackLevel.Dec()
     //log.Printf("ContainerEmbed.MinSize()")
+
+    ms := geom.Point{}
     if c.minSize.Eq(geom.Point{0, 0}) {
-        return c.Layout.MinSize(c.ChildList)
+        //log.Printf("  minSize is zero: calling Layout.MinSize")
+        ms = c.Layout.MinSize(c.ChildList)
     } else {
-        return c.Embed.MinSize()
+        ms =  c.Embed.MinSize()
     }
+    //log.Printf("  > %v", ms)
+    return ms
 }
 
 func (c *ContainerEmbed) layout() {
+    //stackLevel.Inc()
+    //defer stackLevel.Dec()
+    //log.Printf("ContainerEmbed.layout() (internal func)")
+
     if c.Layout == nil {
         return
     }
@@ -383,6 +405,7 @@ func (c *ContainerEmbed) layout() {
 
 func (c *ContainerEmbed) Paint(gc *gg.Context) {
     //log.Printf("ContainerEmbed.Paint() of %T", c.Wrapper)
+    c.Marks.UnmarkNeedsPaint()
     for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed)
         //child := elem.Value.(*Embed).Wrapper
@@ -395,28 +418,31 @@ func (c *ContainerEmbed) Paint(gc *gg.Context) {
 
 func (c *ContainerEmbed) OnChildMarked(child Node, newMarks Marks) {
     c.Mark(newMarks)
+    if c.Parent == nil && newMarks.NeedsPaint() {
+        c.Win.Repaint()
+    }
 }
 
 func (c *ContainerEmbed) SelectTarget(pt geom.Point) (Node) {
     //stackLevel.Inc()
     //defer stackLevel.Dec()
 
-    //log.Printf("<Container.SelectTarget> %T, %v", c.Wrapper, pt)
+    //log.Printf("Container.SelectTarget on %T, size %v, %v", c.Wrapper, c.Wrapper.Size(), pt)
     if !c.Wrapper.Contains(pt) {
-        //log.Printf("> point is outside my rect %v", c.Wrapper.LocalBounds())
+        //log.Printf("   > point is outside my rect %v", c.Wrapper.LocalBounds())
         return nil
     }
     pt = c.Parent2Local(pt)
-    //log.Printf("> new local point: %v", pt)
+    //log.Printf("   > new local point: %v", pt)
     for elem := c.ChildList.Back(); elem != nil; elem = elem.Prev() {
         embed := elem.Value.(*Embed)
         node := embed.Wrapper.SelectTarget(pt)
         if node != nil {
-            //log.Printf("> target found: %T!", node)
+            //log.Printf("   > target found: %T!", node)
             return node
         }
     }
-    //log.Printf("> no target found, sending my self back: %T", c.Wrapper)
+    //log.Printf("   > no target found, sending my self back: %T", c.Wrapper)
     return c.Wrapper
 }
 

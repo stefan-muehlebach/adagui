@@ -112,7 +112,7 @@ func (w *Window) eventThread() {
 
     for evt := range w.eventQ {
 
-        //log.Printf("window: event from screen received\n")
+        //log.Printf("window: event from screen received: %v", evt)
         if evt.Type == touch.TypePress {
             target = w.root.SelectTarget(evt.Pos)
             //log.Printf("SelectTarget: %T, %v\n", target, evt.Pos)
@@ -143,14 +143,13 @@ func (w *Window) eventThread() {
             }
         }
 
-        //log.Printf("SelectTarget: sending %v to %T", evt, target)
         w.mutex.Lock()
         target.OnInputEvent(evt)
         w.mutex.Unlock()
 
-        if w.root.Wrappee().Marks.NeedsPaint() {
-            w.Repaint()
-        }
+        //if w.root.Wrappee().Marks.NeedsPaint() {
+        //    w.Repaint()
+        //}
     }
     w.quitQ <- true
 }

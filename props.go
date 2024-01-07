@@ -126,6 +126,12 @@ func newProps(parent *Properties, colorMap map[ColorPropertyName]color.Color,
     return p
 }
 
+var (
+    NewProps func(*Properties, map[ColorPropertyName]color.Color,
+        map[FontPropertyName]*opentype.Font,
+        map[SizePropertyName]float64) (*Properties) = newProps
+)
+
 // Das sind die Hauptmethoden, um Farben, Font oder Groessen aus den
 // Properties zu lesen. Kann ein Property nicht gefunden werden, dann
 // wird (falls vorhanden) das Parent-Property angefragt.

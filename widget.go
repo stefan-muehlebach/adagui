@@ -368,7 +368,6 @@ func NewButton(w, h float64) (*Button) {
 }
 
 func (b *Button) Paint(gc *gg.Context) {
-    //log.Printf("Button.Paint()")
     gc.DrawRoundedRectangle(0.0, 0.0, b.Size().X, b.Size().Y,
             b.Prop.Size(CornerRadius))
     if b.pushed {
@@ -388,7 +387,6 @@ func (b *Button) Paint(gc *gg.Context) {
 }
 
 func (b *Button) OnInputEvent(evt touch.Event) {
-    //log.Printf("%T: %v", b, evt)
     switch evt.Type {
     case touch.TypePress, touch.TypeEnter:
         b.pushed = true
@@ -438,7 +436,6 @@ func (b *TextButton) updateRefPoint() {
 }
 
 func (b *TextButton) Paint(gc *gg.Context) {
-    //log.Printf("TextButton.Paint()")
     b.Button.Paint(gc)
     gc.SetFontFace(b.fontFace)
     if b.pushed {
@@ -691,13 +688,14 @@ func NewTabPanel(w, h float64) (*TabPanel) {
     p.Wrapper = p
     p.Init(DefProps)
     p.SetMinSize(geom.Point{w, h})
-    p.Layout      = NewVBoxLayout(0.0)
+    p.Layout      = NewVBoxLayout(0)
     p.data        = binding.NewInt()
     p.data.Set(-1)
     p.contentList = make([]Node, 0)
     p.menu        = NewGroup()
-    p.menu.Layout = NewHBoxLayout(0.0)
+    p.menu.Layout = NewHBoxLayout(0)
     p.panel       = NewGroup()
+    p.panel.Layout = NewPaddedLayout(0)
     p.data.AddCallback(func (d binding.DataItem) {
         idx := d.(binding.Int).Get()
         if (idx < 0) || (idx >= len(p.contentList)) ||
@@ -822,9 +820,7 @@ func (b *TabButton) OnInputEvent(evt touch.Event) {
         if !b.selected {
             b.data.Set(b.idx)
         }
-        b.Mark(MarkNeedsPaint)
     }
-    b.CallTouchFunc(evt)
 }
 
 func (b *TabButton) TabIndex() (int) {
@@ -842,6 +838,7 @@ func (b *TabButton) DataChanged(data binding.DataItem) {
     } else {
         b.selected = false
     }
+    b.Mark(MarkNeedsPaint)
 }
 
 // Checkboxen verhalten sich sehr aehnlich zu RadioButtons, sind jedoch eigen-
@@ -1550,7 +1547,7 @@ func (r *Rectangle) Paint(gc *gg.Context) {
 //        for {
 //            <- s.ticker.C
 //            s.curImg = (s.curImg + 1) % len(s.imgList)
-//            s.Mark(MarkNeedsPaint)
+//            //s.Mark(MarkNeedsPaint)
 //            s.Win.Repaint()
 //        }
 //    }()

@@ -1,6 +1,7 @@
 package adagui
 
 import (
+//    "log"
     "math"
     "container/list"
     "github.com/stefan-muehlebach/gg/geom"
@@ -11,13 +12,23 @@ import (
 // die maximale Grösse aller verwalteten Nodes.
 type NullLayout struct { }
 
-func (l *NullLayout) Layout(childList *list.List, size geom.Point) { }
+func (l *NullLayout) Layout(childList *list.List, size geom.Point) {
+    //stackLevel.Inc()
+    //defer stackLevel.Dec()
+    //log.Printf("NullLayout.Layout(cl, %v)", size)
+}
 
 func (l *NullLayout) MinSize(childList *list.List) (geom.Point) {
+    //stackLevel.Inc()
+    //defer stackLevel.Dec()
     //log.Printf("NullLayout.MinSize()")
-    minSize := geom.Point{1.0, 1.0}
+
+    minSize := geom.Point{}
     for elem := childList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed).Wrapper
+        if !child.Visible() {
+            continue
+        }
         minSize = minSize.Max(child.MinSize())
     }
     return minSize
@@ -57,6 +68,10 @@ func NewPaddedLayout(pads... float64) *PaddedLayout {
 }
 
 func (l *PaddedLayout) Layout(childList *list.List, size geom.Point) {
+    //stackLevel.Inc()
+    //defer stackLevel.Dec()
+    //log.Printf("PaddedLayout.Layout(cl, %v)", size)
+
     pos := geom.Point{l.pad[Left], l.pad[Top]}
     siz := geom.Point{size.X-(l.pad[Left]+l.pad[Right]),
             size.Y-(l.pad[Top]+l.pad[Bottom])}
@@ -68,6 +83,10 @@ func (l *PaddedLayout) Layout(childList *list.List, size geom.Point) {
 }
 
 func (l *PaddedLayout) MinSize(childList *list.List) (geom.Point) {
+    //stackLevel.Inc()
+    //defer stackLevel.Dec()
+    //log.Printf("PaddedLayout.MinSize()")
+
     minSize := geom.Point{}
     for elem := childList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed).Wrapper
