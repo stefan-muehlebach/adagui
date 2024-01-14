@@ -114,12 +114,14 @@ func (m *Embed) Size() (geom.Point) {
 }
 func (m *Embed) SetSize(s geom.Point) {
     m.size = s
+    //m.Mark(MarkNeedsPaint)
 }
 func (m *Embed) MinSize() (geom.Point) {
     return m.minSize
 }
 func (m *Embed) SetMinSize(s geom.Point) {
     m.minSize = s
+    //m.Mark(MarkNeedsPaint)
 }
 
 func (m *Embed) LocalBounds() (geom.Rectangle) {
@@ -206,7 +208,7 @@ func (m *Embed) Parent2Local(pt geom.Point) (geom.Point) {
 // Ersetzt die aktuelle Translation des Nodes durch eine Translation um dp.
 func (m *Embed) Translate(dp geom.Point) {
     m.transl = geom.Translate(dp)
-    m.Mark(MarkNeedsRecalc)
+    m.Mark(MarkNeedsRecalc | MarkNeedsPaint)
 }
 
 // Ersetzt die aktuelle Rotation des Nodes durch eine Rotation um a um den
@@ -219,7 +221,7 @@ func (m *Embed) Rotate(a float64) {
 // angegebenen Drehpunkt.
 func (m *Embed) RotateAbout(rp geom.Point, a float64) {
     m.rotate = geom.RotateAbout(rp, a)
-    m.Mark(MarkNeedsRecalc)
+    m.Mark(MarkNeedsRecalc | MarkNeedsPaint)
 }
 
 // Ersetzt die aktuelle Skalierung des Nodes durch eine Skalierung um
@@ -232,7 +234,7 @@ func (m *Embed) Scale(sx, sy float64) {
 // sx, sy mit sp als Zentrum der Skalierung.
 func (m *Embed) ScaleAbout(sp geom.Point, sx, sy float64) {
     m.scale = geom.ScaleAbout(sp, sx, sy)
-    m.Mark(MarkNeedsRecalc)
+    m.Mark(MarkNeedsRecalc | MarkNeedsPaint)
 }
 
 // Liefert die aktuelle Transformationsmatrix des Nodes.
@@ -418,9 +420,6 @@ func (c *ContainerEmbed) Paint(gc *gg.Context) {
 
 func (c *ContainerEmbed) OnChildMarked(child Node, newMarks Marks) {
     c.Mark(newMarks)
-    if c.Parent == nil && newMarks.NeedsPaint() {
-        c.Win.Repaint()
-    }
 }
 
 func (c *ContainerEmbed) SelectTarget(pt geom.Point) (Node) {

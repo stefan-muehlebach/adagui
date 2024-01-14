@@ -1,6 +1,7 @@
 package adagui
 
 import (
+//    "log"
     "sync"
     "github.com/stefan-muehlebach/adatft"
     "github.com/stefan-muehlebach/adagui/touch"
@@ -93,12 +94,16 @@ func (w *Window) paintThread() {
         if w.stage != StageVisible {
             continue
         }
+        for len(w.paintQ) > 0 {
+            <- w.paintQ
+        }
         w.gc.SetFillColor(color.Black)
         w.gc.Clear()
         w.gc.Identity()
         w.mutex.Lock()
         w.root.Wrappee().Paint(w.gc)
         w.mutex.Unlock()
+        //log.Printf("%T: update the display", w)
         w.s.disp.Draw(w.gc.Image())
     }
     w.quitQ <- true
@@ -147,9 +152,9 @@ func (w *Window) eventThread() {
         target.OnInputEvent(evt)
         w.mutex.Unlock()
 
-        //if w.root.Wrappee().Marks.NeedsPaint() {
-        //    w.Repaint()
-        //}
+        if w.root.Wrappee().Marks.NeedsPaint() {
+            w.Repaint()
+        }
     }
     w.quitQ <- true
 }

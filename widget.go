@@ -256,40 +256,36 @@ func (l *Label) SetSize(size geom.Point) {
     l.updateRefPoint()
 }
 
+func (l *Label) Align() (AlignType) {
+    return l.align
+}
 func (l *Label) SetAlign(a AlignType) {
     l.align = a
     l.updateRefPoint()
 }
 
-func (l *Label) Align() (AlignType) {
-    return l.align
-}
-
-func (l *Label) SetText(str string) {
-    l.text.Set(str)
-    l.updateSize()
-}
-
 func (l *Label) Text() (string) {
     return l.text.Get()
 }
-
-func (l *Label) SetFont(fontFont *opentype.Font) {
-    l.Prop.SetFont(Font, fontFont)
+func (l *Label) SetText(str string) {
+    l.text.Set(str)
     l.updateSize()
 }
 
 func (l *Label) Font() (*opentype.Font) {
     return l.Prop.Font(Font)
 }
-
-func (l *Label) SetFontSize(fontSize float64) {
-    l.Prop.SetSize(FontSize, fontSize)
+func (l *Label) SetFont(fontFont *opentype.Font) {
+    l.Prop.SetFont(Font, fontFont)
     l.updateSize()
 }
 
 func (l *Label) FontSize() (float64) {
     return l.Prop.Size(FontSize)
+}
+func (l *Label) SetFontSize(fontSize float64) {
+    l.Prop.SetSize(FontSize, fontSize)
+    l.updateSize()
 }
 
 func (l *Label) updateSize() {
@@ -327,10 +323,10 @@ func (l *Label) Paint(gc *gg.Context) {
     gc.SetStrokeColor(l.Prop.Color(TextColor))
     gc.DrawString(l.text.Get(), l.rPt.X, l.rPt.Y)
     // Groesse des Labels als graues Rechteck
-    //gc.SetStrokeColor(utils.Lightgray)
-    //gc.SetStrokeWidth(1.0)
-    //gc.DrawRectangle(l.Bounds().AsCoord())
-    //gc.Stroke()
+    gc.DrawRectangle(l.Bounds().AsCoord())
+    gc.SetStrokeColor(l.Prop.Color(BorderColor))
+    gc.SetStrokeWidth(l.Prop.Size(BorderWidth))
+    gc.Stroke()
     // Referenzpunkt fuer den Text
     //gc.SetFillColor(colornames.Lightgray)
     //gc.DrawPoint(l.rPt.X, l.rPt.Y, 5.0)
@@ -387,6 +383,7 @@ func (b *Button) Paint(gc *gg.Context) {
 }
 
 func (b *Button) OnInputEvent(evt touch.Event) {
+    //log.Printf("%T: %v", b, evt)
     switch evt.Type {
     case touch.TypePress, touch.TypeEnter:
         b.pushed = true
@@ -616,6 +613,7 @@ type IconButton struct {
     Button
     img image.Image
     data binding.Untyped
+    btnData interface {}
     UserData int
 }
 
@@ -631,7 +629,7 @@ func NewIconButton(imgFile string) (*IconButton) {
     return b
 }
 
-func NewIconButtonWithCallback(imgFile string, callback func(interface {})) (*IconButton) {
+func NewIconButtonWithCallback(imgFile string, btnData interface {}, callback func(interface {})) (*IconButton) {
     b := NewIconButton(imgFile)
     b.data.AddCallback(func (data binding.DataItem) {
         callback(data.(binding.Untyped).Get())
@@ -639,18 +637,21 @@ func NewIconButtonWithCallback(imgFile string, callback func(interface {})) (*Ic
     return b
 }
 
-func NewIconButtonWithData(imgFile string, data binding.Untyped) (*IconButton) {
+func NewIconButtonWithData(imgFile string, btnData interface {}, data binding.Untyped) (*IconButton) {
     b := NewIconButton(imgFile)
     b.data = data
     b.data.AddListener(b)
+    b.btnData = btnData
     return b
 }
 
 func (b *IconButton) OnInputEvent(evt touch.Event) {
+    //log.Printf("%T: %v", b, evt)
     b.Button.OnInputEvent(evt)
-    if evt.Type == touch.TypeTap {
+    switch evt.Type {
+    case touch.TypeTap:
         if !b.checked {
-            b.data.Set(b)
+            b.data.Set(b.btnData)
         } else {
             b.data.Set(nil)
         }
@@ -666,8 +667,8 @@ func (b *IconButton) Paint(gc *gg.Context) {
 }
 
 func (b *IconButton) DataChanged(data binding.DataItem) {
-    value := data.(binding.Untyped).Get()
-    if b == value {
+    val := data.(binding.Untyped).Get()
+    if b.btnData == val {
         b.checked = true
     } else {
         b.checked = false
@@ -685,16 +686,16 @@ type TabPanel struct {
 
 func NewTabPanel(w, h float64) (*TabPanel) {
     p := &TabPanel{}
-    p.Wrapper = p
+    p.Wrapper      = p
     p.Init(DefProps)
     p.SetMinSize(geom.Point{w, h})
-    p.Layout      = NewVBoxLayout(0)
-    p.data        = binding.NewInt()
+    p.Layout       = NewVBoxLayout(0)
+    p.data         = binding.NewInt()
     p.data.Set(-1)
-    p.contentList = make([]Node, 0)
-    p.menu        = NewGroup()
-    p.menu.Layout = NewHBoxLayout(0)
-    p.panel       = NewGroup()
+    p.contentList  = make([]Node, 0)
+    p.menu         = NewGroup()
+    p.menu.Layout  = NewHBoxLayout(0)
+    p.panel        = NewGroup()
     p.panel.Layout = NewPaddedLayout(0)
     p.data.AddCallback(func (d binding.DataItem) {
         idx := d.(binding.Int).Get()
@@ -704,6 +705,7 @@ func NewTabPanel(w, h float64) (*TabPanel) {
         }
         p.panel.DelAll()
         p.panel.Add(p.contentList[idx])
+        p.layout()
     })
     p.Add(p.menu, p.panel)
     return p
@@ -717,13 +719,13 @@ func (p *TabPanel) AddTab(label string, content Node) {
     p.layout()
 }
 
-func (p *TabPanel) SetIndex(idx int) {
+func (p *TabPanel) SetTab(idx int) {
     p.data.Set(idx)
 }
 
-func (p *TabPanel) Paint(gc *gg.Context) {
-    p.ContainerEmbed.Paint(gc)
-}
+//func (p *TabPanel) Paint(gc *gg.Context) {
+//    p.ContainerEmbed.Paint(gc)
+//}
 
 var (
     TabButtonProps = newProps(ButtonProps,
@@ -744,7 +746,6 @@ var (
 
 type TabButton struct {
     Button
-    selected bool
     label string
     fontFace font.Face
     idx int
@@ -781,7 +782,7 @@ func (b *TabButton) Paint(gc *gg.Context) {
         gc.SetFillColor(b.Prop.Color(PressedColor))
         gc.SetStrokeColor(b.Prop.Color(PressedBorderColor))
     } else {
-        if b.selected {
+        if b.checked {
             gc.SetFillColor(b.Prop.Color(SelectedColor))
             gc.SetStrokeColor(b.Prop.Color(SelectedBorderColor))
         } else {
@@ -797,7 +798,7 @@ func (b *TabButton) Paint(gc *gg.Context) {
     if b.pushed {
         gc.SetStrokeColor(b.Prop.Color(PressedTextColor))
     } else {
-        if b.selected {
+        if b.checked {
             gc.SetStrokeColor(b.Prop.Color(SelectedTextColor))
         } else {
             gc.SetStrokeColor(b.Prop.Color(TextColor))
@@ -817,7 +818,7 @@ func (b *TabButton) OnInputEvent(evt touch.Event) {
         b.pushed = false
         b.Mark(MarkNeedsPaint)
     case touch.TypeTap:
-        if !b.selected {
+        if !b.checked {
             b.data.Set(b.idx)
         }
     }
@@ -834,11 +835,16 @@ func (b *TabButton) SetTabIndex(idx int) {
 func (b *TabButton) DataChanged(data binding.DataItem) {
     newIndex := data.(binding.Int).Get()
     if b.idx == newIndex {
-        b.selected = true
+        if !b.checked {
+            b.checked = true
+            b.Mark(MarkNeedsPaint)
+        }
     } else {
-        b.selected = false
+        if b.checked {
+            b.checked = false
+            b.Mark(MarkNeedsPaint)
+        }
     }
-    b.Mark(MarkNeedsPaint)
 }
 
 // Checkboxen verhalten sich sehr aehnlich zu RadioButtons, sind jedoch eigen-
