@@ -38,7 +38,7 @@ func NewScreen() (*Screen) {
     }
     numScreen += 1
     s := &Screen{}
-    adatft.Init()
+//    adatft.Init()
     s.disp  = adatft.OpenDisplay(rotation)
     s.touch = adatft.OpenTouch()
     s.touch.ReadConfig()

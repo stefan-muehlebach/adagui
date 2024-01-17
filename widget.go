@@ -101,7 +101,7 @@ func (g *Group) Paint(gc *gg.Context) {
 // Ein Panel ist eine komplexere Variante eines Containers. Er kann eine
 // Hintergrundfarbe haben und ordnet seine Kinder gem. ihren Koordinaten an. 
 var (
-    PanelProps = newProps(DefProps,
+    PanelProps = NewProps(DefProps,
         map[ColorPropertyName]color.Color{
             Color:        colornames.Black,
             BorderColor:  colornames.Black,
@@ -216,7 +216,7 @@ const (
 // Text! Für die Darstellung von grösseren Textmengen, bitte Widget Text
 // berücksichtigen.
 var (
-    LabelProps = newProps(DefProps, nil, nil, nil)
+    LabelProps = NewProps(DefProps, nil, nil, nil)
 )
 
 type Label struct {
@@ -338,7 +338,7 @@ func (l *Label) Paint(gc *gg.Context) {
 // generische Grundlage fuer die weiter unten definierten Text- oder Icon-
 // Buttons.
 var (
-    ButtonProps = newProps(DefProps, nil,
+    ButtonProps = NewProps(DefProps, nil,
         map[FontPropertyName]*opentype.Font{
             Font:  fonts.GoBold,
         },
@@ -612,9 +612,8 @@ func (b *ListButton) prev() {
 type IconButton struct {
     Button
     img image.Image
-    data binding.Untyped
-    btnData interface {}
-    UserData int
+    btnData int
+    data binding.Int
 }
 
 func NewIconButton(imgFile string) (*IconButton) {
@@ -625,23 +624,23 @@ func NewIconButton(imgFile string) (*IconButton) {
     i := b.Prop.Size(InnerPadding)
     rect := geom.NewRectangleIMG(b.img.Bounds()).Inset(-i, -i)
     b.SetMinSize(rect.Size())
-    b.data = binding.NewUntyped()
+    b.data = binding.NewInt()
     return b
 }
 
-func NewIconButtonWithCallback(imgFile string, btnData interface {}, callback func(interface {})) (*IconButton) {
+func NewIconButtonWithCallback(imgFile string, btnData int, callback func(int)) (*IconButton) {
     b := NewIconButton(imgFile)
     b.data.AddCallback(func (data binding.DataItem) {
-        callback(data.(binding.Untyped).Get())
+        callback(data.(binding.Int).Get())
     })
     return b
 }
 
-func NewIconButtonWithData(imgFile string, btnData interface {}, data binding.Untyped) (*IconButton) {
+func NewIconButtonWithData(imgFile string, btnData int, data binding.Int) (*IconButton) {
     b := NewIconButton(imgFile)
+    b.btnData = btnData
     b.data = data
     b.data.AddListener(b)
-    b.btnData = btnData
     return b
 }
 
@@ -653,7 +652,7 @@ func (b *IconButton) OnInputEvent(evt touch.Event) {
         if !b.checked {
             b.data.Set(b.btnData)
         } else {
-            b.data.Set(nil)
+            b.data.Set(-1)
         }
         b.Mark(MarkNeedsPaint)
     }
@@ -667,7 +666,7 @@ func (b *IconButton) Paint(gc *gg.Context) {
 }
 
 func (b *IconButton) DataChanged(data binding.DataItem) {
-    val := data.(binding.Untyped).Get()
+    val := data.(binding.Int).Get()
     if b.btnData == val {
         b.checked = true
     } else {
@@ -728,7 +727,7 @@ func (p *TabPanel) SetTab(idx int) {
 //}
 
 var (
-    TabButtonProps = newProps(ButtonProps,
+    TabButtonProps = NewProps(ButtonProps,
         map[ColorPropertyName]color.Color{
             Color:             DefProps.Color(Color).Alpha(0.4),
             BorderColor:       DefProps.Color(BorderColor).Alpha(0.4),
@@ -850,7 +849,7 @@ func (b *TabButton) DataChanged(data binding.DataItem) {
 // Checkboxen verhalten sich sehr aehnlich zu RadioButtons, sind jedoch eigen-
 // staendig und nicht Teil einer Gruppe.
 var (
-    CheckboxProps = newProps(ButtonProps, nil,
+    CheckboxProps = NewProps(ButtonProps, nil,
         map[FontPropertyName]*opentype.Font{
             Font:         fonts.GoRegular,
         },
@@ -946,7 +945,7 @@ func (c *Checkbox) SetChecked(val bool) {
 // haben kann (aktiv und nicht aktiv) und moeglicherweise einer Gruppe von
 // RadioButtons angehoert, von denen nur einer aktiviert sein kann.
 var (
-    RadioButtonProps = newProps(ButtonProps, nil,
+    RadioButtonProps = NewProps(ButtonProps, nil,
         map[FontPropertyName]*opentype.Font{
             Font:         fonts.GoRegular,
         },
@@ -960,7 +959,6 @@ type RadioButton struct {
     Button
     label string
     fontFace font.Face
-    checked bool
     value int
     data binding.Int
 }
@@ -1033,7 +1031,7 @@ func (b *RadioButton) DataChanged(data binding.DataItem) {
 // vertikal im GUI positionieren. Als Werte sind aktuell nur Fliesskommazahlen
 // vorgesehen.
 var (
-    ScrollbarProps =  newProps(DefProps, nil, nil,
+    ScrollbarProps =  NewProps(DefProps, nil, nil,
         map[SizePropertyName]float64{
             Size: 18.0,
         })
@@ -1121,7 +1119,6 @@ func (s *Scrollbar) Value() (float64) {
 
 func (s *Scrollbar) Paint(gc *gg.Context) {
     var pt1, pt2 geom.Point
-    //log.Printf("Scrollbar.Paint()")
     if s.pushed {
         gc.SetStrokeColor(s.Prop.Color(PressedBarColor))
     } else {
@@ -1354,7 +1351,7 @@ func (s *Slider) OnInputEvent(evt touch.Event) {
 // Schoene Kreise fuer Spiele oder was auch immer lassen sich mit diesem
 // Widget-Typ auf den Schirm zaubern.
 var (
-    GeomShapeProps = newProps(DefProps,
+    GeomShapeProps = NewProps(DefProps,
         map[ColorPropertyName]color.Color{
             Color:              DefProps.Color(Color),
             PressedColor:       DefProps.Color(Color).Alpha(0.5),
@@ -1364,12 +1361,13 @@ var (
         nil,
         map[SizePropertyName]float64{
             BorderWidth:        2.0,
+            PressedBorderWidth: 2.0,
         })
 )
 
 type Circle struct {
     LeafEmbed
-    Pressed bool
+    pushed bool
 }
 
 func NewCircle(r float64) (*Circle) {
@@ -1380,15 +1378,28 @@ func NewCircle(r float64) (*Circle) {
     return c
 }
 
+func (c *Circle) OnInputEvent(evt touch.Event) {
+    switch evt.Type {
+    case touch.TypePress:
+        c.pushed = true
+        c.Mark(MarkNeedsPaint)
+    case touch.TypeRelease:
+        c.pushed = false
+        c.Mark(MarkNeedsPaint)
+    }
+    c.CallTouchFunc(evt)
+}
+
 func (c *Circle) Paint(gc *gg.Context) {
     //log.Printf("Circle.Paint()")
     w := c.Size().X
     gc.DrawCircle(0.5*w, 0.5*w, 0.5*w)
-    gc.SetStrokeWidth(c.Prop.Size(BorderWidth))
-    if c.Pressed {
+    if c.pushed {
+        gc.SetStrokeWidth(c.Prop.Size(PressedBorderWidth))
         gc.SetFillColor(c.Prop.Color(PressedColor))
         gc.SetStrokeColor(c.Prop.Color(PressedBorderColor))
     } else {
+        gc.SetStrokeWidth(c.Prop.Size(BorderWidth))
         gc.SetFillColor(c.Prop.Color(Color))
         gc.SetStrokeColor(c.Prop.Color(BorderColor))
     }
@@ -1426,7 +1437,7 @@ func (c *Circle) Radius() (float64) {
 // Ein allgemeinerer Widget Typ ist die Ellipse.
 type Ellipse struct {
     LeafEmbed
-    Pressed bool
+    pushed bool
 }
 
 func NewEllipse(rx, ry float64) (*Ellipse) {
@@ -1437,15 +1448,28 @@ func NewEllipse(rx, ry float64) (*Ellipse) {
     return e
 }
 
+func (e *Ellipse) OnInputEvent(evt touch.Event) {
+    switch evt.Type {
+    case touch.TypePress:
+        e.pushed = true
+        e.Mark(MarkNeedsPaint)
+    case touch.TypeRelease:
+        e.pushed = false
+        e.Mark(MarkNeedsPaint)
+    }
+    e.CallTouchFunc(evt)
+}
+
 func (e *Ellipse) Paint(gc *gg.Context) {
     //log.Printf("Circle.Paint()")
     w, h := e.Size().AsCoord()
     gc.DrawEllipse(0.5*w, 0.5*h, 0.5*w, 0.5*h)
-    gc.SetStrokeWidth(e.Prop.Size(BorderWidth))
-    if e.Pressed {
+    if e.pushed {
+        gc.SetStrokeWidth(e.Prop.Size(PressedBorderWidth))
         gc.SetFillColor(e.Prop.Color(PressedColor))
         gc.SetStrokeColor(e.Prop.Color(PressedBorderColor))
     } else {
+        gc.SetStrokeWidth(e.Prop.Size(BorderWidth))
         gc.SetFillColor(e.Prop.Color(Color))
         gc.SetStrokeColor(e.Prop.Color(BorderColor))
     }
@@ -1483,7 +1507,7 @@ func (e *Ellipse) Radius() (float64, float64) {
 // Und wo es Kreise gibt, da sind auch die Rechtecke nicht weit.
 type Rectangle struct {
     LeafEmbed
-    Pressed bool
+    pushed bool
 }
 
 func NewRectangle(w, h float64) (*Rectangle) {
@@ -1494,14 +1518,27 @@ func NewRectangle(w, h float64) (*Rectangle) {
     return r
 }
 
+func (r *Rectangle) OnInputEvent(evt touch.Event) {
+    switch evt.Type {
+    case touch.TypePress:
+        r.pushed = true
+        r.Mark(MarkNeedsPaint)
+    case touch.TypeRelease:
+        r.pushed = false
+        r.Mark(MarkNeedsPaint)
+    }
+    r.CallTouchFunc(evt)
+}
+
 func (r *Rectangle) Paint(gc *gg.Context) {
     //log.Printf("Rectangle.Paint()")
     gc.DrawRectangle(r.Bounds().AsCoord())
-    gc.SetStrokeWidth(r.Prop.Size(BorderWidth))
-    if r.Pressed {
+    if r.pushed {
+        gc.SetStrokeWidth(r.Prop.Size(PressedBorderWidth))
         gc.SetFillColor(r.Prop.Color(PressedColor))
         gc.SetStrokeColor(r.Prop.Color(PressedBorderColor))
     } else {
+        gc.SetStrokeWidth(r.Prop.Size(BorderWidth))
         gc.SetFillColor(r.Prop.Color(Color))
         gc.SetStrokeColor(r.Prop.Color(BorderColor))
     }
