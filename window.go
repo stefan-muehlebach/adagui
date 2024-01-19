@@ -3,6 +3,7 @@ package adagui
 import (
 //    "log"
     "sync"
+    "time"
     "github.com/stefan-muehlebach/adatft"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg"
@@ -25,7 +26,9 @@ type Window struct {
     Rect geom.Rectangle
     s *Screen
     gc *gg.Context
-    paintQ chan bool
+    paintCloseQ chan bool
+    //paintQ chan bool
+    paintTicker *time.Ticker
     eventQ chan touch.Event
     quitQ  chan bool
     root Node
@@ -33,6 +36,8 @@ type Window struct {
     mutex *sync.Mutex
 }
 
+// Dies ist die interne Funktion, welche der Screen beim Erzeugen einer neuen
+// Window-Struktur aufruft.
 func newWindow(s *Screen) (*Window) {
     w := &Window{}
     w.s = s
@@ -40,7 +45,9 @@ func newWindow(s *Screen) (*Window) {
     height := adatft.Height
     w.Rect = geom.NewRectangleWH(0.0, 0.0, float64(width), float64(height))
     w.gc = gg.NewContext(width, height)
-    w.paintQ = make(chan bool, 1)
+    w.paintCloseQ = make(chan bool)
+    //w.paintQ = make(chan bool, 1)
+    w.paintTicker = time.NewTicker(30 * time.Millisecond)
     w.eventQ = make(chan touch.Event)
     w.quitQ  = make(chan bool)
     w.stage  = StageAlive
@@ -52,11 +59,20 @@ func newWindow(s *Screen) (*Window) {
     return w
 }
 
+// Schliesst das Fenster.
 func (w *Window) Close() {
     close(w.eventQ)
     <- w.quitQ
-    close(w.paintQ)
+    //close(w.paintQ)
+    w.paintCloseQ <- true
     <- w.quitQ
+}
+
+// In jedem Fenster muss es ein GUI-Element geben, welches an der obersten
+// Stelle (der Wurzel, 'root') des SceneGraphs steht. Dies ist ueblicherweise
+// ein Container-Widget.
+func (w *Window) Root() (Node) {
+    return w.root
 }
 
 func (w *Window) SetRoot(root Node) {
@@ -70,10 +86,6 @@ func (w *Window) SetRoot(root Node) {
     root.SetSize(w.Rect.Size())
 }
 
-func (w *Window) Root() (Node) {
-    return w.root
-}
-
 // Mit dieser Methode wird ein Neuaufbau des Bildschirms angestossen. Ueber die
 // interne Queue paintQ wird dem paintThread der Auftrag fuer den Neuaufbau
 // gegeben. Diese Methode blockiert nie! Ist bereits ein Auftrag fuer den
@@ -81,14 +93,43 @@ func (w *Window) Root() (Node) {
 // dass auch unser Auftrag behandelt wird.
 func (w *Window) Repaint() {
     //log.Printf("%T: Repaint()", w)
-    select {
-        case w.paintQ <- true:
-        default:
-    }
+    //select {
+    //    case w.paintQ <- true:
+    //    default:
+    //}
 }
 
 // Paint wird aufgerufen, um das Fenster und alle Objekte, die damit verbunden
 // sind, auf dem Zeichen-Kontext des gg-Packages darzustellen.
+func (w *Window) paintThread() {
+    for {
+        select {
+        case <- w.paintCloseQ:
+            Debugf("close message received")
+            w.quitQ <- true
+            return
+        case <- w.paintTicker.C:
+            if w.stage != StageVisible {
+                continue
+            }
+            if !w.root.Wrappee().Marks.NeedsPaint() {
+                continue
+            }
+            w.gc.SetFillColor(color.Black)
+            w.gc.Clear()
+            w.gc.Identity()
+            w.mutex.Lock()
+            if w.root != nil {
+                Debugf("redraw scene graph")
+                w.root.Wrappee().Paint(w.gc)
+            }
+            w.mutex.Unlock()
+            w.s.disp.Draw(w.gc.Image())
+        }
+    }
+}
+
+/*
 func (w *Window) paintThread() {
     for range w.paintQ {
         if w.stage != StageVisible {
@@ -101,13 +142,15 @@ func (w *Window) paintThread() {
         w.gc.Clear()
         w.gc.Identity()
         w.mutex.Lock()
-        w.root.Wrappee().Paint(w.gc)
+        if w.root != nil {
+            w.root.Wrappee().Paint(w.gc)
+        }
         w.mutex.Unlock()
-        //log.Printf("%T: update the display", w)
         w.s.disp.Draw(w.gc.Image())
     }
     w.quitQ <- true
 }
+*/
 
 // Mit dieser Go-Routine werden die Events vom Screen-Objekt empfangen und
 // weiterverarbeitet.
@@ -117,6 +160,11 @@ func (w *Window) eventThread() {
 
     for evt := range w.eventQ {
 
+        // Ist kein root-Element vorhanden, dann wird das Event nicht weiter
+        // verarbeitet und die Go-Routine wartet auf das naechste Event.
+        if w.root == nil {
+            continue
+        }
         //log.Printf("window: event from screen received: %v", evt)
         if evt.Type == touch.TypePress {
             target = w.root.SelectTarget(evt.Pos)
@@ -136,14 +184,18 @@ func (w *Window) eventThread() {
                     onTarget = false
                     newEvent := evt
                     newEvent.Type = touch.TypeLeave
+                    w.mutex.Lock()
                     target.OnInputEvent(newEvent)
+                    w.mutex.Unlock()
                 }
             } else {
                 if !onTarget {
                     onTarget = true
                     newEvent := evt
                     newEvent.Type = touch.TypeEnter
+                    w.mutex.Lock()
                     target.OnInputEvent(newEvent)
+                    w.mutex.Unlock()
                 }
             }
         }
@@ -152,9 +204,9 @@ func (w *Window) eventThread() {
         target.OnInputEvent(evt)
         w.mutex.Unlock()
 
-        if w.root.Wrappee().Marks.NeedsPaint() {
-            w.Repaint()
-        }
+        //if w.root.Wrappee().Marks.NeedsPaint() {
+        //    w.Repaint()
+        //}
     }
     w.quitQ <- true
 }

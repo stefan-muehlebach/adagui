@@ -2,13 +2,6 @@
 // In diesem File befinden sich alle Widgets, die im Zusammenhang mit adagui
 // existieren. Aktuell sind dies:
 //
-// Container Widgets
-// -----------------
-//   Group
-//   Panel
-//   Drawer
-//   Scroller   (Geplant)
-//
 // Leaf Widgets (GUI bezogen)
 // --------------------------
 //   Button
@@ -22,25 +15,12 @@
 //   Text       (Geplant, wie Label aber fuer groessere Textmengen mit spez.
 //              Ausrichtung, waehlbarer Schrift und ev. Scrollbalken)
 //
-// Leaf Widgets (Graphik bezogen)
-// ------------------------------
-//   Circle
-//   Rectangle
-//   Line       (Geplant)
-//
-//   Canvas     Ein ziemlicher Exot! die beiden oben aufgefuehrten
-//              Graphikelemente stehen in KEINEM Zusammenhang zu diesem Typ.
-//
 package adagui
 
 import (
-    "container/list"
     "image"
     "log"
     "math"
-//    "os"
-    "sync"
-//    "time"
     "github.com/stefan-muehlebach/adagui/binding"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg"
@@ -79,105 +59,6 @@ const (
     Vertical
 )
 
-// Eine Group ist die einfachste Form eines Containers. Es dient bloss als
-// logisches Sammelbecken fuer Widgets und hat ein eigenes Koordinatensystem
-// sowie eine Position im darüberliegenden (Parent) Widget.
-type Group struct {
-    ContainerEmbed
-}
-
-func NewGroup() (*Group) {
-    g := &Group{}
-    g.Wrapper = g
-    g.Init(DefProps)
-    return g
-}
-
-func (g *Group) Paint(gc *gg.Context) {
-    //log.Printf("Group.Paint()")
-    g.ContainerEmbed.Paint(gc)
-}
-
-// Ein Panel ist eine komplexere Variante eines Containers. Er kann eine
-// Hintergrundfarbe haben und ordnet seine Kinder gem. ihren Koordinaten an. 
-var (
-    PanelProps = NewProps(DefProps,
-        map[ColorPropertyName]color.Color{
-            Color:        colornames.Black,
-            BorderColor:  colornames.Black,
-        }, nil, nil)
-)
-
-type Panel struct {
-    ContainerEmbed
-    Clip bool
-    virtSize, sizeDiff, viewPort, refPt geom.Point
-}
-
-func NewPanel(w, h float64) (*Panel) {
-    g := &Panel{}
-    g.Wrapper = g
-    g.Init(PanelProps)
-
-    g.SetMinSize(geom.Point{w, h})
-    g.SetVirtualSize(g.Size())
-    g.Clip        = true
-    g.viewPort    = geom.Point{0, 0}
-    g.refPt       = geom.Point{0, 0}
-    return g
-}
-
-func (g *Panel) Paint(gc *gg.Context) {
-    //log.Printf("Panel.Paint()")
-    gc.SetFillColor(g.Prop.Color(Color))
-    gc.SetStrokeColor(g.Prop.Color(BorderColor))
-    gc.SetStrokeWidth(g.Prop.Size(BorderWidth))
-    gc.DrawRectangle(g.Bounds().AsCoord())
-    if g.Clip {
-        gc.ClipPreserve()
-    }
-    gc.FillStroke()
-
-    gc.Translate(g.refPt.AsCoord())
-    g.ContainerEmbed.Paint(gc)
-    if g.Clip {
-        gc.ResetClip()
-    }
-}
-
-func (p *Panel) VisibleRange() (geom.Point) {
-    if p.virtSize.X == 0.0 && p.virtSize.Y == 0.0 {
-        return geom.Point{1, 1}
-    }
-    vis := p.Wrapper.Size()
-    vis.X /= p.virtSize.X
-    vis.Y /= p.virtSize.Y
-    return vis
-}
-
-func (p *Panel) SetXView(vx float64) {
-    p.viewPort.X = vx
-    p.refPt.X = p.sizeDiff.X * p.viewPort.X
-}
-
-func (p *Panel) SetYView(vy float64) {
-    p.viewPort.Y = vy
-    p.refPt.Y = p.sizeDiff.Y * p.viewPort.Y
-}
-
-func (p *Panel) ViewPort() (geom.Point) {
-    return p.viewPort
-}
-
-func (p *Panel) SetVirtualSize(sz geom.Point) {
-    p.virtSize = sz
-    p.sizeDiff = p.Size().Sub(p.virtSize)
-}
-
-func (p *Panel) VirtualSize() (geom.Point) {
-    return p.virtSize
-}
-
 // Fuer die visuelle Abgrenzung in Box-Layouts.
 type Separator struct {
     LeafEmbed
@@ -187,15 +68,16 @@ type Separator struct {
 func NewSeparator(orient Orientation) (*Separator) {
     s := &Separator{}
     s.Wrapper = s
-    s.Init(DefProps)
+    s.Init()
+    s.PropertyEmbed.Init(DefProps)
     s.orient = orient
-    s.SetMinSize(geom.Point{s.Prop.Size(LineWidth), s.Prop.Size(LineWidth)})
+    s.SetMinSize(geom.Point{s.LineWidth(), s.LineWidth()})
     return s
 }
 
 func (s *Separator) Paint(gc *gg.Context) {
-    gc.SetStrokeColor(s.Prop.Color(BarColor))
-    gc.SetStrokeWidth(s.Prop.Size(LineWidth))
+    gc.SetStrokeColor(s.BarColor())
+    gc.SetStrokeWidth(s.LineWidth())
     gc.MoveTo(s.Bounds().W().AsCoord())
     gc.LineTo(s.Bounds().E().AsCoord())
     gc.Stroke()
@@ -231,7 +113,8 @@ type Label struct {
 func newLabel() (*Label) {
     l := &Label{}
     l.Wrapper = l
-    l.Init(LabelProps)
+    l.Init()
+    l.PropertyEmbed.Init(LabelProps)
     l.align = AlignLeft | AlignMiddle
     return l
 }
@@ -272,24 +155,18 @@ func (l *Label) SetText(str string) {
     l.updateSize()
 }
 
-func (l *Label) Font() (*opentype.Font) {
-    return l.Prop.Font(Font)
-}
 func (l *Label) SetFont(fontFont *opentype.Font) {
-    l.Prop.SetFont(Font, fontFont)
+    l.PropertyEmbed.SetFont(fontFont)
     l.updateSize()
 }
 
-func (l *Label) FontSize() (float64) {
-    return l.Prop.Size(FontSize)
-}
 func (l *Label) SetFontSize(fontSize float64) {
-    l.Prop.SetSize(FontSize, fontSize)
+    l.PropertyEmbed.SetFontSize(fontSize)
     l.updateSize()
 }
 
 func (l *Label) updateSize() {
-    l.fontFace = fonts.NewFace(l.Prop.Font(Font), l.Prop.Size(FontSize))
+    l.fontFace = fonts.NewFace(l.Font(), l.FontSize())
     w := float64(font.MeasureString(l.fontFace, l.Text())) / 64.0
     h := float64(l.fontFace.Metrics().Ascent +
             l.fontFace.Metrics().Descent) / 64.0
@@ -320,12 +197,12 @@ func (l *Label) updateRefPoint() {
 func (l *Label) Paint(gc *gg.Context) {
     //log.Printf("Label.Paint()")
     gc.SetFontFace(l.fontFace)
-    gc.SetStrokeColor(l.Prop.Color(TextColor))
+    gc.SetStrokeColor(l.TextColor())
     gc.DrawString(l.text.Get(), l.rPt.X, l.rPt.Y)
     // Groesse des Labels als graues Rechteck
     gc.DrawRectangle(l.Bounds().AsCoord())
-    gc.SetStrokeColor(l.Prop.Color(BorderColor))
-    gc.SetStrokeWidth(l.Prop.Size(BorderWidth))
+    gc.SetStrokeColor(l.BorderColor())
+    gc.SetStrokeWidth(l.BorderWidth())
     gc.Stroke()
     // Referenzpunkt fuer den Text
     //gc.SetFillColor(colornames.Lightgray)
@@ -343,7 +220,8 @@ var (
             Font:  fonts.GoBold,
         },
         map[SizePropertyName]float64{
-            Size:  32.0,
+            Width :  32.0,
+            Height:  32.0,
         })
 )
 
@@ -356,7 +234,8 @@ type Button struct {
 func NewButton(w, h float64) (*Button) {
     b := &Button{}
     b.Wrapper = b
-    b.Init(ButtonProps)
+    b.Init()
+    b.PropertyEmbed.Init(ButtonProps)
     b.SetMinSize(geom.Point{w, h})
     b.pushed    = false
     b.checked   = false
@@ -365,20 +244,20 @@ func NewButton(w, h float64) (*Button) {
 
 func (b *Button) Paint(gc *gg.Context) {
     gc.DrawRoundedRectangle(0.0, 0.0, b.Size().X, b.Size().Y,
-            b.Prop.Size(CornerRadius))
+            b.CornerRadius())
     if b.pushed {
-        gc.SetFillColor(b.Prop.Color(PressedColor))
-        gc.SetStrokeColor(b.Prop.Color(PressedBorderColor))
+        gc.SetFillColor(b.PressedColor())
+        gc.SetStrokeColor(b.PressedBorderColor())
     } else {
         if b.checked {
-            gc.SetFillColor(b.Prop.Color(SelectedColor))
-            gc.SetStrokeColor(b.Prop.Color(SelectedBorderColor))
+            gc.SetFillColor(b.SelectedColor())
+            gc.SetStrokeColor(b.SelectedBorderColor())
         } else {
-            gc.SetFillColor(b.Prop.Color(Color))
-            gc.SetStrokeColor(b.Prop.Color(BorderColor))
+            gc.SetFillColor(b.Color())
+            gc.SetStrokeColor(b.BorderColor())
         }
     }
-    gc.SetStrokeWidth(b.Prop.Size(BorderWidth))
+    gc.SetStrokeWidth(b.BorderWidth())
     gc.FillStroke()
 }
 
@@ -408,7 +287,8 @@ type TextButton struct {
 func NewTextButton(label string) (*TextButton) {
     b := &TextButton{}
     b.Wrapper = b
-    b.Init(ButtonProps)
+    b.Init()
+    b.PropertyEmbed.Init(ButtonProps)
     b.label = label
     b.updateSize()
     return b
@@ -420,11 +300,11 @@ func (b *TextButton) SetSize(size geom.Point) {
 }
 
 func (b *TextButton) updateSize() {
-    b.fontFace = fonts.NewFace(b.Prop.Font(Font), b.Prop.Size(FontSize))
+    b.fontFace = fonts.NewFace(b.Font(), b.FontSize())
     w := float64(font.MeasureString(b.fontFace, b.label)) / 64.0
-    h := b.Prop.Size(Size)
+    h := b.Height()
     b.desc = float64(b.fontFace.Metrics().Descent) / 64.0
-    b.SetMinSize(geom.Point{w+2*b.Prop.Size(Padding), h})
+    b.SetMinSize(geom.Point{w+2*b.Padding(), h})
     b.updateRefPoint()
 }
 
@@ -436,12 +316,12 @@ func (b *TextButton) Paint(gc *gg.Context) {
     b.Button.Paint(gc)
     gc.SetFontFace(b.fontFace)
     if b.pushed {
-        gc.SetStrokeColor(b.Prop.Color(PressedTextColor))
+        gc.SetStrokeColor(b.PressedTextColor())
     } else {
         if b.checked {
-            gc.SetStrokeColor(b.Prop.Color(SelectedTextColor))
+            gc.SetStrokeColor(b.SelectedTextColor())
         } else {
-            gc.SetStrokeColor(b.Prop.Color(TextColor))
+            gc.SetStrokeColor(b.TextColor())
         }
     }
     gc.DrawStringAnchored(b.label, b.rPt.X, b.rPt.Y, 0.5, 0.5)
@@ -468,8 +348,9 @@ type ListButton struct {
 func NewListButton(options []string) (*ListButton) {
     b := &ListButton{}
     b.Wrapper     = b
-    b.Init(ButtonProps)
-    b.fontFace  = fonts.NewFace(b.Prop.Font(Font), b.Prop.Size(FontSize))
+    b.Init()
+    b.PropertyEmbed.Init(ButtonProps)
+    b.fontFace  = fonts.NewFace(b.Font(), b.FontSize())
     b.Options   = options
     b.selIdx    = 0
     b.Selected  = b.Options[b.selIdx]
@@ -485,8 +366,8 @@ func (b *ListButton) updateSize() {
             maxWidth = float64(width)
         }
     }
-    w := maxWidth/64.0 + 2.0*b.Prop.Size(Padding) + b.Prop.Size(Size)
-    h := b.Prop.Size(Size)
+    w := maxWidth/64.0 + 2.0*b.Padding() + b.Width()
+    h := b.Height()
     b.SetMinSize(geom.Point{w, h})
 }
 
@@ -501,22 +382,22 @@ func (b *ListButton) Paint(gc *gg.Context) {
     b.Button.Paint(gc)
     gc.SetFontFace(b.fontFace)
     if b.pushed {
-        gc.SetStrokeColor(b.Prop.Color(PressedTextColor))
+        gc.SetStrokeColor(b.PressedTextColor())
     } else {
         if b.checked {
-            gc.SetStrokeColor(b.Prop.Color(SelectedTextColor))
+            gc.SetStrokeColor(b.SelectedTextColor())
         } else {
-            gc.SetStrokeColor(b.Prop.Color(TextColor))
+            gc.SetStrokeColor(b.TextColor())
         }
     }
-    pt := geom.Point{0.6*b.Size().Y+2*b.Prop.Size(InnerPadding), 0.5*b.Size().Y}
+    pt := geom.Point{0.6*b.Size().Y+2*b.InnerPadding(), 0.5*b.Size().Y}
     gc.DrawStringAnchored(b.Selected, pt.X, pt.Y, 0.0, 0.5)
 
-    gc.SetStrokeWidth(b.Prop.Size(BorderWidth))
+    gc.SetStrokeWidth(b.BorderWidth())
     if b.pushed {
-        gc.SetStrokeColor(b.Prop.Color(PressedBorderColor))
+        gc.SetStrokeColor(b.PressedBorderColor())
     } else {
-        gc.SetStrokeColor(b.Prop.Color(BorderColor))
+        gc.SetStrokeColor(b.BorderColor())
     }
     gc.SetLineCapButt()
     // Trennlinie zwischen Text und Pfeil (links)
@@ -530,11 +411,11 @@ func (b *ListButton) Paint(gc *gg.Context) {
 
     gc.SetLineCapRound()
     if b.pushed {
-        gc.SetFillColor(b.Prop.Color(PressedLineColor))
-        gc.SetStrokeColor(b.Prop.Color(PressedLineColor))
+        gc.SetFillColor(b.PressedLineColor())
+        gc.SetStrokeColor(b.PressedLineColor())
     } else {
-        gc.SetFillColor(b.Prop.Color(LineColor))
-        gc.SetStrokeColor(b.Prop.Color(LineColor))
+        gc.SetFillColor(b.LineColor())
+        gc.SetStrokeColor(b.LineColor())
     }
     // Pfeil nach links
     pa := p1l.Add(geom.Point{-0.2*b.Size().Y, 0.25*b.Size().Y})
@@ -619,9 +500,10 @@ type IconButton struct {
 func NewIconButton(imgFile string) (*IconButton) {
     b := &IconButton{}
     b.Wrapper = b
-    b.Init(ButtonProps)
+    b.Init()
+    b.PropertyEmbed.Init(ButtonProps)
     b.img, _ = gg.LoadPNG(imgFile)
-    i := b.Prop.Size(InnerPadding)
+    i := b.InnerPadding()
     rect := geom.NewRectangleIMG(b.img.Bounds()).Inset(-i, -i)
     b.SetMinSize(rect.Size())
     b.data = binding.NewInt()
@@ -674,58 +556,6 @@ func (b *IconButton) DataChanged(data binding.DataItem) {
     }
 }
 
-// TabPanel und TabButton sind fuer Tabbed Windows gedacht.
-type TabPanel struct {
-    ContainerEmbed
-    data binding.Int
-    contentList []Node
-    menu  *Group
-    panel *Group
-}
-
-func NewTabPanel(w, h float64) (*TabPanel) {
-    p := &TabPanel{}
-    p.Wrapper      = p
-    p.Init(DefProps)
-    p.SetMinSize(geom.Point{w, h})
-    p.Layout       = NewVBoxLayout(0)
-    p.data         = binding.NewInt()
-    p.data.Set(-1)
-    p.contentList  = make([]Node, 0)
-    p.menu         = NewGroup()
-    p.menu.Layout  = NewHBoxLayout(0)
-    p.panel        = NewGroup()
-    p.panel.Layout = NewPaddedLayout(0)
-    p.data.AddCallback(func (d binding.DataItem) {
-        idx := d.(binding.Int).Get()
-        if (idx < 0) || (idx >= len(p.contentList)) ||
-                (p.contentList[idx] == nil) {
-            return
-        }
-        p.panel.DelAll()
-        p.panel.Add(p.contentList[idx])
-        p.layout()
-    })
-    p.Add(p.menu, p.panel)
-    return p
-}
-
-func (p *TabPanel) AddTab(label string, content Node) {
-    tabIndex := len(p.contentList)
-    p.contentList = append(p.contentList, content)
-    b := NewTabButtonWithData(label, tabIndex, p.data)
-    p.menu.Add(b)
-    p.layout()
-}
-
-func (p *TabPanel) SetTab(idx int) {
-    p.data.Set(idx)
-}
-
-//func (p *TabPanel) Paint(gc *gg.Context) {
-//    p.ContainerEmbed.Paint(gc)
-//}
-
 var (
     TabButtonProps = NewProps(ButtonProps,
         map[ColorPropertyName]color.Color{
@@ -754,10 +584,11 @@ type TabButton struct {
 func NewTabButton(label string, idx int) (*TabButton) {
     b := &TabButton{}
     b.Wrapper = b
-    b.Init(TabButtonProps)
-    b.SetMinSize(geom.Point{b.Prop.Size(Width), b.Prop.Size(Height)})
+    b.Init()
+    b.PropertyEmbed.Init(TabButtonProps)
+    b.SetMinSize(geom.Point{b.Width(), b.Height()})
     b.label     = label
-    b.fontFace  = fonts.NewFace(b.Prop.Font(Font), b.Prop.Size(FontSize))
+    b.fontFace  = fonts.NewFace(b.Font(), b.FontSize())
     b.data      = binding.NewInt()
     b.idx       = idx
     return b
@@ -775,32 +606,32 @@ func (b *TabButton) Paint(gc *gg.Context) {
     gc.DrawRectangle(b.Bounds().AsCoord())
     gc.Clip()
     gc.DrawRoundedRectangle(0.0, 0.0,
-            b.Size().X, b.Size().Y+b.Prop.Size(CornerRadius),
-            b.Prop.Size(CornerRadius))
+            b.Size().X, b.Size().Y+b.CornerRadius(),
+            b.CornerRadius())
     if b.pushed {
-        gc.SetFillColor(b.Prop.Color(PressedColor))
-        gc.SetStrokeColor(b.Prop.Color(PressedBorderColor))
+        gc.SetFillColor(b.PressedColor())
+        gc.SetStrokeColor(b.PressedBorderColor())
     } else {
         if b.checked {
-            gc.SetFillColor(b.Prop.Color(SelectedColor))
-            gc.SetStrokeColor(b.Prop.Color(SelectedBorderColor))
+            gc.SetFillColor(b.SelectedColor())
+            gc.SetStrokeColor(b.SelectedBorderColor())
         } else {
-            gc.SetFillColor(b.Prop.Color(Color))
-            gc.SetStrokeColor(b.Prop.Color(BorderColor))
+            gc.SetFillColor(b.Color())
+            gc.SetStrokeColor(b.BorderColor())
         }
     }
-    gc.SetStrokeWidth(b.Prop.Size(BorderWidth))
+    gc.SetStrokeWidth(b.BorderWidth())
     gc.FillStroke()
     gc.ResetClip()
 
     mp := b.Bounds().Center()
     if b.pushed {
-        gc.SetStrokeColor(b.Prop.Color(PressedTextColor))
+        gc.SetStrokeColor(b.PressedTextColor())
     } else {
         if b.checked {
-            gc.SetStrokeColor(b.Prop.Color(SelectedTextColor))
+            gc.SetStrokeColor(b.SelectedTextColor())
         } else {
-            gc.SetStrokeColor(b.Prop.Color(TextColor))
+            gc.SetStrokeColor(b.TextColor())
         }
     }
     gc.SetFontFace(b.fontFace)
@@ -854,7 +685,8 @@ var (
             Font:         fonts.GoRegular,
         },
         map[SizePropertyName]float64{
-            Size:         18.0,
+            Width:        18.0,
+            Height:       18.0,
             LineWidth:     4.0,
             CornerRadius:  5.0,
         })
@@ -870,12 +702,13 @@ type Checkbox struct {
 func NewCheckbox(label string) (*Checkbox) {
     c := &Checkbox{}
     c.Wrapper = c
-    c.Init(CheckboxProps)
+    c.Init()
+    c.PropertyEmbed.Init(CheckboxProps)
     c.label     = label
-    c.fontFace  = fonts.NewFace(c.Prop.Font(Font), c.Prop.Size(FontSize))
+    c.fontFace  = fonts.NewFace(c.Font(), c.FontSize())
     w := float64(font.MeasureString(c.fontFace, label))/64.0
-    c.SetMinSize(geom.Point{c.Prop.Size(Size)+c.Prop.Size(InnerPadding)+w,
-        c.Prop.Size(Size)})
+    c.SetMinSize(geom.Point{c.Width()+c.InnerPadding()+w,
+        c.Height()})
     c.value = binding.NewBool()
     return c
 }
@@ -895,32 +728,32 @@ func NewCheckboxWithData(label string, data binding.Bool) (*Checkbox) {
 }
 
 func (c *Checkbox) Paint(gc *gg.Context) {
-    gc.DrawRoundedRectangle(0.0, 0.0, c.Prop.Size(Size), c.Prop.Size(Size),
-            c.Prop.Size(CornerRadius))
+    gc.DrawRoundedRectangle(0.0, 0.0, c.Width(), c.Height(),
+            c.CornerRadius())
     if c.pushed {
-        gc.SetFillColor(c.Prop.Color(PressedColor))
-        gc.SetStrokeColor(c.Prop.Color(PressedBorderColor))
+        gc.SetFillColor(c.PressedColor())
+        gc.SetStrokeColor(c.PressedBorderColor())
     } else {
-        gc.SetFillColor(c.Prop.Color(Color))
-        gc.SetStrokeColor(c.Prop.Color(BorderColor))
+        gc.SetFillColor(c.Color())
+        gc.SetStrokeColor(c.BorderColor())
     }
-    gc.SetStrokeWidth(c.Prop.Size(BorderWidth))
+    gc.SetStrokeWidth(c.BorderWidth())
     gc.FillStroke()
     if c.Checked() {
-        gc.SetStrokeWidth(c.Prop.Size(LineWidth))
+        gc.SetStrokeWidth(c.LineWidth())
         if c.pushed {
-            gc.SetStrokeColor(c.Prop.Color(PressedLineColor))
+            gc.SetStrokeColor(c.PressedLineColor())
         } else {
-            gc.SetStrokeColor(c.Prop.Color(LineColor))
+            gc.SetStrokeColor(c.LineColor())
         }
         gc.MoveTo(4, 9)
         gc.LineTo(8, 14)
         gc.LineTo(14, 5)
         gc.Stroke()
     }
-    x := c.Prop.Size(Size) + c.Prop.Size(InnerPadding)
-    y := 0.5*c.Size().Y
-    gc.SetStrokeColor(c.Prop.Color(TextColor))
+    x := c.Width() + c.InnerPadding()
+    y := 0.5*c.Height()
+    gc.SetStrokeColor(c.TextColor())
     gc.SetFontFace(c.fontFace)
     gc.DrawStringAnchored(c.label, x, y, 0.0, 0.5)
 }
@@ -950,7 +783,8 @@ var (
             Font:         fonts.GoRegular,
         },
         map[SizePropertyName]float64{
-            Size:         18.0,
+            Width:        18.0,
+            Height:       18.0,
             LineWidth:     8.0,
         })
 )
@@ -966,12 +800,13 @@ type RadioButton struct {
 func NewRadioButtonWithData(label string, value int, data binding.Int) (*RadioButton) {
     b := &RadioButton{}
     b.Wrapper  = b
-    b.Init(RadioButtonProps)
+    b.Init()
+    b.PropertyEmbed.Init(RadioButtonProps)
     b.label    = label
-    b.fontFace = fonts.NewFace(b.Prop.Font(Font), b.Prop.Size(FontSize))
+    b.fontFace = fonts.NewFace(b.Font(), b.FontSize())
     w := float64(font.MeasureString(b.fontFace, label))/64.0
-    b.SetMinSize(geom.Point{b.Prop.Size(Size)+b.Prop.Size(InnerPadding)+w,
-        b.Prop.Size(Size)})
+    b.SetMinSize(geom.Point{b.Width()+b.InnerPadding()+w,
+        b.Height()})
     b.value = value
     b.data = data
     b.data.AddListener(b)
@@ -980,29 +815,29 @@ func NewRadioButtonWithData(label string, value int, data binding.Int) (*RadioBu
 
 func (b *RadioButton) Paint(gc *gg.Context) {
     //log.Printf("RadioButton.Paint()")
-    mp := geom.Point{0.5*b.Prop.Size(Size), 0.5*b.Prop.Size(Size)}
-    gc.DrawCircle(mp.X, mp.Y, 0.5*b.Prop.Size(Size))
+    mp := geom.Point{0.5*b.Width(), 0.5*b.Height()}
+    gc.DrawCircle(mp.X, mp.Y, 0.5*b.Width())
     if b.pushed {
-        gc.SetFillColor(b.Prop.Color(PressedColor))
-        gc.SetStrokeColor(b.Prop.Color(PressedBorderColor))
+        gc.SetFillColor(b.PressedColor())
+        gc.SetStrokeColor(b.PressedBorderColor())
     } else {
-        gc.SetFillColor(b.Prop.Color(Color))
-        gc.SetStrokeColor(b.Prop.Color(BorderColor))
+        gc.SetFillColor(b.Color())
+        gc.SetStrokeColor(b.BorderColor())
     }
-    gc.SetStrokeWidth(b.Prop.Size(BorderWidth))
+    gc.SetStrokeWidth(b.BorderWidth())
     gc.FillStroke()
     if b.checked {
         if b.pushed {
-	    gc.SetFillColor(b.Prop.Color(PressedLineColor))
+	    gc.SetFillColor(b.PressedLineColor())
         } else {
-  	    gc.SetFillColor(b.Prop.Color(LineColor))
+  	    gc.SetFillColor(b.LineColor())
         }
-        gc.DrawCircle(mp.X, mp.Y, 0.5*b.Prop.Size(LineWidth))
+        gc.DrawCircle(mp.X, mp.Y, 0.5*b.LineWidth())
 	gc.Fill()
     }
-    x := b.Prop.Size(Size) + b.Prop.Size(InnerPadding)
-    y := 0.5*b.Size().Y
-    gc.SetStrokeColor(b.Prop.Color(TextColor))
+    x := b.Width() + b.InnerPadding()
+    y := 0.5*b.Height()
+    gc.SetStrokeColor(b.TextColor())
     gc.SetFontFace(b.fontFace)
     gc.DrawStringAnchored(b.label, x, y, 0.0, 0.5)
 }
@@ -1033,7 +868,8 @@ func (b *RadioButton) DataChanged(data binding.DataItem) {
 var (
     ScrollbarProps =  NewProps(DefProps, nil, nil,
         map[SizePropertyName]float64{
-            Size: 18.0,
+            Width:  18.0,
+            Height: 18.0,
         })
 )
 
@@ -1051,18 +887,19 @@ type Scrollbar struct {
 func NewScrollbar(len float64, orient Orientation) (*Scrollbar) {
     s := &Scrollbar{}
     s.Wrapper = s
-    s.Init(ScrollbarProps)
+    s.Init()
+    s.PropertyEmbed.Init(ScrollbarProps)
     s.orient = orient
     if s.orient == Horizontal {
-        s.SetMinSize(geom.Point{len, s.Prop.Size(Size)})
-        s.barStart = geom.Point{0.5*s.Prop.Size(BarSize), 0.5*s.Prop.Size(Size)}
-        s.ctrlStart = geom.Point{0.5*max(s.Prop.Size(CtrlSize), s.Prop.Size(BarSize)),
-            0.5*s.Prop.Size(Size)}
+        s.SetMinSize(geom.Point{len, s.Height()})
+        s.barStart = geom.Point{0.5*s.BarSize(), 0.5*s.Height()}
+        s.ctrlStart = geom.Point{0.5*max(s.CtrlSize(), s.BarSize()),
+            0.5*s.Height()}
     } else {
-        s.SetMinSize(geom.Point{s.Prop.Size(Size), len})
-        s.barStart = geom.Point{0.5*s.Prop.Size(Size), 0.5*s.Prop.Size(BarSize)}
-        s.ctrlStart = geom.Point{0.5*s.Prop.Size(Size), 0.5*max(s.Prop.Size(CtrlSize),
-            s.Prop.Size(BarSize))}
+        s.SetMinSize(geom.Point{s.Width(), len})
+        s.barStart = geom.Point{0.5*s.Width(), 0.5*s.BarSize()}
+        s.ctrlStart = geom.Point{0.5*s.Width(), 0.5*max(s.CtrlSize(),
+            s.BarSize())}
     }
     s.initValue = 0.0
     s.visiRange = 0.1
@@ -1120,11 +957,11 @@ func (s *Scrollbar) Value() (float64) {
 func (s *Scrollbar) Paint(gc *gg.Context) {
     var pt1, pt2 geom.Point
     if s.pushed {
-        gc.SetStrokeColor(s.Prop.Color(PressedBarColor))
+        gc.SetStrokeColor(s.PressedBarColor())
     } else {
-        gc.SetStrokeColor(s.Prop.Color(BarColor))
+        gc.SetStrokeColor(s.BarColor())
     }
-    gc.SetStrokeWidth(s.Prop.Size(BarSize))
+    gc.SetStrokeWidth(s.BarSize())
     gc.DrawLine(s.barStart.X, s.barStart.Y, s.barEnd.X, s.barEnd.Y)
     gc.Stroke()
 
@@ -1142,11 +979,11 @@ func (s *Scrollbar) Paint(gc *gg.Context) {
     }
 
     if s.pushed {
-        gc.SetStrokeColor(s.Prop.Color(PressedColor))
+        gc.SetStrokeColor(s.PressedColor())
     } else {
-        gc.SetStrokeColor(s.Prop.Color(Color))
+        gc.SetStrokeColor(s.Color())
     }
-    gc.SetStrokeWidth(s.Prop.Size(CtrlSize))
+    gc.SetStrokeWidth(s.CtrlSize())
     gc.DrawLine(pt1.X, pt1.Y, pt2.X, pt2.Y)
     gc.Stroke()
 }
@@ -1198,18 +1035,19 @@ type Slider struct {
 func NewSlider(len float64, orient Orientation) (*Slider) {
     s := &Slider{}
     s.Wrapper = s
-    s.Init(SliderProps)
+    s.Init()
+    s.PropertyEmbed.Init(SliderProps)
     s.orient = orient
     if s.orient == Horizontal {
-        s.SetMinSize(geom.Point{len, s.Prop.Size(Size)})
-        s.barStart = geom.Point{0.5*s.Prop.Size(BarSize), 0.5*s.Prop.Size(Size)}
-        s.ctrlStart = geom.Point{0.5*max(s.Prop.Size(CtrlSize), s.Prop.Size(BarSize)),
-            0.5*s.Prop.Size(Size)}
+        s.SetMinSize(geom.Point{len, s.Height()})
+        s.barStart = geom.Point{0.5*s.BarSize(), 0.5*s.Height()}
+        s.ctrlStart = geom.Point{0.5*max(s.CtrlSize(), s.BarSize()),
+            0.5*s.Height()}
     } else {
-        s.SetMinSize(geom.Point{s.Prop.Size(Size), len})
-        s.barStart = geom.Point{0.5*s.Prop.Size(Size), 0.5*s.Prop.Size(BarSize)}
-        s.ctrlStart = geom.Point{0.5*s.Prop.Size(Size), 0.5*max(s.Prop.Size(CtrlSize),
-            s.Prop.Size(BarSize))}
+        s.SetMinSize(geom.Point{s.Width(), len})
+        s.barStart = geom.Point{0.5*s.Width(), 0.5*s.BarSize()}
+        s.ctrlStart = geom.Point{0.5*s.Width(), 0.5*max(s.CtrlSize(),
+            s.BarSize())}
     }
     s.initValue = 0.0
     s.minValue  = 0.0
@@ -1249,11 +1087,11 @@ func (s *Slider) Paint(gc *gg.Context) {
     var pt0, pt1 geom.Point
     //log.Printf("Slider.Paint()")
     if s.pushed {
-        gc.SetStrokeColor(s.Prop.Color(PressedBarColor))
+        gc.SetStrokeColor(s.PressedBarColor())
     } else {
-        gc.SetStrokeColor(s.Prop.Color(BarColor))
+        gc.SetStrokeColor(s.BarColor())
     }
-    gc.SetStrokeWidth(s.Prop.Size(BarSize))
+    gc.SetStrokeWidth(s.BarSize())
     gc.DrawLine(s.barStart.X, s.barStart.Y, s.barEnd.X, s.barEnd.Y)
     gc.Stroke()
 
@@ -1266,11 +1104,11 @@ func (s *Slider) Paint(gc *gg.Context) {
     }
 
     if s.pushed {
-        gc.SetStrokeColor(s.Prop.Color(PressedColor))
+        gc.SetStrokeColor(s.PressedColor())
     } else {
-        gc.SetStrokeColor(s.Prop.Color(Color))
+        gc.SetStrokeColor(s.Color())
     }
-    gc.SetStrokeWidth(s.Prop.Size(CtrlSize))
+    gc.SetStrokeWidth(s.CtrlSize())
     gc.DrawLine(pt0.X, pt0.Y, pt1.X, pt1.Y)
     gc.Stroke()
 }
@@ -1348,203 +1186,6 @@ func (s *Slider) OnInputEvent(evt touch.Event) {
     }
 }
 
-// Schoene Kreise fuer Spiele oder was auch immer lassen sich mit diesem
-// Widget-Typ auf den Schirm zaubern.
-var (
-    GeomShapeProps = NewProps(DefProps,
-        map[ColorPropertyName]color.Color{
-            Color:              DefProps.Color(Color),
-            PressedColor:       DefProps.Color(Color).Alpha(0.5),
-            BorderColor:        DefProps.Color(WhiteColor),
-            PressedBorderColor: DefProps.Color(WhiteColor).Alpha(0.5),
-        },
-        nil,
-        map[SizePropertyName]float64{
-            BorderWidth:        2.0,
-            PressedBorderWidth: 2.0,
-        })
-)
-
-type Circle struct {
-    LeafEmbed
-    pushed bool
-}
-
-func NewCircle(r float64) (*Circle) {
-    c := &Circle{}
-    c.Wrapper = c
-    c.Init(GeomShapeProps)
-    c.SetMinSize(geom.Point{2*r, 2*r})
-    return c
-}
-
-func (c *Circle) OnInputEvent(evt touch.Event) {
-    switch evt.Type {
-    case touch.TypePress:
-        c.pushed = true
-        c.Mark(MarkNeedsPaint)
-    case touch.TypeRelease:
-        c.pushed = false
-        c.Mark(MarkNeedsPaint)
-    }
-    c.CallTouchFunc(evt)
-}
-
-func (c *Circle) Paint(gc *gg.Context) {
-    //log.Printf("Circle.Paint()")
-    w := c.Size().X
-    gc.DrawCircle(0.5*w, 0.5*w, 0.5*w)
-    if c.pushed {
-        gc.SetStrokeWidth(c.Prop.Size(PressedBorderWidth))
-        gc.SetFillColor(c.Prop.Color(PressedColor))
-        gc.SetStrokeColor(c.Prop.Color(PressedBorderColor))
-    } else {
-        gc.SetStrokeWidth(c.Prop.Size(BorderWidth))
-        gc.SetFillColor(c.Prop.Color(Color))
-        gc.SetStrokeColor(c.Prop.Color(BorderColor))
-    }
-    gc.FillStroke()
-}
-
-func (c *Circle) Contains(pt geom.Point) (bool) {
-    if !c.Embed.Contains(pt) {
-        return false
-    }
-    x, y, w, h := c.Rect().AsCoord()
-    rx := 2*(pt.X-x)/w - 1.0
-    ry := 2*(pt.Y-y)/h - 1.0
-    return rx*rx + ry*ry <= 1.0
-}
-
-func (c *Circle) SetCenter(p geom.Point) {
-    c.SetPos(p.Sub(c.Size().Mul(0.5)))
-}
-
-func (c *Circle) Center() (geom.Point) {
-    return c.Rect().Center()
-}
-
-func (c *Circle) SetRadius(r float64) {
-    mp := c.Center()
-    c.SetMinSize(geom.Point{2*r, 2*r})
-    c.SetPos(mp.Sub(c.Size().Mul(0.5)))
-}
-
-func (c *Circle) Radius() (float64) {
-    return 0.5 * c.Size().X
-}
-
-// Ein allgemeinerer Widget Typ ist die Ellipse.
-type Ellipse struct {
-    LeafEmbed
-    pushed bool
-}
-
-func NewEllipse(rx, ry float64) (*Ellipse) {
-    e := &Ellipse{}
-    e.Wrapper = e
-    e.Init(GeomShapeProps)
-    e.SetMinSize(geom.Point{2*rx, 2*ry})
-    return e
-}
-
-func (e *Ellipse) OnInputEvent(evt touch.Event) {
-    switch evt.Type {
-    case touch.TypePress:
-        e.pushed = true
-        e.Mark(MarkNeedsPaint)
-    case touch.TypeRelease:
-        e.pushed = false
-        e.Mark(MarkNeedsPaint)
-    }
-    e.CallTouchFunc(evt)
-}
-
-func (e *Ellipse) Paint(gc *gg.Context) {
-    //log.Printf("Circle.Paint()")
-    w, h := e.Size().AsCoord()
-    gc.DrawEllipse(0.5*w, 0.5*h, 0.5*w, 0.5*h)
-    if e.pushed {
-        gc.SetStrokeWidth(e.Prop.Size(PressedBorderWidth))
-        gc.SetFillColor(e.Prop.Color(PressedColor))
-        gc.SetStrokeColor(e.Prop.Color(PressedBorderColor))
-    } else {
-        gc.SetStrokeWidth(e.Prop.Size(BorderWidth))
-        gc.SetFillColor(e.Prop.Color(Color))
-        gc.SetStrokeColor(e.Prop.Color(BorderColor))
-    }
-    gc.FillStroke()
-}
-
-func (e *Ellipse) Contains(pt geom.Point) (bool) {
-    if !e.Embed.Contains(pt) {
-        return false
-    }
-    x, y, w, h := e.Rect().AsCoord()
-    rx := 2*(pt.X-x)/w - 1.0
-    ry := 2*(pt.Y-y)/h - 1.0
-    return rx*rx + ry*ry <= 1.0
-}
-
-func (e *Ellipse) SetCenter(p geom.Point) {
-    e.SetPos(p.Sub(e.Size().Mul(0.5)))
-}
-
-func (e *Ellipse) Center() (geom.Point) {
-    return e.Rect().Center()
-}
-
-func (e *Ellipse) SetRadius(rx, ry float64) {
-    mp := e.Center()
-    e.SetMinSize(geom.Point{2*rx, 2*ry})
-    e.SetPos(mp.Sub(e.Size().Mul(0.5)))
-}
-
-func (e *Ellipse) Radius() (float64, float64) {
-    return e.Size().Mul(0.5).AsCoord()
-}
-
-// Und wo es Kreise gibt, da sind auch die Rechtecke nicht weit.
-type Rectangle struct {
-    LeafEmbed
-    pushed bool
-}
-
-func NewRectangle(w, h float64) (*Rectangle) {
-    r := &Rectangle{}
-    r.Wrapper = r
-    r.Init(GeomShapeProps)
-    r.SetMinSize(geom.Point{w, h})
-    return r
-}
-
-func (r *Rectangle) OnInputEvent(evt touch.Event) {
-    switch evt.Type {
-    case touch.TypePress:
-        r.pushed = true
-        r.Mark(MarkNeedsPaint)
-    case touch.TypeRelease:
-        r.pushed = false
-        r.Mark(MarkNeedsPaint)
-    }
-    r.CallTouchFunc(evt)
-}
-
-func (r *Rectangle) Paint(gc *gg.Context) {
-    //log.Printf("Rectangle.Paint()")
-    gc.DrawRectangle(r.Bounds().AsCoord())
-    if r.pushed {
-        gc.SetStrokeWidth(r.Prop.Size(PressedBorderWidth))
-        gc.SetFillColor(r.Prop.Color(PressedColor))
-        gc.SetStrokeColor(r.Prop.Color(PressedBorderColor))
-    } else {
-        gc.SetStrokeWidth(r.Prop.Size(BorderWidth))
-        gc.SetFillColor(r.Prop.Color(Color))
-        gc.SetStrokeColor(r.Prop.Color(BorderColor))
-    }
-    gc.FillStroke()
-}
-
 // Wir wollen es wissen und machen einen auf Game-Entwickler
 //type Sprite struct {
 //    LeafEmbed
@@ -1556,7 +1197,7 @@ func (r *Rectangle) Paint(gc *gg.Context) {
 //func NewSprite(imgFiles ...string) (*Sprite) {
 //    s := &Sprite{}
 //    s.Wrapper = s
-//    s.Init(DefProps)
+//    s.PropertyEmbed.Init(DefProps)
 //    s.imgList = make([]image.Image, 0)
 //    s.curImg = 0
 //    s.AddImages(imgFiles...)
@@ -1601,79 +1242,4 @@ func (r *Rectangle) Paint(gc *gg.Context) {
 //}
 //
 //-----------------------------------------------------------------------------
-
-type Canvas struct {
-    LeafEmbed
-    Color, StrokeColor color.Color
-    LineWidth float64
-    Clip bool
-    ObjList *list.List
-    mutex *sync.Mutex
-}
-
-func NewCanvas(w, h float64) (*Canvas) {
-    c := &Canvas{}
-    c.Wrapper = c
-    c.Init(DefProps)
-    c.SetSize(geom.Point{w, h})
-    c.Color   = DefProps.Color(BlackColor)
-    c.StrokeColor = DefProps.Color(WhiteColor)
-    c.LineWidth   = 0.0
-    c.Clip        = false
-    c.ObjList     = list.New()
-    c.mutex       = &sync.Mutex{}
-    return c
-}
-
-/*
-func (c *Canvas) Paint(gc *gg.Context) {
-    //log.Printf("Canvas.Paint()")
-    c.Marks.UnmarkNeedsPaint()
-    transformer := draw.BiLinear
-    m := c.Matrix()
-    s2d := f64.Aff3{m.M11, m.M12, m.M13, m.M21, m.M22, m.M23}
-    c.Lock()
-    if gc.Mask() == nil {
-        transformer.Transform(gc.Image().(*image.RGBA), s2d, c.Gc.Image(),
-                c.Gc.Image().Bounds(), draw.Over, nil)
-    } else {
-        transformer.Transform(gc.Image().(*image.RGBA), s2d, c.Gc.Image(),
-                c.Gc.Image().Bounds(), draw.Over, &draw.Options{
-                    DstMask : gc.Mask(),
-                    DstMaskP: image.Point{},
-                })
-    }
-    c.Unlock()
-}
-*/
-
-func (c *Canvas) Paint(gc *gg.Context) {
-    c.Marks.UnmarkNeedsPaint()
-    gc.Push()
-    gc.Multiply(c.Matrix())
-    gc.SetFillColor(c.Color)
-    gc.SetStrokeColor(c.StrokeColor)
-    gc.SetStrokeWidth(c.LineWidth)
-    gc.DrawRectangle(c.LocalBounds().AsCoord())
-    if c.Clip {
-        gc.ClipPreserve()
-    }
-    gc.FillStroke()
-    for e := c.ObjList.Front(); e != nil; e = e.Next() {
-        o := e.Value.(CanvasObject)
-        o.Paint(gc)
-    }
-    if c.Clip {
-        gc.ResetClip()
-    }
-    gc.Pop()
-}
-
-func (c *Canvas) Add(obj CanvasObject) {
-    c.ObjList.PushBack(obj)
-}
-
-func (c *Canvas) OnInputEvent(evt touch.Event) {
-    c.CallTouchFunc(evt)
-}
 

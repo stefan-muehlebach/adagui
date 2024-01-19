@@ -509,7 +509,7 @@ type Spacer struct {
 func NewSpacer() (*Spacer) {
     s := &Spacer{}
     s.Wrapper = s
-    s.Init(DefProps)
+    s.Init()
     return s
 }
 

@@ -38,7 +38,6 @@ func NewScreen() (*Screen) {
     }
     numScreen += 1
     s := &Screen{}
-//    adatft.Init()
     s.disp  = adatft.OpenDisplay(rotation)
     s.touch = adatft.OpenTouch()
     s.touch.ReadConfig()
@@ -61,6 +60,11 @@ func (s *Screen) NewWindow() (*Window) {
     return w
 }
 
+// Liefert das aktuell angezeigte Window zurueck.
+func (s *Screen) Window() (*Window) {
+    return s.window
+}
+
 // Mit SetWindow wird das übergebene Fenster zum sichtbaren und aktiven
 // Fenster. Nur aktive Fenster erhalten die Touch-Events vom Touchscreen und
 // nur aktive Fenster werden dargestellt.
@@ -74,10 +78,6 @@ func (s *Screen) SetWindow(w *Window) {
     s.window = w
     s.window.stage = StageVisible
     s.window.Repaint()
-}
-
-func (s *Screen) Window() (*Window) {
-    return s.window
 }
 
 // Mit Run schliesslich wird der MainEvent-Loop der Applikation gestartet,
