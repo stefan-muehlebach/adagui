@@ -137,13 +137,6 @@ func (pe *PropertyEmbed) SetHeight(s float64) {
     pe.prop.SetSize(Height, s)
 }
 
-func (pe *PropertyEmbed) Size() (float64) {
-    return pe.prop.Size(Size)
-}
-func (pe *PropertyEmbed) SetSize(s float64) {
-    pe.prop.SetSize(Size, s)
-}
-
 func (pe *PropertyEmbed) BorderWidth() (float64) {
     return pe.prop.Size(BorderWidth)
 }

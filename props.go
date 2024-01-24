@@ -60,7 +60,7 @@ type SizePropertyName int
 const (
     Width SizePropertyName = iota
     Height
-    Size
+//    Size
     BorderWidth
     PressedBorderWidth
     SelectedBorderWidth
@@ -257,7 +257,7 @@ func NewDefaultProps() (*Properties) {
     p.sizeMap = map[SizePropertyName]float64{
         Width:               0.0,
         Height:              0.0,
-        Size:                0.0,
+        //Size:                0.0,
 
         BorderWidth:         0.0,
         PressedBorderWidth:  0.0,

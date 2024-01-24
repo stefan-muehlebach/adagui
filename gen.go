@@ -105,7 +105,7 @@ func (pe *PropertyEmbed) Init(parent *Properties) {
             NameList: []string{
                 "Width",
                 "Height",
-                "Size",
+                // "Size",
                 "BorderWidth",
                 "PressedBorderWidth",
                 "SelectedBorderWidth",

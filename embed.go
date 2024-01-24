@@ -20,7 +20,6 @@ type Embed struct {
     transl, rotate, scale, transf geom.Matrix
     Marks Marks
     visible bool
-//    Prop *Properties
     PropertyEmbed
 }
 
@@ -30,7 +29,6 @@ func (m *Embed) Init() {
     m.scale   = geom.Identity()
     m.transf  = geom.Identity()
     m.visible = true
- //   m.Prop    = NewProperties(parentProps)
 }
 
 func (m *Embed) Wrappee() (*Embed) {
@@ -129,14 +127,14 @@ func (m *Embed) LocalBounds() (geom.Rectangle) {
     return geom.Rectangle{Max: m.Size()}
 }
 func (m *Embed) Bounds() (geom.Rectangle) {
-    return geom.Rectangle{Max: m.Size()}
+    return m.Wrapper.LocalBounds()
 }
 
 func (m *Embed) ParentBounds() (geom.Rectangle) {
-    return m.LocalBounds().Add(m.Pos())
+    return geom.Rectangle{Max: m.Size()}.Add(m.Pos())
 }
 func (m *Embed) Rect() (geom.Rectangle) {
-    return m.LocalBounds().Add(m.Pos())
+    return m.Wrapper.ParentBounds()
 }
 
 func (m *Embed) Visible() (bool) {
@@ -371,19 +369,16 @@ func (c *ContainerEmbed) MinSize() (geom.Point) {
     return ms
 }
 
-func (c *ContainerEmbed) layout() {
-    if c.Layout == nil {
-        return
-    }
-    c.Layout.Layout(c.ChildList, c.Wrapper.Size())
-}
-
 func (c *ContainerEmbed) Paint(gc *gg.Context) {
     Debugf("type %T", c.Wrapper)
+    Debugf("LocalBounds: %v", c.Wrapper.LocalBounds())
     c.Marks.UnmarkNeedsPaint()
     for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed)
         if !child.Visible() {
+            continue
+        }
+        if !c.Wrapper.LocalBounds().Overlaps(child.ParentBounds()) {
             continue
         }
         child.Paint(gc)
@@ -407,6 +402,13 @@ func (c *ContainerEmbed) SelectTarget(pt geom.Point) (Node) {
         }
     }
     return c.Wrapper
+}
+
+func (c *ContainerEmbed) layout() {
+    if c.Layout == nil {
+        return
+    }
+    c.Layout.Layout(c.ChildList, c.Wrapper.Size())
 }
 
 //----------------------------------------------------------------------------
