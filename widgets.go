@@ -59,6 +59,18 @@ const (
     Vertical
 )
 
+// Der Typ AlignType dient der Ausrichtung von Text.
+type AlignType int
+
+const (
+    AlignLeft AlignType = 1 << iota
+    AlignCenter
+    AlignRight
+    AlignTop
+    AlignMiddle
+    AlignBottom
+)
+
 // Fuer die visuelle Abgrenzung in Box-Layouts.
 type Separator struct {
     LeafEmbed
@@ -82,17 +94,6 @@ func (s *Separator) Paint(gc *gg.Context) {
     gc.LineTo(s.Bounds().E().AsCoord())
     gc.Stroke()
 }
-
-type AlignType int
-
-const (
-    AlignLeft AlignType = (1 << 0)
-    AlignCenter         = (1 << 1)
-    AlignRight          = (1 << 2)
-    AlignTop            = (1 << 3)
-    AlignMiddle         = (1 << 4)
-    AlignBottom         = (1 << 5)
-)
 
 // Unter einem Label verstehen wir einfach eine Konserve für Text,
 // kurzen Text!
