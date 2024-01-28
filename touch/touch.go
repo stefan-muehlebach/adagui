@@ -167,47 +167,49 @@ func (m *TouchEmbed) CallTouchFunc(evt Event) {
 
 // Mit SetTouchFunc wird die Funktion fnc als Handler fuer den Event typ
 // registriert. Eine bereits registrierte Funktion wird damit ueberschrieben.
-func (m *TouchEmbed) SetTouchFunc(typ Type, fnc TouchFunction) {
-    m.touchFuncList[typ] = fnc
+func (m *TouchEmbed) SetTouchFunc(fnc TouchFunction, types ...Type) {
+    for _, typ := range types {
+        m.touchFuncList[typ] = fnc
+    }
 }
 
 // Registriert fnc als Handler fuer den Press-Event.
 func (m *TouchEmbed) SetOnPress(fnc TouchFunction) {
-    m.SetTouchFunc(TypePress, fnc)
+    m.SetTouchFunc(fnc, TypePress)
 }
 
 // Registriert fnc als Handler fuer den Release-Event.
 func (m *TouchEmbed) SetOnRelease(fnc TouchFunction) {
-    m.SetTouchFunc(TypeRelease, fnc)
+    m.SetTouchFunc(fnc, TypeRelease)
 }
 
 // Registriert fnc als Handler fuer den Drag-Event.
 func (m *TouchEmbed) SetOnDrag(fnc TouchFunction) {
-    m.SetTouchFunc(TypeDrag, fnc)
+    m.SetTouchFunc(fnc, TypeDrag)
 }
 
 // Registriert fnc als Handler fuer den LongPress-Event.
 func (m *TouchEmbed) SetOnLongPress(fnc TouchFunction) {
-    m.SetTouchFunc(TypeLongPress, fnc)
+    m.SetTouchFunc(fnc, TypeLongPress)
 }
 
 // Registriert fnc als Handler fuer den Enter-Event.
 func (m *TouchEmbed) SetOnEnter(fnc TouchFunction) {
-    m.SetTouchFunc(TypeEnter, fnc)
+    m.SetTouchFunc(fnc, TypeEnter)
 }
 
 // Registriert fnc als Handler fuer den Leave-Event.
 func (m *TouchEmbed) SetOnLeave(fnc TouchFunction) {
-    m.SetTouchFunc(TypeLeave, fnc)
+    m.SetTouchFunc(fnc, TypeLeave)
 }
 
 // Registriert fnc als Handler fuer den Tap-Event.
 func (m *TouchEmbed) SetOnTap(fnc TouchFunction) {
-    m.SetTouchFunc(TypeTap, fnc)
+    m.SetTouchFunc(fnc, TypeTap)
 }
 
 // Registriert fnc als Handler fuer den DoubleTap-Event.
 func (m *TouchEmbed) SetOnDoubleTap(fnc TouchFunction) {
-    m.SetTouchFunc(TypeDoubleTap, fnc)
+    m.SetTouchFunc(fnc, TypeDoubleTap)
 }
 

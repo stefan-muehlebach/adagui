@@ -116,6 +116,20 @@ func (pe *PropertyEmbed) SetPressedBarColor(c color.Color) {
     pe.prop.SetColor(PressedBarColor, c)
 }
 
+func (pe *PropertyEmbed) BackgroundColor() (color.Color) {
+    return pe.prop.Color(BackgroundColor)
+}
+func (pe *PropertyEmbed) SetBackgroundColor(c color.Color) {
+    pe.prop.SetColor(BackgroundColor, c)
+}
+
+func (pe *PropertyEmbed) MenuBackgroundColor() (color.Color) {
+    return pe.prop.Color(MenuBackgroundColor)
+}
+func (pe *PropertyEmbed) SetMenuBackgroundColor(c color.Color) {
+    pe.prop.SetColor(MenuBackgroundColor, c)
+}
+
 func (pe *PropertyEmbed) Font() (*opentype.Font) {
     return pe.prop.Font(Font)
 }

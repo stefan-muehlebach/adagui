@@ -196,41 +196,41 @@ func (l *Label) updateRefPoint() {
 }
 
 func (l *Label) Paint(gc *gg.Context) {
-    Debugf("type %T", l.Wrapper)
+    Debugf(Painting, "type %T", l.Wrapper)
     gc.SetFontFace(l.fontFace)
     gc.SetStrokeColor(l.TextColor())
     gc.DrawString(l.text.Get(), l.rPt.X, l.rPt.Y)
-    // Groesse des Labels als graues Rechteck
+    // Groesse des Labels als Rechteck
     gc.DrawRectangle(l.Bounds().AsCoord())
     gc.SetStrokeColor(l.BorderColor())
     gc.SetStrokeWidth(l.BorderWidth())
     gc.Stroke()
     // Markierungen um den Bereich fuer den Text
-    gc.SetStrokeColor(colornames.Crimson)
-    gc.SetStrokeWidth(2.0)
-    pt0 := l.Bounds().Min
-    pt1 := l.Bounds().Max
+//    gc.SetStrokeColor(colornames.Crimson)
+//    gc.SetStrokeWidth(2.0)
+//    pt0 := l.Bounds().Min
+//    pt1 := l.Bounds().Max
     // Links oben
-    gc.MoveTo(pt0.X, pt0.Y+10.0)
-    gc.LineTo(pt0.X, pt0.Y)
-    gc.LineTo(pt0.X+10.0, pt0.Y)
+//    gc.MoveTo(pt0.X, pt0.Y+10.0)
+//    gc.LineTo(pt0.X, pt0.Y)
+//    gc.LineTo(pt0.X+10.0, pt0.Y)
     // Links unten
-    gc.MoveTo(pt0.X, pt1.Y-10.0)
-    gc.LineTo(pt0.X, pt1.Y)
-    gc.LineTo(pt0.X+10.0, pt1.Y)
+//    gc.MoveTo(pt0.X, pt1.Y-10.0)
+//    gc.LineTo(pt0.X, pt1.Y)
+//    gc.LineTo(pt0.X+10.0, pt1.Y)
     // Rechts oben
-    gc.MoveTo(pt1.X-10.0, pt0.Y)
-    gc.LineTo(pt1.X, pt0.Y)
-    gc.LineTo(pt1.X, pt0.Y+10.0)
+//    gc.MoveTo(pt1.X-10.0, pt0.Y)
+//    gc.LineTo(pt1.X, pt0.Y)
+//    gc.LineTo(pt1.X, pt0.Y+10.0)
     // Rechts unten
-    gc.MoveTo(pt1.X, pt1.Y-10.0)
-    gc.LineTo(pt1.X, pt1.Y)
-    gc.LineTo(pt1.X-10.0, pt1.Y)
-    gc.Stroke()
+//    gc.MoveTo(pt1.X, pt1.Y-10.0)
+//    gc.LineTo(pt1.X, pt1.Y)
+//    gc.LineTo(pt1.X-10.0, pt1.Y)
+//    gc.Stroke()
     // Referenzpunkt fuer den Text
-    gc.SetFillColor(colornames.Crimson)
-    gc.DrawPoint(l.rPt.X, l.rPt.Y, 5.0)
-    gc.Fill()
+//    gc.SetFillColor(colornames.Crimson)
+//    gc.DrawPoint(l.rPt.X, l.rPt.Y, 5.0)
+//    gc.Fill()
 }
 
 // Buttons sind neutrale Knoepfe, ohne spezifischen Inhalt, d.h. ohne Text
@@ -250,17 +250,17 @@ var (
 
 type Button struct {
     LeafEmbed
-    pushed bool
+    PushEmbed
     checked bool
 }
 
 func NewButton(w, h float64) (*Button) {
     b := &Button{}
     b.Wrapper = b
-    b.Init()
+    b.LeafEmbed.Init()
+    b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.Init(ButtonProps)
     b.SetMinSize(geom.Point{w, h})
-    b.pushed    = false
     b.checked   = false
     return b
 }
@@ -268,7 +268,7 @@ func NewButton(w, h float64) (*Button) {
 func (b *Button) Paint(gc *gg.Context) {
     gc.DrawRoundedRectangle(0.0, 0.0, b.Size().X, b.Size().Y,
             b.CornerRadius())
-    if b.pushed {
+    if b.Pushed() {
         gc.SetFillColor(b.PressedColor())
         gc.SetStrokeColor(b.PressedBorderColor())
     } else {
@@ -286,14 +286,7 @@ func (b *Button) Paint(gc *gg.Context) {
 
 func (b *Button) OnInputEvent(evt touch.Event) {
     //log.Printf("%T: %v", b, evt)
-    switch evt.Type {
-    case touch.TypePress, touch.TypeEnter:
-        b.pushed = true
-        b.Mark(MarkNeedsPaint)
-    case touch.TypeRelease, touch.TypeLeave:
-        b.pushed = false
-        b.Mark(MarkNeedsPaint)
-    }
+    b.PushEmbed.OnInputEvent(evt)
     b.CallTouchFunc(evt)
 }
 
@@ -303,22 +296,42 @@ type TextButton struct {
     Button
     label string
     fontFace font.Face
-    rPt geom.Point
+    align AlignType
+    refPt geom.Point
+    ax, ay float64
     desc float64
 }
 
 func NewTextButton(label string) (*TextButton) {
     b := &TextButton{}
     b.Wrapper = b
-    b.Init()
+    b.LeafEmbed.Init()
+    b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.Init(ButtonProps)
     b.label = label
+    b.align = AlignCenter | AlignMiddle
     b.updateSize()
     return b
 }
 
 func (b *TextButton) SetSize(size geom.Point) {
     b.Button.SetSize(size)
+    b.updateRefPoint()
+}
+
+func (b *TextButton) Text() (string) {
+    return b.label
+}
+func (b *TextButton) SetText(str string) {
+    b.label = str
+    b.updateSize()
+}
+
+func (b *TextButton) Align() (AlignType) {
+    return b.align
+}
+func (b *TextButton) SetAlign(a AlignType) {
+    b.align = a
     b.updateRefPoint()
 }
 
@@ -332,13 +345,32 @@ func (b *TextButton) updateSize() {
 }
 
 func (b *TextButton) updateRefPoint() {
-    b.rPt = b.Bounds().Center()
+    if b.align & AlignLeft != 0 {
+        b.refPt.X = b.Bounds().Min.X + b.InnerPadding()
+        b.ax = 0.0
+    } else if b.align & AlignCenter != 0 {
+        b.refPt.X = b.Bounds().Center().X
+        b.ax = 0.5
+    } else {
+        b.refPt.X = b.Bounds().Max.X - b.InnerPadding()
+        b.ax = 1.0
+    }
+    if b.align & AlignBottom != 0 {
+        b.refPt.Y = b.Bounds().Max.Y - b.Padding()
+        b.ay = 0.0
+    } else if b.align & AlignMiddle != 0 {
+        b.refPt.Y = b.Bounds().Center().Y
+        b.ay = 0.5
+    } else {
+        b.refPt.Y = b.Bounds().Min.Y + b.Padding()
+        b.ay = 1.0
+    }
 }
 
 func (b *TextButton) Paint(gc *gg.Context) {
     b.Button.Paint(gc)
     gc.SetFontFace(b.fontFace)
-    if b.pushed {
+    if b.Pushed() {
         gc.SetStrokeColor(b.PressedTextColor())
     } else {
         if b.checked {
@@ -347,16 +379,7 @@ func (b *TextButton) Paint(gc *gg.Context) {
             gc.SetStrokeColor(b.TextColor())
         }
     }
-    gc.DrawStringAnchored(b.label, b.rPt.X, b.rPt.Y, 0.5, 0.5)
-}
-
-func (b *TextButton) SetText(str string) {
-    b.label = str
-    b.updateSize()
-}
-
-func (b *TextButton) Text() (string) {
-    return b.label
+    gc.DrawStringAnchored(b.label, b.refPt.X, b.refPt.Y, b.ax, b.ay)
 }
 
 // Der Versuch, ein ListButton zu implementieren...
@@ -371,7 +394,8 @@ type ListButton struct {
 func NewListButton(options []string) (*ListButton) {
     b := &ListButton{}
     b.Wrapper     = b
-    b.Init()
+    b.LeafEmbed.Init()
+    b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.Init(ButtonProps)
     b.fontFace  = fonts.NewFace(b.Font(), b.FontSize())
     b.Options   = options
@@ -404,7 +428,7 @@ func (b *ListButton) updateSelected() {
 func (b *ListButton) Paint(gc *gg.Context) {
     b.Button.Paint(gc)
     gc.SetFontFace(b.fontFace)
-    if b.pushed {
+    if b.Pushed() {
         gc.SetStrokeColor(b.PressedTextColor())
     } else {
         if b.checked {
@@ -417,7 +441,7 @@ func (b *ListButton) Paint(gc *gg.Context) {
     gc.DrawStringAnchored(b.Selected, pt.X, pt.Y, 0.0, 0.5)
 
     gc.SetStrokeWidth(b.BorderWidth())
-    if b.pushed {
+    if b.Pushed() {
         gc.SetStrokeColor(b.PressedBorderColor())
     } else {
         gc.SetStrokeColor(b.BorderColor())
@@ -433,7 +457,7 @@ func (b *ListButton) Paint(gc *gg.Context) {
     gc.Stroke()
 
     gc.SetLineCapRound()
-    if b.pushed {
+    if b.Pushed() {
         gc.SetFillColor(b.PressedLineColor())
         gc.SetStrokeColor(b.PressedLineColor())
     } else {
@@ -463,14 +487,10 @@ func (b *ListButton) Paint(gc *gg.Context) {
 
 func (b *ListButton) OnInputEvent(evt touch.Event) {
     //log.Printf("%T: %v", b, evt)
+    b.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
     case touch.TypePress, touch.TypeEnter:
-        b.pushed = true
         b.next()
-        b.Mark(MarkNeedsPaint)
-    case touch.TypeRelease, touch.TypeLeave:
-        b.pushed = false
-        b.Mark(MarkNeedsPaint)
     }
     b.CallTouchFunc(evt)
 }
@@ -523,7 +543,8 @@ type IconButton struct {
 func NewIconButton(imgFile string) (*IconButton) {
     b := &IconButton{}
     b.Wrapper = b
-    b.Init()
+    b.LeafEmbed.Init()
+    b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.Init(ButtonProps)
     b.img, _ = gg.LoadPNG(imgFile)
     i := b.InnerPadding()
@@ -582,16 +603,17 @@ func (b *IconButton) DataChanged(data binding.DataItem) {
 var (
     TabButtonProps = NewProps(ButtonProps,
         map[ColorPropertyName]color.Color{
-            Color:             DefProps.Color(Color).Alpha(0.4),
-            BorderColor:       DefProps.Color(BorderColor).Alpha(0.4),
-            TextColor:         DefProps.Color(TextColor).Alpha(0.4),
+            Color:             ButtonProps.Color(Color).Alpha(0.4),
+            BorderColor:       ButtonProps.Color(BorderColor).Alpha(0.4),
+            TextColor:         ButtonProps.Color(TextColor).Alpha(0.4),
             SelectedTextColor: colornames.Black,
         },
         nil,
         map[SizePropertyName]float64{
             Width:        30.0,
             Height:       18.0,
-            CornerRadius:  8.0,
+            BorderWidth:   0.0,
+            CornerRadius:  9.0,
             FontSize:     12.0,
         })
 )
@@ -607,7 +629,8 @@ type TabButton struct {
 func NewTabButton(label string, idx int) (*TabButton) {
     b := &TabButton{}
     b.Wrapper = b
-    b.Init()
+    b.LeafEmbed.Init()
+    b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.Init(TabButtonProps)
     b.SetMinSize(geom.Point{b.Width(), b.Height()})
     b.label     = label
@@ -625,13 +648,10 @@ func NewTabButtonWithData(label string, idx int, data binding.Int) (*TabButton) 
 }
 
 func (b *TabButton) Paint(gc *gg.Context) {
-    //log.Printf("Button.Paint()")
-    gc.DrawRectangle(b.Bounds().AsCoord())
-    gc.Clip()
     gc.DrawRoundedRectangle(0.0, 0.0,
             b.Size().X, b.Size().Y+b.CornerRadius(),
             b.CornerRadius())
-    if b.pushed {
+    if b.Pushed() {
         gc.SetFillColor(b.PressedColor())
         gc.SetStrokeColor(b.PressedBorderColor())
     } else {
@@ -643,12 +663,10 @@ func (b *TabButton) Paint(gc *gg.Context) {
             gc.SetStrokeColor(b.BorderColor())
         }
     }
-    gc.SetStrokeWidth(b.BorderWidth())
     gc.FillStroke()
-    gc.ResetClip()
 
     mp := b.Bounds().Center()
-    if b.pushed {
+    if b.Pushed() {
         gc.SetStrokeColor(b.PressedTextColor())
     } else {
         if b.checked {
@@ -663,13 +681,8 @@ func (b *TabButton) Paint(gc *gg.Context) {
 
 func (b *TabButton) OnInputEvent(evt touch.Event) {
     //log.Printf("%T: %v", b, evt)
+    b.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
-    case touch.TypePress, touch.TypeEnter:
-        b.pushed = true
-        b.Mark(MarkNeedsPaint)
-    case touch.TypeRelease, touch.TypeLeave:
-        b.pushed = false
-        b.Mark(MarkNeedsPaint)
     case touch.TypeTap:
         if !b.checked {
             b.data.Set(b.idx)
@@ -725,7 +738,8 @@ type Checkbox struct {
 func NewCheckbox(label string) (*Checkbox) {
     c := &Checkbox{}
     c.Wrapper = c
-    c.Init()
+    c.LeafEmbed.Init()
+    c.PushEmbed.Init(c, nil)
     c.PropertyEmbed.Init(CheckboxProps)
     c.label     = label
     c.fontFace  = fonts.NewFace(c.Font(), c.FontSize())
@@ -753,7 +767,7 @@ func NewCheckboxWithData(label string, data binding.Bool) (*Checkbox) {
 func (c *Checkbox) Paint(gc *gg.Context) {
     gc.DrawRoundedRectangle(0.0, 0.0, c.Width(), c.Height(),
             c.CornerRadius())
-    if c.pushed {
+    if c.Pushed() {
         gc.SetFillColor(c.PressedColor())
         gc.SetStrokeColor(c.PressedBorderColor())
     } else {
@@ -764,7 +778,7 @@ func (c *Checkbox) Paint(gc *gg.Context) {
     gc.FillStroke()
     if c.Checked() {
         gc.SetStrokeWidth(c.LineWidth())
-        if c.pushed {
+        if c.Pushed() {
             gc.SetStrokeColor(c.PressedLineColor())
         } else {
             gc.SetStrokeColor(c.LineColor())
@@ -823,7 +837,8 @@ type RadioButton struct {
 func NewRadioButtonWithData(label string, value int, data binding.Int) (*RadioButton) {
     b := &RadioButton{}
     b.Wrapper  = b
-    b.Init()
+    b.LeafEmbed.Init()
+    b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.Init(RadioButtonProps)
     b.label    = label
     b.fontFace = fonts.NewFace(b.Font(), b.FontSize())
@@ -840,7 +855,7 @@ func (b *RadioButton) Paint(gc *gg.Context) {
     //log.Printf("RadioButton.Paint()")
     mp := geom.Point{0.5*b.Width(), 0.5*b.Height()}
     gc.DrawCircle(mp.X, mp.Y, 0.5*b.Width())
-    if b.pushed {
+    if b.Pushed() {
         gc.SetFillColor(b.PressedColor())
         gc.SetStrokeColor(b.PressedBorderColor())
     } else {
@@ -850,10 +865,10 @@ func (b *RadioButton) Paint(gc *gg.Context) {
     gc.SetStrokeWidth(b.BorderWidth())
     gc.FillStroke()
     if b.checked {
-        if b.pushed {
-	    gc.SetFillColor(b.PressedLineColor())
+        if b.Pushed() {
+	        gc.SetFillColor(b.PressedLineColor())
         } else {
-  	    gc.SetFillColor(b.LineColor())
+      	    gc.SetFillColor(b.LineColor())
         }
         gc.DrawCircle(mp.X, mp.Y, 0.5*b.LineWidth())
 	gc.Fill()
@@ -898,9 +913,9 @@ var (
 
 type Scrollbar struct {
     LeafEmbed
+    PushEmbed
     orient Orientation
     initValue, visiRange float64
-    pushed bool
     value binding.Float
     barStart, barEnd geom.Point
     ctrlStart, ctrlEnd geom.Point
@@ -910,8 +925,9 @@ type Scrollbar struct {
 func NewScrollbar(len float64, orient Orientation) (*Scrollbar) {
     s := &Scrollbar{}
     s.Wrapper = s
-    s.Init()
+    s.LeafEmbed.Init()
     s.PropertyEmbed.Init(ScrollbarProps)
+    s.PushEmbed.Init(s, nil)
     s.orient = orient
     if s.orient == Horizontal {
         s.SetMinSize(geom.Point{len, s.Height()})
@@ -979,7 +995,7 @@ func (s *Scrollbar) Value() (float64) {
 
 func (s *Scrollbar) Paint(gc *gg.Context) {
     var pt1, pt2 geom.Point
-    if s.pushed {
+    if s.Pushed() {
         gc.SetStrokeColor(s.PressedBarColor())
     } else {
         gc.SetStrokeColor(s.BarColor())
@@ -1001,7 +1017,7 @@ func (s *Scrollbar) Paint(gc *gg.Context) {
         pt2 = r.RelPos(0.0, endValue)
     }
 
-    if s.pushed {
+    if s.Pushed() {
         gc.SetStrokeColor(s.PressedColor())
     } else {
         gc.SetStrokeColor(s.Color())
@@ -1013,13 +1029,8 @@ func (s *Scrollbar) Paint(gc *gg.Context) {
 
 func (s *Scrollbar) OnInputEvent(evt touch.Event) {
     //log.Printf("%T: %v", s, evt)
+    s.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
-    case touch.TypePress:
-        s.pushed = true
-        s.Mark(MarkNeedsPaint)
-    case touch.TypeRelease:
-        s.pushed = false
-        s.Mark(MarkNeedsPaint)
     case touch.TypeDrag:
         r := s.Rect().Inset(s.ctrlStart.X, s.ctrlStart.Y)
         fx, fy := r.PosRel(evt.Pos)
@@ -1047,9 +1058,9 @@ var (
 
 type Slider struct {
     LeafEmbed
+    PushEmbed
     orient Orientation
     initValue, minValue, maxValue, stepSize float64
-    pushed bool
     value binding.Float
     barStart, barEnd geom.Point
     ctrlStart, ctrlEnd geom.Point
@@ -1058,8 +1069,9 @@ type Slider struct {
 func NewSlider(len float64, orient Orientation) (*Slider) {
     s := &Slider{}
     s.Wrapper = s
-    s.Init()
+    s.LeafEmbed.Init()
     s.PropertyEmbed.Init(SliderProps)
+    s.PushEmbed.Init(s, nil)
     s.orient = orient
     if s.orient == Horizontal {
         s.SetMinSize(geom.Point{len, s.Height()})
@@ -1109,7 +1121,7 @@ func (s *Slider) updateValues() {
 func (s *Slider) Paint(gc *gg.Context) {
     var pt0, pt1 geom.Point
     //log.Printf("Slider.Paint()")
-    if s.pushed {
+    if s.Pushed() {
         gc.SetStrokeColor(s.PressedBarColor())
     } else {
         gc.SetStrokeColor(s.BarColor())
@@ -1126,7 +1138,7 @@ func (s *Slider) Paint(gc *gg.Context) {
         pt1 = pt0.AddXY(0, 0.5)
     }
 
-    if s.pushed {
+    if s.Pushed() {
         gc.SetStrokeColor(s.PressedColor())
     } else {
         gc.SetStrokeColor(s.Color())
@@ -1185,13 +1197,8 @@ func (s *Slider) Factor() (float64) {
 
 func (s *Slider) OnInputEvent(evt touch.Event) {
     //log.Printf("%T: %v", s, evt)
+    s.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
-    case touch.TypePress:
-        s.pushed = true
-        s.Mark(MarkNeedsPaint)
-    case touch.TypeRelease:
-        s.pushed = false
-        s.Mark(MarkNeedsPaint)
     case touch.TypeDrag:
         r := s.Rect().Inset(s.ctrlStart.X, s.ctrlStart.Y)
         fx, fy := r.PosRel(evt.Pos)

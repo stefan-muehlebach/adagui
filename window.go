@@ -105,7 +105,7 @@ func (w *Window) paintThread() {
     for {
         select {
         case <- w.paintCloseQ:
-            Debugf("close message received")
+            Debugf(Painting, "close message received")
             w.quitQ <- true
             return
         case <- w.paintTicker.C:
@@ -120,7 +120,7 @@ func (w *Window) paintThread() {
             w.gc.Identity()
             w.mutex.Lock()
             if w.root != nil {
-                Debugf("redraw scene graph")
+                Debugf(Painting, "redraw scene graph")
                 w.root.Wrappee().Paint(w.gc)
             }
             w.mutex.Unlock()

@@ -155,7 +155,7 @@ func (m *Embed) Mark(marks Marks) {
 }
 
 func (m *Embed) Paint(gc *gg.Context) {
-    Debugf("type %T", m.Wrapper)
+    Debugf(Painting, "type %T", m.Wrapper)
     m.Marks.UnmarkNeedsPaint()
     gc.Push()
     gc.Multiply(m.Matrix())
@@ -166,6 +166,7 @@ func (m *Embed) Paint(gc *gg.Context) {
 // Contains ermittelt, ob sich der Punkt pt innerhalb des Widgets befindet.
 // Die Koordianten in pt muessen relativ zum Bezugssystem von m sein.
 func (m *Embed) Contains(pt geom.Point) (bool) {
+    Debugf(Coordinates, "type %T, pt: %v", m.Wrapper, pt)
     pt = m.Parent2Local(pt)
     return pt.In(m.Wrapper.Bounds())
 }
@@ -253,12 +254,13 @@ type LeafEmbed struct {
 }
 
 func (m *LeafEmbed) Paint(gc *gg.Context) {
-    Debugf("type %T", m.Wrapper)
+    Debugf(Painting, "type %T", m.Wrapper)
 }
 
 func (m *LeafEmbed) OnChildMarked(child Node, newMarks Marks) {}
 
 func (m *LeafEmbed) SelectTarget(pt geom.Point) (Node) {
+    Debugf(Coordinates, "type %T, pt: %v", m.Wrapper, pt)
     if !m.Visible() {
         return nil
     }
@@ -297,119 +299,6 @@ func (m *LeafEmbed) Parent2Local(pt geom.Point) (geom.Point) {
     return m.Parent.Parent2Local(pt)
 }
 
-// Alle GUI-Typen, welche weitere Nodes verwalten können (Fenster, Panels,
-// etc.) müssen dagegen diesen Typ einbetten. Damit kann über die ChildList
-// die angehängten Nodes verwaltet werden. Ebenso kann ein LayoutManager
-// verwendet werden, der für die Platzierung der Nodes zuständig ist.
-// Per Default wird das NullLayout verwendet, d.h. die Kinder müssen per
-// SetPos platziert werden und bleiben an dieser Stelle.
-type ContainerEmbed struct {
-    Embed
-    touch.TouchEmbed
-    ChildList *list.List
-    Layout LayoutManager
-}
-
-func (c *ContainerEmbed) Init() {
-    c.Embed.Init()
-    c.ChildList = list.New()
-    c.Layout = &NullLayout{}
-}
-
-func (c *ContainerEmbed) Add(n ...Node) {
-    for _, node := range n {
-        embed := node.Wrappee()
-        if embed.Parent != nil {
-            log.Fatal("Container: Add called for an attached child")
-        }
-        embed.Win = c.Win
-        embed.Parent = c
-        c.ChildList.PushBack(embed)
-        c.layout()
-    }
-}
-
-func (c *ContainerEmbed) Del(n Node) {
-    for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
-        node := elem.Value.(Node)
-        if n != node {
-            continue
-        }
-        embed := node.Wrappee()
-        embed.Win =  nil
-        embed.Parent = nil
-        c.ChildList.Remove(elem)
-        break
-    }
-    c.layout()
-}
-
-func (c *ContainerEmbed) DelAll() {
-    for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
-        embed := elem.Value.(*Embed)
-        embed.Parent = nil
-        embed.Win = nil
-    }
-    c.ChildList.Init()
-    c.layout()
-}
-
-func (c *ContainerEmbed) SetSize(s geom.Point) {
-    c.Embed.SetSize(s)
-    c.layout()
-}
-
-func (c *ContainerEmbed) MinSize() (geom.Point) {
-    ms := geom.Point{}
-    if c.minSize.Eq(geom.Point{0, 0}) {
-        ms = c.Layout.MinSize(c.ChildList)
-    } else {
-        ms =  c.Embed.MinSize()
-    }
-    return ms
-}
-
-func (c *ContainerEmbed) Paint(gc *gg.Context) {
-    Debugf("type %T", c.Wrapper)
-    Debugf("LocalBounds: %v", c.Wrapper.LocalBounds())
-    c.Marks.UnmarkNeedsPaint()
-    for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
-        child := elem.Value.(*Embed)
-        if !child.Visible() {
-            continue
-        }
-        if !c.Wrapper.LocalBounds().Overlaps(child.ParentBounds()) {
-            continue
-        }
-        child.Paint(gc)
-    }
-}
-
-func (c *ContainerEmbed) OnChildMarked(child Node, newMarks Marks) {
-    c.Mark(newMarks)
-}
-
-func (c *ContainerEmbed) SelectTarget(pt geom.Point) (Node) {
-    if !c.Wrapper.Contains(pt) {
-        return nil
-    }
-    pt = c.Parent2Local(pt)
-    for elem := c.ChildList.Back(); elem != nil; elem = elem.Prev() {
-        embed := elem.Value.(*Embed)
-        node := embed.Wrapper.SelectTarget(pt)
-        if node != nil {
-            return node
-        }
-    }
-    return c.Wrapper
-}
-
-func (c *ContainerEmbed) layout() {
-    if c.Layout == nil {
-        return
-    }
-    c.Layout.Layout(c.ChildList, c.Wrapper.Size())
-}
 
 //----------------------------------------------------------------------------
 

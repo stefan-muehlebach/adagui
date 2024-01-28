@@ -37,8 +37,8 @@ var (
         nil,
         map[SizePropertyName]float64{
             BorderWidth:         2.0,
-            PressedBorderWidth:  1.0,
-            SelectedBorderWidth: 2.0,
+            PressedBorderWidth:  4.0,
+            SelectedBorderWidth: 4.0,
         })
 
     PointProps = NewProps(ShapeProps,
@@ -52,26 +52,33 @@ var (
             Width:               8.0,
             Height:              8.0,
             BorderWidth:         0.0,
-            PressedBorderWidth:  0.0,
-            SelectedBorderWidth: 0.0,
+            PressedBorderWidth:  4.0,
+            SelectedBorderWidth: 4.0,
         })
 )
 
 // Abstrakter, allgemeiner Typ fuer geometrische Formen
 type Shape struct {
     LeafEmbed
-    pushed bool
+    PushEmbed
     selected bool
 }
 
+func (s *Shape) Init() {
+    s.LeafEmbed.Init()
+    s.PushEmbed.Init(s, nil)
+}
+
 func (s *Shape) OnInputEvent(evt touch.Event) {
+    Debugf(Events, "evt: %v", evt)
+    s.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
-    case touch.TypePress:
-        s.pushed = true
-        s.Mark(MarkNeedsPaint)
-    case touch.TypeRelease:
-        s.pushed = false
-        s.Mark(MarkNeedsPaint)
+//    case touch.TypePress:
+//        s.pushed = true
+//        s.Mark(MarkNeedsPaint)
+//    case touch.TypeRelease:
+//        s.pushed = false
+//        s.Mark(MarkNeedsPaint)
     case touch.TypeTap:
         s.selected = !s.selected
         s.Mark(MarkNeedsPaint)
@@ -80,19 +87,19 @@ func (s *Shape) OnInputEvent(evt touch.Event) {
 }
 
 func (s *Shape) Paint(gc *gg.Context) {
-    if s.pushed {
-        Debugf("paint pushed")
+    if s.Pushed() {
+        Debugf(Painting, "paint pushed")
         gc.SetFillColor(s.PressedColor())
         gc.SetStrokeWidth(s.PressedBorderWidth())
         gc.SetStrokeColor(s.PressedBorderColor())
     } else {
         if s.selected {
-            Debugf("paint selected")
+            Debugf(Painting, "paint selected")
             gc.SetFillColor(s.SelectedColor())
             gc.SetStrokeWidth(s.SelectedBorderWidth())
             gc.SetStrokeColor(s.SelectedBorderColor())
         } else {
-            Debugf("paint normally")
+            Debugf(Painting, "paint normally")
             gc.SetFillColor(s.Color())
             gc.SetStrokeWidth(s.BorderWidth())
             gc.SetStrokeColor(s.BorderColor())
@@ -108,14 +115,14 @@ type Point struct {
 func NewPoint() (*Point) {
     p := &Point{}
     p.Wrapper = p
-    p.Init()
+    p.Shape.Init()
     p.PropertyEmbed.Init(PointProps)
     p.SetMinSize(geom.Point{p.Width(), p.Height()})
     return p
 }
 
 func (p *Point) Paint(gc *gg.Context) {
-    Debugf("-")
+    Debugf(Painting, "")
     p.Shape.Paint(gc)
     mp := p.LocalBounds().Center()
     gc.DrawPoint(mp.X, mp.Y, p.Width()/2)
@@ -140,29 +147,61 @@ func (p *Point) SetPos(mp geom.Point) {
 // Geraden
 type Line struct {
     Shape
-    isRaising bool
+    p0, p1 geom.Point
 }
 
-func NewLine(dx, dy float64, isRaising bool) (*Line) {
+func NewLine(p0, p1 geom.Point) (*Line) {
     l := &Line{}
     l.Wrapper = l
-    l.Init()
+    l.Shape.Init()
     l.PropertyEmbed.Init(ShapeProps)
-    l.SetMinSize(geom.Point{dx, dy})
-    l.isRaising = isRaising
+    l.SetPos(p0.Min(p1))
+    l.p0 = geom.Point{}
+    l.p1 = geom.Point{}
+    l.SetP0(p0)
+    l.SetP1(p1)
     return l
 }
 
-func (l *Line) Paint(gc *gg.Context) {
-    Debugf("-")
-    l.Shape.Paint(gc)
-    if l.isRaising {
-        gc.MoveTo(l.Bounds().SW().AsCoord())
-        gc.LineTo(l.Bounds().NE().AsCoord())
-    } else {
-        gc.MoveTo(l.Bounds().Min.AsCoord())
-        gc.LineTo(l.Bounds().Max.AsCoord())
+func (l *Line) P0() (geom.Point) {
+    return l.Pos().Add(l.p0)
+}
+func (l *Line) SetP0(pt geom.Point) {
+    pos := l.Pos()
+    if pt.X < pos.X {
+        pos.X = pt.X
     }
+    if pt.Y < pos.Y {
+        pos.Y = pt.Y
+    }
+    l.p1 = l.p1.Add(l.Pos().Sub(pos))
+    l.p0 = pt.Sub(pos)
+    l.SetPos(pos)
+    l.SetMinSize(geom.Rect(l.p0.X, l.p0.Y, l.p1.X, l.p1.Y).Size())
+}
+
+func (l *Line) P1() (geom.Point) {
+    return l.Pos().Add(l.p1)
+}
+func (l *Line) SetP1(pt geom.Point) {
+    pos := l.Pos()
+    if pt.X < pos.X {
+        pos.X = pt.X
+    }
+    if pt.Y < pos.Y {
+        pos.Y = pt.Y
+    }
+    l.p0 = l.p0.Add(l.Pos().Sub(pos))
+    l.p1 = pt.Sub(pos)
+    l.SetPos(pos)
+    l.SetMinSize(geom.Rect(l.p0.X, l.p0.Y, l.p1.X, l.p1.Y).Size())
+}    
+
+func (l *Line) Paint(gc *gg.Context) {
+    Debugf(Painting, "")
+    l.Shape.Paint(gc)
+    gc.MoveTo(l.p0.AsCoord())
+    gc.LineTo(l.p1.AsCoord())
     gc.Stroke()
 }
 
@@ -172,10 +211,7 @@ func (l *Line) Contains(pt geom.Point) (bool) {
         return false
     }
     fx, fy := l.ParentBounds().PosRel(pt)
-    if l.isRaising {
-        fy = 1.0 - fy
-    }
-    Debugf("fx, fy: %f, %f", fx, fy)
+    Debugf(Coordinates, "fx, fy: %f, %f", fx, fy)
     return math.Abs(fx-fy) <= 0.1
 }
 
@@ -187,14 +223,14 @@ type Circle struct {
 func NewCircle(r float64) (*Circle) {
     c := &Circle{}
     c.Wrapper = c
-    c.Init()
+    c.Shape.Init()
     c.PropertyEmbed.Init(ShapeProps)
     c.SetMinSize(geom.Point{2*r, 2*r})
     return c
 }
 
 func (c *Circle) Paint(gc *gg.Context) {
-    Debugf("-")
+    Debugf(Painting, "")
     c.Shape.Paint(gc)
     mp := c.LocalBounds().Center()
     r  := 0.5 * c.Size().X
@@ -234,14 +270,14 @@ type Ellipse struct {
 func NewEllipse(rx, ry float64) (*Ellipse) {
     e := &Ellipse{}
     e.Wrapper = e
-    e.Init()
+    e.Shape.Init()
     e.PropertyEmbed.Init(ShapeProps)
     e.SetMinSize(geom.Point{2*rx, 2*ry})
     return e
 }
 
 func (e *Ellipse) Paint(gc *gg.Context) {
-    Debugf("-")
+    Debugf(Painting, "")
     e.Shape.Paint(gc)
     mp := e.LocalBounds().Center()
     w, h := e.Size().AsCoord()
@@ -254,13 +290,13 @@ func (e *Ellipse) Contains(pt geom.Point) (bool) {
     if !pt.In(outer) {
         return false
     }
-    Debugf("pt    : %v", pt)
+    Debugf(Coordinates, "pt    : %v", pt)
     mp := e.Pos()
-    Debugf("mp    : %v", mp)
+    Debugf(Coordinates, "mp    : %v", mp)
     rx, ry := e.Size().Mul(0.5).AsCoord()
-    Debugf("rx, ry: %f, %f", rx, ry)
+    Debugf(Coordinates, "rx, ry: %f, %f", rx, ry)
     dp := mp.Sub(pt)
-    Debugf("dp    : %v", dp)
+    Debugf(Coordinates, "dp    : %v", dp)
     dpOut := geom.Point{dp.X/(rx+fangRadius), dp.Y/(ry+fangRadius)}
     dpIn  := geom.Point{dp.X/(rx-fangRadius), dp.Y/(ry-fangRadius)}
     return dpOut.Abs() < 1.0 && dpIn.Abs() > 1.0
@@ -290,7 +326,7 @@ type Rectangle struct {
 func NewRectangle(w, h float64) (*Rectangle) {
     r := &Rectangle{}
     r.Wrapper = r
-    r.Init()
+    r.Shape.Init()
     r.PropertyEmbed.Init(ShapeProps)
     r.SetMinSize(geom.Point{w, h})
     return r
@@ -298,12 +334,12 @@ func NewRectangle(w, h float64) (*Rectangle) {
 
 func (r *Rectangle) Contains(pt geom.Point) (bool) {
     outer := r.ParentBounds().Inset(-5.0, -5.0)
-    inner := r.ParentBounds().Inset(+5.0, +5.0)
-    return pt.In(outer) && !pt.In(inner)
+    //inner := r.ParentBounds().Inset(+5.0, +5.0)
+    return pt.In(outer)
 }
 
 func (r *Rectangle) Paint(gc *gg.Context) {
-    Debugf("-")
+    Debugf(Painting, "")
     r.Shape.Paint(gc)
     gc.DrawRectangle(r.LocalBounds().AsCoord())
     gc.FillStroke()

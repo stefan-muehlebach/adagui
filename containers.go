@@ -12,7 +12,9 @@ package adagui
 
 import (
     "image"
-    //"image/draw"
+    "container/list"
+    "log"
+    "github.com/stefan-muehlebach/adagui/touch"
     "golang.org/x/image/draw"
     "github.com/stefan-muehlebach/adagui/binding"
     "github.com/stefan-muehlebach/gg"
@@ -20,6 +22,123 @@ import (
     "github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/geom"
 )
+
+// Alle GUI-Typen, welche weitere Nodes verwalten können (Fenster, Panels,
+// etc.) müssen dagegen diesen Typ einbetten. Damit kann über die ChildList
+// die angehängten Nodes verwaltet werden. Ebenso kann ein LayoutManager
+// verwendet werden, der für die Platzierung der Nodes zuständig ist.
+// Per Default wird das NullLayout verwendet, d.h. die Kinder müssen per
+// SetPos platziert werden und bleiben an dieser Stelle.
+type ContainerEmbed struct {
+    Embed
+    touch.TouchEmbed
+    ChildList *list.List
+    Layout LayoutManager
+}
+
+func (c *ContainerEmbed) Init() {
+    c.Embed.Init()
+    c.ChildList = list.New()
+    c.Layout = &NullLayout{}
+}
+
+func (c *ContainerEmbed) Add(n ...Node) {
+    for _, node := range n {
+        embed := node.Wrappee()
+        if embed.Parent != nil {
+            log.Fatal("Container: Add called for an attached child")
+        }
+        embed.Win = c.Win
+        embed.Parent = c
+        c.ChildList.PushBack(embed)
+        c.layout()
+    }
+}
+
+func (c *ContainerEmbed) Del(n Node) {
+    for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
+        node := elem.Value.(Node)
+        if n != node {
+            continue
+        }
+        embed := node.Wrappee()
+        embed.Win =  nil
+        embed.Parent = nil
+        c.ChildList.Remove(elem)
+        break
+    }
+    c.layout()
+}
+
+func (c *ContainerEmbed) DelAll() {
+    for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
+        embed := elem.Value.(*Embed)
+        embed.Parent = nil
+        embed.Win = nil
+    }
+    c.ChildList.Init()
+    c.layout()
+}
+
+func (c *ContainerEmbed) SetSize(s geom.Point) {
+    c.Embed.SetSize(s)
+    c.layout()
+}
+
+func (c *ContainerEmbed) MinSize() (geom.Point) {
+    ms := geom.Point{}
+    if c.minSize.Eq(geom.Point{0, 0}) {
+        ms = c.Layout.MinSize(c.ChildList)
+    } else {
+        ms =  c.Embed.MinSize()
+    }
+    return ms
+}
+
+func (c *ContainerEmbed) Paint(gc *gg.Context) {
+    Debugf(Painting, "type %T", c.Wrapper)
+    Debugf(Painting, "LocalBounds: %v", c.Wrapper.LocalBounds())
+    c.Marks.UnmarkNeedsPaint()
+    for elem := c.ChildList.Front(); elem != nil; elem = elem.Next() {
+        child := elem.Value.(*Embed)
+        if !child.Visible() {
+            continue
+        }
+        if !c.Wrapper.LocalBounds().Overlaps(child.ParentBounds()) {
+            continue
+        }
+        child.Paint(gc)
+    }
+}
+
+func (c *ContainerEmbed) OnChildMarked(child Node, newMarks Marks) {
+    c.Mark(newMarks)
+}
+
+func (c *ContainerEmbed) SelectTarget(pt geom.Point) (Node) {
+    Debugf(Coordinates, "type %T, pt: %v", c.Wrapper, pt)
+    if !c.Wrapper.Contains(pt) {
+        return nil
+    }
+    pt = c.Parent2Local(pt).Add(c.Wrapper.LocalBounds().Min)
+    Debugf(Coordinates, "pt after Parent2Local: %v", pt)
+    for elem := c.ChildList.Back(); elem != nil; elem = elem.Prev() {
+        embed := elem.Value.(*Embed)
+        node := embed.Wrapper.SelectTarget(pt)
+        if node != nil {
+            return node
+        }
+    }
+    return c.Wrapper
+}
+
+func (c *ContainerEmbed) layout() {
+    if c.Layout == nil {
+        return
+    }
+    c.Layout.Layout(c.ChildList, c.Wrapper.Size())
+}
+
 
 // Eine Group ist die einfachste Form eines Containers. Sie dient
 // hauptsaechlich als logisches Sammelbecken fuer Widgets auf dem Screen.
@@ -39,7 +158,7 @@ func NewGroup() (*Group) {
 }
 
 func (g *Group) Paint(gc *gg.Context) {
-    Debugf("type %T", g.Wrapper)
+    Debugf(Painting, "type %T", g.Wrapper)
     g.ContainerEmbed.Paint(gc)
 }
 
@@ -76,8 +195,8 @@ func NewPanel(w, h float64) (*Panel) {
 }
 
 func (p *Panel) Paint(gc *gg.Context) {
-    Debugf("type %T", p.Wrapper)
-    Debugf("LocalBounds: %v", p.LocalBounds())
+    Debugf(Painting, "type %T", p.Wrapper)
+    Debugf(Painting, "LocalBounds: %v", p.LocalBounds())
     gc.DrawRectangle(p.LocalBounds().AsCoord())
     if p.Image != nil {
         dst := gc.Image().(*image.RGBA)
@@ -118,10 +237,10 @@ func NewScrollPanel(w, h float64) (*ScrollPanel) {
 }
 
 func (p *ScrollPanel) Paint(gc *gg.Context) {
-    Debugf("type %T", p.Wrapper)
-    Debugf("LocalBounds: %v", p.LocalBounds())
-    Debugf("RefPt      : %v", p.refPt)
-    gc.Translate(p.refPt.AsCoord())
+    Debugf(Painting, "type %T", p.Wrapper)
+    Debugf(Painting, "LocalBounds : %v", p.LocalBounds())
+    Debugf(Painting, "RefPt       : %v", p.refPt)
+    gc.Translate(p.refPt.Neg().AsCoord())
     gc.DrawRectangle(p.LocalBounds().AsCoord())
     gc.ClipPreserve()
     gc.SetFillColor(p.Color())
@@ -134,7 +253,7 @@ func (p *ScrollPanel) Paint(gc *gg.Context) {
 }
 
 func (p *ScrollPanel) LocalBounds() (geom.Rectangle) {
-    return geom.Rectangle{Max: p.Size()}.Sub(p.refPt)
+    return geom.Rectangle{Min: p.refPt, Max: p.refPt.Add(p.Size())}
 }
 
 func (p *ScrollPanel) VisibleRange() (geom.Point) {
@@ -148,78 +267,127 @@ func (p *ScrollPanel) VisibleRange() (geom.Point) {
 }
 
 func (p *ScrollPanel) SetXView(vx float64) {
-    p.viewPort.X = vx
-    p.refPt.X = p.sizeDiff.X * p.viewPort.X
+    p.refPt.X = p.sizeDiff.X * vx
 }
 
 func (p *ScrollPanel) SetYView(vy float64) {
-    p.viewPort.Y = vy
-    p.refPt.Y = p.sizeDiff.Y * p.viewPort.Y
+    p.refPt.Y = p.sizeDiff.Y * vy
 }
 
 func (p *ScrollPanel) ViewPort() (geom.Point) {
     return p.viewPort
 }
 
+// Bestimmt die neue virtuelle Groesse des ScrolledPanels. Man kann bei
+// sz keine Angaben machen, die kleiner als die eigentliche Groesse des
+// Widgets ist.
 func (p *ScrollPanel) SetVirtualSize(sz geom.Point) {
+    if sz.X < p.Size().X {
+        sz.X = p.Size().X
+    }
+    if sz.Y < p.Size().Y {
+        sz.Y = p.Size().Y
+    }
     p.virtSize = sz
-    p.sizeDiff = p.Size().Sub(p.virtSize)
+    p.sizeDiff = p.virtSize.Sub(p.Size())
 }
-
 func (p *ScrollPanel) VirtualSize() (geom.Point) {
     return p.virtSize
 }
 
 // TabPanel und TabButton sind fuer Tabbed Windows gedacht.
+var (
+    TabPanelProps = NewProps(DefProps,
+        map[ColorPropertyName]color.Color{
+            Color:        colornames.Black,
+            BorderColor:  colornames.Black,
+        },
+        nil,
+        map[SizePropertyName]float64{
+            BorderWidth:  0.0,
+        })
+)
+
+
 type TabPanel struct {
     ContainerEmbed
-    data binding.Int
-    contentList []Node
-    menu  *Group
-    panel *Group
+    menu *TabMenu
+    content *Panel
 }
 
-func NewTabPanel(w, h float64) (*TabPanel) {
+func NewTabPanel(w, h float64, menu *TabMenu, content *Panel) (*TabPanel) {
     p := &TabPanel{}
     p.Wrapper      = p
     p.Init()
-    p.PropertyEmbed.Init(DefProps)
+    p.PropertyEmbed.Init(TabPanelProps)
     p.SetMinSize(geom.Point{w, h})
     p.Layout       = NewVBoxLayout(0)
-    p.data         = binding.NewInt()
-    p.data.Set(-1)
-    p.contentList  = make([]Node, 0)
-    p.menu         = NewGroup()
-    p.menu.Layout  = NewHBoxLayout(0)
-    p.panel        = NewGroup()
-    p.panel.Layout = NewPaddedLayout(0)
-    p.data.AddCallback(func (d binding.DataItem) {
-        idx := d.(binding.Int).Get()
-        if (idx < 0) || (idx >= len(p.contentList)) ||
-                (p.contentList[idx] == nil) {
-            return
-        }
-        p.panel.DelAll()
-        p.panel.Add(p.contentList[idx])
-        p.layout()
-    })
-    p.Add(p.menu, p.panel)
+    p.menu = menu
+    p.menu.panel = p
+    p.content = content
+    p.Add(p.menu, p.content)
     return p
 }
 
-func (p *TabPanel) AddTab(label string, content Node) {
-    tabIndex := len(p.contentList)
-    p.contentList = append(p.contentList, content)
-    b := NewTabButtonWithData(label, tabIndex, p.data)
-    p.menu.Add(b)
-    p.layout()
+//----------------------------------------------------------------------------
+
+var (
+    TabMenuProps = NewProps(TabPanelProps,
+        map[ColorPropertyName]color.Color{
+            Color: DefProps.Color(MenuBackgroundColor),
+        }, nil, nil)
+)
+
+
+type TabMenu struct {
+    ContainerEmbed
+    panel *TabPanel
+    data binding.Int
+    contentList []Node
 }
 
-func (p *TabPanel) SetTab(idx int) {
-    p.data.Set(idx)
+func NewTabMenu() (*TabMenu) {
+    m := &TabMenu{}
+    m.Wrapper = m
+    m.Init()
+    m.PropertyEmbed.Init(TabMenuProps)
+    m.Layout = NewHBoxLayout(0)
+    m.data   = binding.NewInt()
+    m.data.Set(-1)
+    m.contentList  = make([]Node, 0)
+    m.data.AddCallback(func (d binding.DataItem) {
+        idx := d.(binding.Int).Get()
+        if (idx < 0) || (idx >= len(m.contentList)) ||
+                (m.contentList[idx] == nil) {
+            return
+        }
+        m.panel.content.DelAll()
+        m.panel.content.Add(m.contentList[idx])
+        m.panel.content.layout()
+    })
+    return m
 }
 
-//func (p *TabPanel) Paint(gc *gg.Context) {
-//    p.ContainerEmbed.Paint(gc)
-//}
+func (m *TabMenu) AddTab(label string, content Node) {
+    tabIndex := len(m.contentList)
+    m.contentList = append(m.contentList, content)
+    b := NewTabButtonWithData(label, tabIndex, m.data)
+    m.Add(b)
+    m.layout()
+}
+
+func (m *TabMenu) SetTab(idx int) {
+    m.data.Set(idx)
+}
+
+func (m *TabMenu) Paint(gc *gg.Context) {
+    Debugf(Painting, "type %T", m.Wrapper)
+    Debugf(Painting, "LocalBounds: %v", m.LocalBounds())
+    gc.DrawRectangle(m.LocalBounds().AsCoord())
+    gc.SetFillColor(m.Color())
+    gc.FillPreserve()
+    gc.Clip()
+    m.ContainerEmbed.Paint(gc)
+    gc.ResetClip()
+}
 

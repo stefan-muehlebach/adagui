@@ -10,17 +10,30 @@ import (
 
 //----------------------------------------------------------------------------
 
+type DebugDomain uint64
+
+const (
+    Painting DebugDomain = 1 << iota
+    Coordinates
+    Events
+)
+
 var (
     debugFlag bool
+    debugDomains uint64
 )
 
 func init() {
     flag.BoolVar(&debugFlag, "debug", false, "show debugging messages")
-    flag.Parse()
+    flag.Uint64Var(&debugDomains, "domain", uint64(Painting | Coordinates),
+            "whith this flag, you can filter the debug messages.")
 }
 
-func Debugf(format string, a ...any) {
+func Debugf(domain DebugDomain, format string, a ...any) {
     if !debugFlag {
+        return
+    }
+    if domain & DebugDomain(debugDomains) == 0 {
         return
     }
     log.Printf("%*s %s: %s", CallDepth(2), ">", CallerInfo(2),
@@ -42,30 +55,4 @@ func CallDepth(skip int) (int) {
         }
     }
 }
-
-//----------------------------------------------------------------------------
-
-// Das ist ein Ueberbleibsel einer Debug-Session, als ich ohne klare
-// Darstellung der Stack-Level einfach nicht begriffen haben, wo das Problem
-// liegt. Vielleicht wird daraus mal noch etwas...?
-type DebugLevel int
-
-func (l *DebugLevel) Inc() {
-    *l += 3
-    log.SetPrefix(":" + l.String())
-}
-
-func (l *DebugLevel) Dec() {
-    *l -= 3
-    log.SetPrefix(":" + l.String())
-}
-
-func (l DebugLevel) String() (string) {
-    return fmt.Sprintf("%*s", l, " ")
-}
-
-var (
-    stackLevel DebugLevel = 0
-)
-
 

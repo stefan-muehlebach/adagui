@@ -28,6 +28,8 @@ const (
     SelectedLineColor
     BarColor
     PressedBarColor
+    BackgroundColor
+    MenuBackgroundColor
     // Old
     RedColor
     OrangeColor
@@ -207,9 +209,15 @@ func (p *Properties) DelSize(name SizePropertyName) {
 func NewDefaultProps() (*Properties) {
     p := &Properties{}
 
-    c1 := colornames.DarkGreen
-    c2 := c1.Interpolate(colornames.YellowGreen, 0.9)
-    c3 := c1.Interpolate(colornames.YellowGreen, 0.7)
+    c1 := colornames.Navy.Dark(0.4)
+    c2 := colornames.DeepSkyBlue.Dark(0.3)
+    c3 := colornames.DeepSkyBlue.Dark(0.3)
+    //c1 := colornames.DarkRed
+    //c2 := colornames.Gold
+    //c3 := colornames.YellowGreen
+    //c1 := colornames.DarkGreen
+    //c2 := c1.Interpolate(colornames.YellowGreen, 0.9)
+    //c3 := c1.Interpolate(colornames.YellowGreen, 0.7)
 
     p.colorMap = map[ColorPropertyName]color.Color{
         Color:               c1,
@@ -230,6 +238,9 @@ func NewDefaultProps() (*Properties) {
 
         BarColor:            colornames.DarkSlateGray.Dark(0.5),
         PressedBarColor:     colornames.DarkSlateGray.Dark(0.5),
+        
+        BackgroundColor:     colornames.Navy.Dark(0.8),
+        MenuBackgroundColor: colornames.DarkGreen.Dark(0.8),
 
         // Out
         RedColor:            colornames.Red,
@@ -257,7 +268,6 @@ func NewDefaultProps() (*Properties) {
     p.sizeMap = map[SizePropertyName]float64{
         Width:               0.0,
         Height:              0.0,
-        //Size:                0.0,
 
         BorderWidth:         0.0,
         PressedBorderWidth:  0.0,

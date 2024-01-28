@@ -94,6 +94,8 @@ func (pe *PropertyEmbed) Init(parent *Properties) {
                 "SelectedLineColor",
                 "BarColor",
                 "PressedBarColor",
+                "BackgroundColor",
+                "MenuBackgroundColor",
             },
         },
         propInfo{
