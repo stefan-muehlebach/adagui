@@ -6,6 +6,7 @@ import (
 
 //----------------------------------------------------------------------------
 
+/*
 func max(a, b float64) (float64) {
     if a > b {
         return a
@@ -21,6 +22,7 @@ func min(a, b float64) (float64) {
         return b
     }
 }
+*/
 
 func check(err error) {
     if err != nil {

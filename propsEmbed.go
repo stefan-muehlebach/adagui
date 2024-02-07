@@ -207,16 +207,16 @@ func (pe *PropertyEmbed) SetFontSize(s float64) {
     pe.prop.SetSize(FontSize, s)
 }
 
-func (pe *PropertyEmbed) BarSize() (float64) {
-    return pe.prop.Size(BarSize)
+func (pe *PropertyEmbed) BarWidth() (float64) {
+    return pe.prop.Size(BarWidth)
 }
-func (pe *PropertyEmbed) SetBarSize(s float64) {
-    pe.prop.SetSize(BarSize, s)
+func (pe *PropertyEmbed) SetBarWidth(s float64) {
+    pe.prop.SetSize(BarWidth, s)
 }
 
-func (pe *PropertyEmbed) CtrlSize() (float64) {
-    return pe.prop.Size(CtrlSize)
+func (pe *PropertyEmbed) CtrlWidth() (float64) {
+    return pe.prop.Size(CtrlWidth)
 }
-func (pe *PropertyEmbed) SetCtrlSize(s float64) {
-    pe.prop.SetSize(CtrlSize, s)
+func (pe *PropertyEmbed) SetCtrlWidth(s float64) {
+    pe.prop.SetSize(CtrlWidth, s)
 }

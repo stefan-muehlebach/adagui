@@ -20,6 +20,7 @@ type Embed struct {
     transl, rotate, scale, transf geom.Matrix
     Marks Marks
     visible bool
+    selectable bool
     PropertyEmbed
 }
 
@@ -29,6 +30,7 @@ func (m *Embed) Init() {
     m.scale   = geom.Identity()
     m.transf  = geom.Identity()
     m.visible = true
+    m.selectable = true
 }
 
 func (m *Embed) Wrappee() (*Embed) {
@@ -155,7 +157,7 @@ func (m *Embed) Mark(marks Marks) {
 }
 
 func (m *Embed) Paint(gc *gg.Context) {
-    Debugf(Painting, "type %T", m.Wrapper)
+    Debugf(Painting, "[%T]", m.Wrapper)
     m.Marks.UnmarkNeedsPaint()
     gc.Push()
     gc.Multiply(m.Matrix())
@@ -166,9 +168,12 @@ func (m *Embed) Paint(gc *gg.Context) {
 // Contains ermittelt, ob sich der Punkt pt innerhalb des Widgets befindet.
 // Die Koordianten in pt muessen relativ zum Bezugssystem von m sein.
 func (m *Embed) Contains(pt geom.Point) (bool) {
-    Debugf(Coordinates, "type %T, pt: %v", m.Wrapper, pt)
+    Debugf(Coordinates, "[%T], pt: %v", m.Wrapper, pt)
     pt = m.Parent2Local(pt)
-    return pt.In(m.Wrapper.Bounds())
+    Debugf(Coordinates, "[%T], pt      : %v", m.Wrapper, pt)
+    Debugf(Coordinates, "[%T], Bounds(): %v", m.Wrapper, m.Wrapper.Bounds())
+    Debugf(Coordinates, "[%T], Size()  : %v", m.Wrapper, m.Wrapper.Size())
+    return pt.In(geom.Rectangle{Max: m.Wrapper.Size()})
 }
 
 // Rechnet die lokalen Koordianten pt in Bildschirmkoordinaten um.
@@ -185,6 +190,7 @@ func (m *Embed) Screen2Local(pt geom.Point) (geom.Point) {
     if m.Parent != nil {
         pt = m.Parent.Screen2Local(pt)
     }
+    pt = pt.Add(m.Wrapper.LocalBounds().Min)
     return m.Matrix().Inv().Transform(pt)
 }
 
@@ -254,14 +260,14 @@ type LeafEmbed struct {
 }
 
 func (m *LeafEmbed) Paint(gc *gg.Context) {
-    Debugf(Painting, "type %T", m.Wrapper)
+    Debugf(Painting, "[%T]", m.Wrapper)
 }
 
 func (m *LeafEmbed) OnChildMarked(child Node, newMarks Marks) {}
 
 func (m *LeafEmbed) SelectTarget(pt geom.Point) (Node) {
-    Debugf(Coordinates, "type %T, pt: %v", m.Wrapper, pt)
-    if !m.Visible() {
+    Debugf(Coordinates, "[%T], pt: %v", m.Wrapper, pt)
+    if !m.Visible() || !m.selectable {
         return nil
     }
     if !m.Wrapper.Contains(pt) {
@@ -298,7 +304,6 @@ func (m *LeafEmbed) Parent2Local(pt geom.Point) (geom.Point) {
     }
     return m.Parent.Parent2Local(pt)
 }
-
 
 //----------------------------------------------------------------------------
 

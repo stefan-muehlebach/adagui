@@ -32,13 +32,13 @@ var (
             SelectedColor:       color.Transparent,
             BorderColor:         DefProps.Color(WhiteColor),
             PressedBorderColor:  DefProps.Color(WhiteColor).Alpha(0.5),
-            SelectedBorderColor: DefProps.Color(RedColor),
+            SelectedBorderColor: DefProps.Color(WhiteColor),
         },
         nil,
         map[SizePropertyName]float64{
             BorderWidth:         2.0,
-            PressedBorderWidth:  4.0,
-            SelectedBorderWidth: 4.0,
+            PressedBorderWidth:  2.0,
+            SelectedBorderWidth: 2.0,
         })
 
     PointProps = NewProps(ShapeProps,
@@ -72,17 +72,11 @@ func (s *Shape) Init() {
 func (s *Shape) OnInputEvent(evt touch.Event) {
     Debugf(Events, "evt: %v", evt)
     s.PushEmbed.OnInputEvent(evt)
-    switch evt.Type {
-//    case touch.TypePress:
-//        s.pushed = true
+//    switch evt.Type {
+//    case touch.TypeTap:
+//        s.selected = !s.selected
 //        s.Mark(MarkNeedsPaint)
-//    case touch.TypeRelease:
-//        s.pushed = false
-//        s.Mark(MarkNeedsPaint)
-    case touch.TypeTap:
-        s.selected = !s.selected
-        s.Mark(MarkNeedsPaint)
-    }
+//    }
     s.CallTouchFunc(evt)
 }
 
@@ -93,18 +87,65 @@ func (s *Shape) Paint(gc *gg.Context) {
         gc.SetStrokeWidth(s.PressedBorderWidth())
         gc.SetStrokeColor(s.PressedBorderColor())
     } else {
-        if s.selected {
-            Debugf(Painting, "paint selected")
-            gc.SetFillColor(s.SelectedColor())
-            gc.SetStrokeWidth(s.SelectedBorderWidth())
-            gc.SetStrokeColor(s.SelectedBorderColor())
-        } else {
+//        if s.selected {
+//            Debugf(Painting, "paint selected")
+//            gc.SetFillColor(s.SelectedColor())
+//            gc.SetStrokeWidth(s.SelectedBorderWidth())
+//            gc.SetStrokeColor(s.SelectedBorderColor())
+//        } else {
             Debugf(Painting, "paint normally")
             gc.SetFillColor(s.Color())
             gc.SetStrokeWidth(s.BorderWidth())
             gc.SetStrokeColor(s.BorderColor())
-        }
+//        }
     }
+}
+
+// Kreis
+type Circle struct {
+    Shape
+}
+
+func NewCircle(r float64) (*Circle) {
+    c := &Circle{}
+    c.Wrapper = c
+    c.Shape.Init()
+    c.PropertyEmbed.Init(ShapeProps)
+    c.SetMinSize(geom.Point{2*r, 2*r})
+    return c
+}
+
+func (c *Circle) Paint(gc *gg.Context) {
+    Debugf(Painting, "")
+    c.Shape.Paint(gc)
+    mp := c.LocalBounds().Center()
+    r  := 0.5 * c.Size().X
+    gc.DrawCircle(mp.X, mp.Y, r)
+    gc.FillStroke()
+}
+
+func (c *Circle) Contains(pt geom.Point) (bool) {
+    outer := c.ParentBounds().Inset(-fangRadius, -fangRadius)
+    if !pt.In(outer) {
+        return false
+    }
+    return c.Pos().Distance(pt) <= c.Radius()
+}
+
+func (c *Circle) Pos() (geom.Point) {
+    return c.ParentBounds().Center()
+}
+func (c *Circle) SetPos(mp geom.Point) {
+    c.Wrappee().SetPos(mp.Sub(c.Size().Mul(0.5)))
+}
+
+func (c *Circle) Radius() (float64) {
+    return 0.5 * c.Size().X
+}
+func (c *Circle) SetRadius(r float64) {
+    mp := c.Pos()
+    c.SetMinSize(geom.Point{2*r, 2*r})
+    c.Wrappee().SetPos(mp.Sub(c.Size().Mul(0.5)))
 }
 
 // Punkte
@@ -215,53 +256,6 @@ func (l *Line) Contains(pt geom.Point) (bool) {
     return math.Abs(fx-fy) <= 0.1
 }
 
-// Kreis
-type Circle struct {
-    Shape
-}
-
-func NewCircle(r float64) (*Circle) {
-    c := &Circle{}
-    c.Wrapper = c
-    c.Shape.Init()
-    c.PropertyEmbed.Init(ShapeProps)
-    c.SetMinSize(geom.Point{2*r, 2*r})
-    return c
-}
-
-func (c *Circle) Paint(gc *gg.Context) {
-    Debugf(Painting, "")
-    c.Shape.Paint(gc)
-    mp := c.LocalBounds().Center()
-    r  := 0.5 * c.Size().X
-    gc.DrawCircle(mp.X, mp.Y, r)
-    gc.FillStroke()
-}
-
-func (c *Circle) Contains(pt geom.Point) (bool) {
-    outer := c.ParentBounds().Inset(-fangRadius, -fangRadius)
-    if !pt.In(outer) {
-        return false
-    }
-    return math.Abs(c.Radius() - c.Pos().Distance(pt)) <= fangRadius
-}
-
-func (c *Circle) Pos() (geom.Point) {
-    return c.ParentBounds().Center()
-}
-func (c *Circle) SetPos(mp geom.Point) {
-    c.Wrappee().SetPos(mp.Sub(c.Size().Mul(0.5)))
-}
-
-func (c *Circle) Radius() (float64) {
-    return 0.5 * c.Size().X
-}
-func (c *Circle) SetRadius(r float64) {
-    mp := c.Pos()
-    c.SetMinSize(geom.Point{2*r, 2*r})
-    c.Wrappee().SetPos(mp.Sub(c.Size().Mul(0.5)))
-}
-
 // Ein allgemeinerer Widget Typ ist die Ellipse.
 type Ellipse struct {
     Shape
@@ -290,16 +284,10 @@ func (e *Ellipse) Contains(pt geom.Point) (bool) {
     if !pt.In(outer) {
         return false
     }
-    Debugf(Coordinates, "pt    : %v", pt)
-    mp := e.Pos()
-    Debugf(Coordinates, "mp    : %v", mp)
-    rx, ry := e.Size().Mul(0.5).AsCoord()
-    Debugf(Coordinates, "rx, ry: %f, %f", rx, ry)
-    dp := mp.Sub(pt)
-    Debugf(Coordinates, "dp    : %v", dp)
-    dpOut := geom.Point{dp.X/(rx+fangRadius), dp.Y/(ry+fangRadius)}
-    dpIn  := geom.Point{dp.X/(rx-fangRadius), dp.Y/(ry-fangRadius)}
-    return dpOut.Abs() < 1.0 && dpIn.Abs() > 1.0
+    dx, dy := e.Pos().Sub(pt).AsCoord()
+    rx, ry := e.Radius()
+    
+    return (dx*dx)/(rx*rx) + (dy*dy)/(ry*ry) <= 1.0
 }
 
 func (e *Ellipse) Pos() (geom.Point) {

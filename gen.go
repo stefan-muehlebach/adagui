@@ -116,8 +116,8 @@ func (pe *PropertyEmbed) Init(parent *Properties) {
                 "Padding",
                 "CornerRadius",
                 "FontSize",
-                "BarSize",
-                "CtrlSize",
+                "BarWidth",
+                "CtrlWidth",
             },
         },
     }

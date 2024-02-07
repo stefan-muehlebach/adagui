@@ -165,10 +165,10 @@ func (w *Window) eventThread() {
         if w.root == nil {
             continue
         }
-        //log.Printf("window: event from screen received: %v", evt)
+        Debugf(Events, "event received: %v", evt)
         if evt.Type == touch.TypePress {
             target = w.root.SelectTarget(evt.Pos)
-            //log.Printf("SelectTarget: %T, %v\n", target, evt.Pos)
+            Debugf(Events, "new target    : %T", target)
             if target == nil {
                 continue
             }
@@ -176,7 +176,7 @@ func (w *Window) eventThread() {
         }
         evt.InitPos = target.Screen2Local(evt.InitPos)
         evt.Pos = target.Screen2Local(evt.Pos)
-        //log.Printf("SelectTarget: local coord %v\n", evt.Pos)
+        Debugf(Events, "relative pos  : %v", evt.Pos)
 
         if evt.Type == touch.TypeDrag {
             if !target.Contains(evt.Pos) {
@@ -203,10 +203,6 @@ func (w *Window) eventThread() {
         w.mutex.Lock()
         target.OnInputEvent(evt)
         w.mutex.Unlock()
-
-        //if w.root.Wrappee().Marks.NeedsPaint() {
-        //    w.Repaint()
-        //}
     }
     w.quitQ <- true
 }

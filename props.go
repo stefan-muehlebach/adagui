@@ -71,8 +71,8 @@ const (
     Padding
     CornerRadius
     FontSize
-    BarSize
-    CtrlSize
+    BarWidth
+    CtrlWidth
     numSizeProperties
 )
 
@@ -209,15 +209,15 @@ func (p *Properties) DelSize(name SizePropertyName) {
 func NewDefaultProps() (*Properties) {
     p := &Properties{}
 
-    c1 := colornames.Navy.Dark(0.4)
-    c2 := colornames.DeepSkyBlue.Dark(0.3)
-    c3 := colornames.DeepSkyBlue.Dark(0.3)
+    //c1 := colornames.Navy.Dark(0.4)
+    //c2 := colornames.DeepSkyBlue.Dark(0.3)
+    //c3 := colornames.DeepSkyBlue.Dark(0.3)
     //c1 := colornames.DarkRed
     //c2 := colornames.Gold
     //c3 := colornames.YellowGreen
-    //c1 := colornames.DarkGreen
-    //c2 := c1.Interpolate(colornames.YellowGreen, 0.9)
-    //c3 := c1.Interpolate(colornames.YellowGreen, 0.7)
+    c1 := colornames.DarkGreen
+    c2 := c1.Interpolate(colornames.YellowGreen, 0.9)
+    c3 := c1.Interpolate(colornames.YellowGreen, 0.7)
 
     p.colorMap = map[ColorPropertyName]color.Color{
         Color:               c1,
@@ -278,8 +278,8 @@ func NewDefaultProps() (*Properties) {
         Padding:            15.0,
         CornerRadius:        6.0,
         FontSize:           15.0,
-        BarSize:            18.0,
-        CtrlSize:           18.0,
+        BarWidth:           18.0,
+        CtrlWidth:          18.0,
     }
     return p
 }

@@ -613,7 +613,8 @@ var (
             Width:        30.0,
             Height:       18.0,
             BorderWidth:   0.0,
-            CornerRadius:  9.0,
+            CornerRadius: 10.0,
+            Padding:      15.0,
             FontSize:     12.0,
         })
 )
@@ -632,9 +633,12 @@ func NewTabButton(label string, idx int) (*TabButton) {
     b.LeafEmbed.Init()
     b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.Init(TabButtonProps)
-    b.SetMinSize(geom.Point{b.Width(), b.Height()})
     b.label     = label
     b.fontFace  = fonts.NewFace(b.Font(), b.FontSize())
+    w := (float64(font.MeasureString(b.fontFace, b.label))/64.0) +
+            (2.0*b.Padding())
+    h := b.Height()
+    b.SetMinSize(geom.Point{w, h})
     b.data      = binding.NewInt()
     b.idx       = idx
     return b
@@ -920,6 +924,8 @@ type Scrollbar struct {
     barStart, barEnd geom.Point
     ctrlStart, ctrlEnd geom.Point
     dp1, dp2, startPt, endPt1, endPt2 geom.Point
+    barLen, ctrlLen float64
+    isDragging bool
 }
 
 func NewScrollbar(len float64, orient Orientation) (*Scrollbar) {
@@ -931,19 +937,15 @@ func NewScrollbar(len float64, orient Orientation) (*Scrollbar) {
     s.orient = orient
     if s.orient == Horizontal {
         s.SetMinSize(geom.Point{len, s.Height()})
-        s.barStart = geom.Point{0.5*s.BarSize(), 0.5*s.Height()}
-        s.ctrlStart = geom.Point{0.5*max(s.CtrlSize(), s.BarSize()),
-            0.5*s.Height()}
     } else {
         s.SetMinSize(geom.Point{s.Width(), len})
-        s.barStart = geom.Point{0.5*s.Width(), 0.5*s.BarSize()}
-        s.ctrlStart = geom.Point{0.5*s.Width(), 0.5*max(s.CtrlSize(),
-            s.BarSize())}
     }
+    d := max(0.5*s.BarWidth(), 0.5*s.CtrlWidth())
+    s.barStart = geom.Point{d, d}
     s.initValue = 0.0
     s.visiRange = 0.1
     s.value     = binding.NewFloat()
-    s.updateValues()
+    s.SetValue(s.initValue)
     return s
 }
 
@@ -964,66 +966,66 @@ func NewScrollbarWithCallback(len float64, orient Orientation,
 
 func (s *Scrollbar) SetSize(size geom.Point) {
     s.LeafEmbed.SetSize(size)
-    s.updateValues()
-}
-
-func (s *Scrollbar) updateValues() {
-    s.barEnd = s.Size().Sub(s.barStart)
-    s.ctrlEnd = s.Size().Sub(s.ctrlStart)
-}
-
-func (s *Scrollbar) SetVisiRange(vr float64) {
-    if vr < 0.0 || vr > 1.0 {
-        return
-    }
-    s.visiRange = vr
+    s.updateCtrl()
 }
 
 func (s *Scrollbar) VisiRange() (float64) {
     return s.visiRange
 }
-
-func (s *Scrollbar) SetValue(v float64) {
-    if v > 1.0 { v = 1.0 }
-    if v < 0.0 { v = 0.0 }
-    s.value.Set(v)
+func (s *Scrollbar) SetVisiRange(vr float64) {
+    if vr < 0.0 || vr > 1.0 {
+        return
+    }
+    s.visiRange = vr
+    s.updateCtrl()
 }
 
 func (s *Scrollbar) Value() (float64) {
     return s.value.Get()
 }
+func (s *Scrollbar) SetValue(v float64) {
+    if v > 1.0 { v = 1.0 }
+    if v < 0.0 { v = 0.0 }
+    s.value.Set(v)
+    s.updateCtrl()
+}
+
+func (s *Scrollbar) updateCtrl() {
+    s.barEnd = s.Size().Sub(s.barStart)
+    if s.orient == Horizontal {
+        s.barLen = s.barEnd.X - s.barStart.X
+    } else {
+        s.barLen = s.barEnd.Y - s.barStart.Y
+    }
+    s.ctrlLen = s.visiRange * s.barLen
+    l := s.barLen - s.ctrlLen
+    if s.orient == Horizontal {
+        s.ctrlStart = s.barStart.AddXY(s.Value() * l, 0.0)
+        s.ctrlEnd = s.ctrlStart.AddXY(s.ctrlLen, 0.0)
+    } else {
+        s.ctrlStart = s.barStart.AddXY(0.0, s.Value() * l)
+        s.ctrlEnd = s.ctrlStart.AddXY(0.0, s.ctrlLen)
+    }
+}
 
 func (s *Scrollbar) Paint(gc *gg.Context) {
-    var pt1, pt2 geom.Point
+//    var pt1, pt2 geom.Point
     if s.Pushed() {
         gc.SetStrokeColor(s.PressedBarColor())
     } else {
         gc.SetStrokeColor(s.BarColor())
     }
-    gc.SetStrokeWidth(s.BarSize())
+    gc.SetStrokeWidth(s.BarWidth())
     gc.DrawLine(s.barStart.X, s.barStart.Y, s.barEnd.X, s.barEnd.Y)
     gc.Stroke()
-
-    newVal     := 0.5*s.visiRange + s.Value()*(1.0-s.visiRange)
-    startValue := newVal - 0.5*s.visiRange
-    endValue   := newVal + 0.5*s.visiRange
-
-    r := s.Bounds().Inset(s.ctrlStart.X, s.ctrlStart.Y)
-    if s.orient == Horizontal {
-        pt1 = r.RelPos(startValue, 0.0)
-        pt2 = r.RelPos(endValue, 0.0)
-    } else {
-        pt1 = r.RelPos(0.0, startValue)
-        pt2 = r.RelPos(0.0, endValue)
-    }
 
     if s.Pushed() {
         gc.SetStrokeColor(s.PressedColor())
     } else {
         gc.SetStrokeColor(s.Color())
     }
-    gc.SetStrokeWidth(s.CtrlSize())
-    gc.DrawLine(pt1.X, pt1.Y, pt2.X, pt2.Y)
+    gc.SetStrokeWidth(s.CtrlWidth())
+    gc.DrawLine(s.ctrlStart.X, s.ctrlStart.Y, s.ctrlEnd.X, s.ctrlEnd.Y)
     gc.Stroke()
 }
 
@@ -1031,16 +1033,51 @@ func (s *Scrollbar) OnInputEvent(evt touch.Event) {
     //log.Printf("%T: %v", s, evt)
     s.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
+    case touch.TypePress:
+        if s.orient == Horizontal {
+            if evt.Pos.X >= s.ctrlStart.X && evt.Pos.X <= s.ctrlEnd.X {
+                s.isDragging = true
+            } else {
+                s.isDragging = false
+            }
+        } else {
+            if evt.Pos.Y >= s.ctrlStart.Y && evt.Pos.Y <= s.ctrlEnd.Y {
+                s.isDragging = true
+            } else {
+                s.isDragging = false
+            }
+        }
     case touch.TypeDrag:
-        r := s.Rect().Inset(s.ctrlStart.X, s.ctrlStart.Y)
-        fx, fy := r.PosRel(evt.Pos)
+        if !s.isDragging {
+            break
+        }
         v := 0.0
         if s.orient == Horizontal {
-            v = fx
+            r := s.Rect().Inset(s.barStart.X+s.ctrlLen/2, s.barStart.Y)
+            v, _ = r.PosRel(evt.Pos)
         } else {
-            v = fy
+            r := s.Rect().Inset(s.barStart.X, s.barStart.Y+s.ctrlLen/2)
+            _, v = r.PosRel(evt.Pos)
         }
-        v = (v-0.5*s.visiRange)/(1.0-s.visiRange)
+        s.SetValue(v)
+        s.Mark(MarkNeedsPaint)
+    case touch.TypeTap:
+        v := s.Value()
+        if s.orient == Horizontal {
+            if evt.Pos.X < s.ctrlStart.X {
+                v -= s.visiRange
+            }
+            if evt.Pos.X > s.ctrlEnd.X {
+                v += s.visiRange
+            }
+        } else {
+            if evt.Pos.Y < s.ctrlStart.Y {
+                v -= s.visiRange
+            }
+            if evt.Pos.Y > s.ctrlEnd.Y {
+                v += s.visiRange
+            }
+        }
         s.SetValue(v)
         s.Mark(MarkNeedsPaint)
     case touch.TypeDoubleTap:
@@ -1053,7 +1090,14 @@ func (s *Scrollbar) OnInputEvent(evt touch.Event) {
 // vertikal im GUI positionieren. Als Werte sind aktuell nur Fliesskommazahlen
 // vorgesehen.
 var (
-    SliderProps = ScrollbarProps
+    SliderProps =  NewProps(DefProps,
+        nil, nil,
+        map[SizePropertyName]float64{
+            Width:    18.0,
+            Height:   18.0,
+            BarWidth:  3.0,
+            
+        })
 )
 
 type Slider struct {
@@ -1063,7 +1107,8 @@ type Slider struct {
     initValue, minValue, maxValue, stepSize float64
     value binding.Float
     barStart, barEnd geom.Point
-    ctrlStart, ctrlEnd geom.Point
+    barLen float64
+    ctrlPos geom.Point
 }
 
 func NewSlider(len float64, orient Orientation) (*Slider) {
@@ -1072,24 +1117,21 @@ func NewSlider(len float64, orient Orientation) (*Slider) {
     s.LeafEmbed.Init()
     s.PropertyEmbed.Init(SliderProps)
     s.PushEmbed.Init(s, nil)
+
     s.orient = orient
     if s.orient == Horizontal {
         s.SetMinSize(geom.Point{len, s.Height()})
-        s.barStart = geom.Point{0.5*s.BarSize(), 0.5*s.Height()}
-        s.ctrlStart = geom.Point{0.5*max(s.CtrlSize(), s.BarSize()),
-            0.5*s.Height()}
     } else {
         s.SetMinSize(geom.Point{s.Width(), len})
-        s.barStart = geom.Point{0.5*s.Width(), 0.5*s.BarSize()}
-        s.ctrlStart = geom.Point{0.5*s.Width(), 0.5*max(s.CtrlSize(),
-            s.BarSize())}
     }
+    d := max(0.5*s.BarWidth(), 0.5*s.CtrlWidth())
+    s.barStart = geom.Point{d, d}
     s.initValue = 0.0
     s.minValue  = 0.0
     s.maxValue  = 1.0
     s.stepSize  = 0.1
     s.value     = binding.NewFloat()
-    s.updateValues()
+    s.SetValue(s.initValue)
     return s
 }
 
@@ -1110,41 +1152,42 @@ func NewSliderWithCallback(len float64, orient Orientation,
 
 func (s *Slider) SetSize(size geom.Point) {
     s.LeafEmbed.SetSize(size)
-    s.updateValues()
+    s.updateCtrl()
 }
 
-func (s *Slider) updateValues() {
+func (s *Slider) updateCtrl() {
     s.barEnd = s.Size().Sub(s.barStart)
-    s.ctrlEnd = s.Size().Sub(s.ctrlStart)
+    if s.orient == Horizontal {
+        s.barLen = s.barEnd.X - s.barStart.X
+        s.ctrlPos = s.barStart.Interpolate(s.barEnd, s.Factor())
+    } else {
+        s.barLen = s.barEnd.Y - s.barStart.Y
+        s.ctrlPos = s.barStart.Interpolate(s.barEnd, 1.0 - s.Factor())
+    }
 }
 
 func (s *Slider) Paint(gc *gg.Context) {
-    var pt0, pt1 geom.Point
     //log.Printf("Slider.Paint()")
     if s.Pushed() {
         gc.SetStrokeColor(s.PressedBarColor())
     } else {
         gc.SetStrokeColor(s.BarColor())
     }
-    gc.SetStrokeWidth(s.BarSize())
+    gc.SetStrokeWidth(s.BarWidth())
     gc.DrawLine(s.barStart.X, s.barStart.Y, s.barEnd.X, s.barEnd.Y)
     gc.Stroke()
-
-    if s.orient == Horizontal {
-        pt0 = s.ctrlStart.Interpolate(s.ctrlEnd, s.Factor())
-        pt1 = pt0.AddXY(0.5, 0)
-    } else {
-        pt0 = s.ctrlStart.Interpolate(s.ctrlEnd, 1.0-s.Factor())
-        pt1 = pt0.AddXY(0, 0.5)
-    }
 
     if s.Pushed() {
         gc.SetStrokeColor(s.PressedColor())
     } else {
         gc.SetStrokeColor(s.Color())
     }
-    gc.SetStrokeWidth(s.CtrlSize())
-    gc.DrawLine(pt0.X, pt0.Y, pt1.X, pt1.Y)
+    gc.SetStrokeWidth(s.CtrlWidth())
+    if s.orient == Horizontal {
+        gc.DrawLine(s.ctrlPos.X-0.5, s.ctrlPos.Y, s.ctrlPos.X+0.5, s.ctrlPos.Y)
+    } else {
+        gc.DrawLine(s.ctrlPos.X, s.ctrlPos.Y-0.5, s.ctrlPos.X, s.ctrlPos.Y+0.5)
+    }
     gc.Stroke()
 }
 
@@ -1169,6 +1212,7 @@ func (s *Slider) SetValue(v float64) {
     if v > s.maxValue { v = s.maxValue }
     if v < s.minValue { v = s.minValue }
     s.value.Set(v)
+    s.updateCtrl()
 }
 
 func (s *Slider) Value() (float64) {
@@ -1187,8 +1231,8 @@ func (s *Slider) InitValue() (float64) {
 func (s *Slider) SetFactor(f float64) {
     if f > 1.0 { f = 1.0 }
     if f < 0.0 { f = 0.0 }
-    v := (1.0-f)*s.minValue + f*s.maxValue
-    s.SetValue(v)
+    s.SetValue((1.0-f)*s.minValue + f*s.maxValue)
+    
 }
 
 func (s *Slider) Factor() (float64) {
@@ -1196,17 +1240,15 @@ func (s *Slider) Factor() (float64) {
 }
 
 func (s *Slider) OnInputEvent(evt touch.Event) {
-    //log.Printf("%T: %v", s, evt)
     s.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
     case touch.TypeDrag:
-        r := s.Rect().Inset(s.ctrlStart.X, s.ctrlStart.Y)
-        fx, fy := r.PosRel(evt.Pos)
         v := 0.0
+        r := s.Rect().Inset(s.barStart.X, s.barStart.Y)
         if s.orient == Horizontal {
-            v = fx
+            v, _ = r.PosRel(evt.Pos)
         } else {
-            v = 1.0 - fy
+            _, v = r.PosRel(evt.Pos)
         }
         s.SetFactor(v)
         s.Mark(MarkNeedsPaint)

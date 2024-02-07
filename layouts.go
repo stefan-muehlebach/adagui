@@ -29,7 +29,7 @@ func (l *NullLayout) MinSize(childList *list.List) (geom.Point) {
         if !child.Visible() {
             continue
         }
-        minSize = minSize.Max(child.MinSize())
+        minSize = minSize.Max(child.Pos().Add(child.MinSize()))
     }
     return minSize
 }
