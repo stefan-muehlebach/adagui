@@ -13,6 +13,7 @@ import (
 	"container/list"
 	"github.com/stefan-muehlebach/adagui/binding"
 	"github.com/stefan-muehlebach/adagui/touch"
+	. "github.com/stefan-muehlebach/adagui/props"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/colornames"
@@ -334,9 +335,6 @@ func NewTabPanel(w, h float64, menu *TabMenu, content *Panel) *TabPanel {
 
 var (
 	TabMenuProps = NewProps(TabPanelProps, nil, nil, nil)
-//		map[ColorPropertyName]color.Color{
-//			Color: DefProps.Color(MenuBackgroundColor),
-//		}, nil, nil)
 )
 
 type TabMenu struct {

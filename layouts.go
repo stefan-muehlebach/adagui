@@ -5,6 +5,7 @@ import (
     "math"
     "container/list"
     "github.com/stefan-muehlebach/gg/geom"
+    . "github.com/stefan-muehlebach/adagui/props"
 )
 
 // Mit dem NullLayout werden die verwalteten Nodes per SetPos platziert und
@@ -12,17 +13,9 @@ import (
 // die maximale Grösse aller verwalteten Nodes.
 type NullLayout struct { }
 
-func (l *NullLayout) Layout(childList *list.List, size geom.Point) {
-    //stackLevel.Inc()
-    //defer stackLevel.Dec()
-    //log.Printf("NullLayout.Layout(cl, %v)", size)
-}
+func (l *NullLayout) Layout(childList *list.List, size geom.Point) { }
 
 func (l *NullLayout) MinSize(childList *list.List) (geom.Point) {
-    //stackLevel.Inc()
-    //defer stackLevel.Dec()
-    //log.Printf("NullLayout.MinSize()")
-
     minSize := geom.Point{}
     for elem := childList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed).Wrapper
@@ -68,10 +61,6 @@ func NewPaddedLayout(pads... float64) *PaddedLayout {
 }
 
 func (l *PaddedLayout) Layout(childList *list.List, size geom.Point) {
-    //stackLevel.Inc()
-    //defer stackLevel.Dec()
-    //log.Printf("PaddedLayout.Layout(cl, %v)", size)
-
     pos := geom.Point{l.pad[Left], l.pad[Top]}
     siz := geom.Point{size.X-(l.pad[Left]+l.pad[Right]),
             size.Y-(l.pad[Top]+l.pad[Bottom])}
@@ -83,10 +72,6 @@ func (l *PaddedLayout) Layout(childList *list.List, size geom.Point) {
 }
 
 func (l *PaddedLayout) MinSize(childList *list.List) (geom.Point) {
-    //stackLevel.Inc()
-    //defer stackLevel.Dec()
-    //log.Printf("PaddedLayout.MinSize()")
-
     minSize := geom.Point{}
     for elem := childList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed).Wrapper
@@ -97,6 +82,134 @@ func (l *PaddedLayout) MinSize(childList *list.List) (geom.Point) {
     }
     return minSize.Add(geom.Point{l.pad[Left]+l.pad[Right],
         l.pad[Top]+l.pad[Bottom]})
+}
+
+// Die BoxLayouts gibt es in zwei Varianten: horizontal oder vertikal.
+// Alle verwalteten Kinder werden neben oder untereinander angeordnet und
+// auf die gleiche Höhe, resp. gleiche Breite getrimmt. Bei diesem Layout
+// kommen auch die Spacer-Widgets zum Einsatz: sie dehnen sich auf die
+// maximale Breite, resp. Höhe aus, haben aber sonst keinen Inhalt oder
+// Einfluss.
+type BoxLayout struct {
+    orient Orientation
+    padding float64
+}
+
+func NewHBoxLayout(pads... float64) *BoxLayout {
+    pad := DefProps.Size(InnerPadding)
+    if len(pads) > 0 {
+        pad = pads[0]
+    }
+    return &BoxLayout{Horizontal, pad}
+}
+
+func NewVBoxLayout(pads... float64) *BoxLayout {
+    pad := DefProps.Size(InnerPadding)
+    if len(pads) > 0 {
+        pad = pads[0]
+    }
+    return &BoxLayout{Vertical, pad}
+}
+
+func (l *BoxLayout) isSpacer(obj Node) (bool) {
+    spc, ok := obj.(*Spacer)
+    if !ok {
+        return false
+    }
+    if l.orient == Horizontal {
+        return spc.ExpandHorizontal()
+    }
+    return spc.ExpandVertical()
+}
+
+func (l *BoxLayout) Layout(childList *list.List, size geom.Point) {
+    spacers := 0
+    total   := 0.0
+    for elem := childList.Front(); elem != nil; elem = elem.Next() {
+        child := elem.Value.(*Embed).Wrapper
+        if !child.Visible() {
+            continue
+        }
+        if l.isSpacer(child) {
+            spacers++
+            continue
+        }
+        childSize := child.MinSize()
+        switch l.orient {
+        case Horizontal:
+            total += childSize.X
+        case Vertical:
+            total += childSize.Y
+        }
+    }
+    extra, extraCell := 0.0, 0.0
+    switch l.orient {
+    case Horizontal:
+        extra = size.X - total - l.padding * float64(childList.Len() -
+                spacers - 1)
+    case Vertical:
+        extra = size.Y - total - l.padding * float64(childList.Len() -
+                spacers - 1)
+    }
+    if spacers > 0 {
+        extraCell = extra / float64(spacers)
+    }
+    pos := geom.Point{}
+    for elem := childList.Front(); elem != nil; elem = elem.Next() {
+        child := elem.Value.(*Embed).Wrapper
+        if !child.Visible() {
+            continue
+        }
+        if l.isSpacer(child) {
+            switch l.orient {
+            case Horizontal:
+                pos.X += extraCell
+            case Vertical:
+                pos.Y += extraCell
+            }
+            continue
+        }
+        child.SetPos(pos)
+        switch l.orient {
+        case Horizontal:
+            width := child.MinSize().X
+            pos.X += width + l.padding
+            child.SetSize(geom.Point{width, size.Y})
+        case Vertical:
+            height := child.MinSize().Y
+            pos.Y += height + l.padding
+            child.SetSize(geom.Point{size.X, height})
+        }
+    }
+}
+
+func (l *BoxLayout) MinSize(childList *list.List) (geom.Point) {
+    //log.Printf("BoxLayout.MinSize()")
+    minSize := geom.Point{}
+    addPadding := false
+    for elem := childList.Front(); elem != nil; elem = elem.Next() {
+        child := elem.Value.(*Embed).Wrapper
+        if !child.Visible() || l.isSpacer(child) {
+            continue
+        }
+        childSize := child.MinSize()
+        switch l.orient {
+        case Horizontal:
+            minSize.Y  = max(minSize.Y, childSize.Y)
+            minSize.X += childSize.X
+            if addPadding {
+                minSize.X += l.padding
+            }
+        case Vertical:
+            minSize.X  = max(minSize.X, childSize.X)
+            minSize.Y += childSize.Y
+            if addPadding {
+                minSize.Y += l.padding
+            }
+        }
+        addPadding = true
+    }
+    return minSize
 }
 
 // Wie beim PaddedLayout wird man mit Stack- oder Max-Layout sinnvollerweise
@@ -368,134 +481,6 @@ func (l *BorderLayout) MinSize(childList *list.List) (geom.Point) {
         minSize = geom.Point{minWidth, minSize.Y+bottomMin.Y+l.padding}
     }
 
-    return minSize
-}
-
-// Die BoxLayouts gibt es in zwei Varianten: horizontal oder vertikal.
-// Alle verwalteten Kinder werden neben oder untereinander angeordnet und
-// auf die gleiche Höhe, resp. gleiche Breite getrimmt. Bei diesem Layout
-// kommen auch die Spacer-Widgets zum Einsatz: sie dehnen sich auf die
-// maximale Breite, resp. Höhe aus, haben aber sonst keinen Inhalt oder
-// Einfluss.
-type BoxLayout struct {
-    orient Orientation
-    padding float64
-}
-
-func NewHBoxLayout(pads... float64) *BoxLayout {
-    pad := DefProps.Size(InnerPadding)
-    if len(pads) > 0 {
-        pad = pads[0]
-    }
-    return &BoxLayout{Horizontal, pad}
-}
-
-func NewVBoxLayout(pads... float64) *BoxLayout {
-    pad := DefProps.Size(InnerPadding)
-    if len(pads) > 0 {
-        pad = pads[0]
-    }
-    return &BoxLayout{Vertical, pad}
-}
-
-func (l *BoxLayout) isSpacer(obj Node) (bool) {
-    spc, ok := obj.(*Spacer)
-    if !ok {
-        return false
-    }
-    if l.orient == Horizontal {
-        return spc.ExpandHorizontal()
-    }
-    return spc.ExpandVertical()
-}
-
-func (l *BoxLayout) Layout(childList *list.List, size geom.Point) {
-    spacers := 0
-    total   := 0.0
-    for elem := childList.Front(); elem != nil; elem = elem.Next() {
-        child := elem.Value.(*Embed).Wrapper
-        if !child.Visible() {
-            continue
-        }
-        if l.isSpacer(child) {
-            spacers++
-            continue
-        }
-        childSize := child.MinSize()
-        switch l.orient {
-        case Horizontal:
-            total += childSize.X
-        case Vertical:
-            total += childSize.Y
-        }
-    }
-    extra, extraCell := 0.0, 0.0
-    switch l.orient {
-    case Horizontal:
-        extra = size.X - total - l.padding * float64(childList.Len() -
-                spacers - 1)
-    case Vertical:
-        extra = size.Y - total - l.padding * float64(childList.Len() -
-                spacers - 1)
-    }
-    if spacers > 0 {
-        extraCell = extra / float64(spacers)
-    }
-    pos := geom.Point{}
-    for elem := childList.Front(); elem != nil; elem = elem.Next() {
-        child := elem.Value.(*Embed).Wrapper
-        if !child.Visible() {
-            continue
-        }
-        if l.isSpacer(child) {
-            switch l.orient {
-            case Horizontal:
-                pos.X += extraCell
-            case Vertical:
-                pos.Y += extraCell
-            }
-            continue
-        }
-        child.SetPos(pos)
-        switch l.orient {
-        case Horizontal:
-            width := child.MinSize().X
-            pos.X += width + l.padding
-            child.SetSize(geom.Point{width, size.Y})
-        case Vertical:
-            height := child.MinSize().Y
-            pos.Y += height + l.padding
-            child.SetSize(geom.Point{size.X, height})
-        }
-    }
-}
-
-func (l *BoxLayout) MinSize(childList *list.List) (geom.Point) {
-    //log.Printf("BoxLayout.MinSize()")
-    minSize := geom.Point{}
-    addPadding := false
-    for elem := childList.Front(); elem != nil; elem = elem.Next() {
-        child := elem.Value.(*Embed).Wrapper
-        if !child.Visible() || l.isSpacer(child) {
-            continue
-        }
-        childSize := child.MinSize()
-        switch l.orient {
-        case Horizontal:
-            minSize.Y  = max(minSize.Y, childSize.Y)
-            minSize.X += childSize.X
-            if addPadding {
-                minSize.X += l.padding
-            }
-        case Vertical:
-            minSize.X  = max(minSize.X, childSize.X)
-            minSize.Y += childSize.Y
-            if addPadding {
-                minSize.Y += l.padding
-            }
-        }
-        addPadding = true
-    }
     return minSize
 }
 

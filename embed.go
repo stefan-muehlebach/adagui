@@ -4,6 +4,7 @@ import (
     "container/list"
     "log"
     "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/adagui/props"
     "github.com/stefan-muehlebach/gg"
     "github.com/stefan-muehlebach/gg/geom"
 )
@@ -21,7 +22,7 @@ type Embed struct {
     Marks Marks
     visible bool
     selectable bool
-    PropertyEmbed
+    props.PropertyEmbed
 }
 
 func (m *Embed) Init() {

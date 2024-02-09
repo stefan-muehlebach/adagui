@@ -2,8 +2,10 @@ module github.com/stefan-muehlebach/adagui
 
 go 1.21.6
 
+replace github.com/stefan-muehlebach/adatft => ../adatft
+
 require (
-	github.com/stefan-muehlebach/adatft v1.2.0
+	github.com/stefan-muehlebach/adatft v0.0.0-00010101000000-000000000000
 	github.com/stefan-muehlebach/gg v1.2.0
 	golang.org/x/image v0.15.0
 )

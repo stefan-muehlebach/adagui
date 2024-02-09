@@ -15,6 +15,7 @@ import (
     "math"
     "sync"
     "github.com/stefan-muehlebach/adagui/touch"
+    . "github.com/stefan-muehlebach/adagui/props"
     "github.com/stefan-muehlebach/gg"
     "github.com/stefan-muehlebach/gg/color"
     "github.com/stefan-muehlebach/gg/geom"

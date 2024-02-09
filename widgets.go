@@ -23,6 +23,7 @@ import (
     "math"
     "github.com/stefan-muehlebach/adagui/binding"
     "github.com/stefan-muehlebach/adagui/touch"
+    . "github.com/stefan-muehlebach/adagui/props"
     "github.com/stefan-muehlebach/gg"
     "github.com/stefan-muehlebach/gg/color"
     "github.com/stefan-muehlebach/gg/colornames"
@@ -910,8 +911,9 @@ func (b *RadioButton) DataChanged(data binding.DataItem) {
 var (
     ScrollbarProps =  NewProps(DefProps, nil, nil,
         map[SizePropertyName]float64{
-            Width:  18.0,
-            Height: 18.0,
+            Width:    18.0,
+            Height:   18.0,
+            BarWidth:  3.0,
         })
 )
 
