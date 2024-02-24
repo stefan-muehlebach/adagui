@@ -29,23 +29,23 @@ var (
     ShapeProps = NewProps(DefProps,
         map[ColorPropertyName]color.Color{
             Color:               color.Transparent,
-            PressedColor:        color.Transparent,
+            PushedColor:         color.Transparent,
             SelectedColor:       color.Transparent,
             BorderColor:         DefProps.Color(WhiteColor),
-            PressedBorderColor:  DefProps.Color(WhiteColor).Alpha(0.5),
+            PushedBorderColor:   DefProps.Color(WhiteColor).Alpha(0.5),
             SelectedBorderColor: DefProps.Color(WhiteColor),
         },
         nil,
         map[SizePropertyName]float64{
             BorderWidth:         2.0,
-            PressedBorderWidth:  2.0,
+            PushedBorderWidth:   2.0,
             SelectedBorderWidth: 2.0,
         })
 
     PointProps = NewProps(ShapeProps,
         map[ColorPropertyName]color.Color{
             Color:               DefProps.Color(WhiteColor),
-            PressedColor:        DefProps.Color(WhiteColor).Alpha(0.5),
+            PushedColor:         DefProps.Color(WhiteColor).Alpha(0.5),
             SelectedColor:       DefProps.Color(RedColor),
         },
         nil,
@@ -53,7 +53,7 @@ var (
             Width:               8.0,
             Height:              8.0,
             BorderWidth:         0.0,
-            PressedBorderWidth:  4.0,
+            PushedBorderWidth:   4.0,
             SelectedBorderWidth: 4.0,
         })
 )
@@ -62,43 +62,40 @@ var (
 type Shape struct {
     LeafEmbed
     PushEmbed
-    selected bool
+    SelectEmbed
 }
 
 func (s *Shape) Init() {
     s.LeafEmbed.Init()
     s.PushEmbed.Init(s, nil)
+    s.SelectEmbed.Init(s, nil, nil)
 }
 
 func (s *Shape) OnInputEvent(evt touch.Event) {
     Debugf(Events, "evt: %v", evt)
     s.PushEmbed.OnInputEvent(evt)
-//    switch evt.Type {
-//    case touch.TypeTap:
-//        s.selected = !s.selected
-//        s.Mark(MarkNeedsPaint)
-//    }
+    s.SelectEmbed.OnInputEvent(evt)
     s.CallTouchFunc(evt)
 }
 
 func (s *Shape) Paint(gc *gg.Context) {
     if s.Pushed() {
         Debugf(Painting, "paint pushed")
-        gc.SetFillColor(s.PressedColor())
-        gc.SetStrokeWidth(s.PressedBorderWidth())
-        gc.SetStrokeColor(s.PressedBorderColor())
+        gc.SetFillColor(s.PushedColor())
+        gc.SetStrokeWidth(s.PushedBorderWidth())
+        gc.SetStrokeColor(s.PushedBorderColor())
     } else {
-//        if s.selected {
-//            Debugf(Painting, "paint selected")
-//            gc.SetFillColor(s.SelectedColor())
-//            gc.SetStrokeWidth(s.SelectedBorderWidth())
-//            gc.SetStrokeColor(s.SelectedBorderColor())
-//        } else {
+        if s.Selected() {
+            Debugf(Painting, "paint selected")
+            gc.SetFillColor(s.SelectedColor())
+            gc.SetStrokeWidth(s.SelectedBorderWidth())
+            gc.SetStrokeColor(s.SelectedBorderColor())
+        } else {
             Debugf(Painting, "paint normally")
             gc.SetFillColor(s.Color())
             gc.SetStrokeWidth(s.BorderWidth())
             gc.SetStrokeColor(s.BorderColor())
-//        }
+        }
     }
 }
 

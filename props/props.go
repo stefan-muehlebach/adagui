@@ -15,19 +15,19 @@ type ColorPropertyName int
 
 const (
     Color ColorPropertyName = iota
-    PressedColor
+    PushedColor
     SelectedColor
     BorderColor
-    PressedBorderColor
+    PushedBorderColor
     SelectedBorderColor
     TextColor
-    PressedTextColor
+    PushedTextColor
     SelectedTextColor
     LineColor
-    PressedLineColor
+    PushedLineColor
     SelectedLineColor
     BarColor
-    PressedBarColor
+    PushedBarColor
     BackgroundColor
     MenuBackgroundColor
     RedColor
@@ -46,19 +46,19 @@ const (
 func (p ColorPropertyName) String() (string) {
     switch p {
     case Color: return "Color"
-    case PressedColor: return "PressedColor"
+    case PushedColor: return "PushedColor"
     case SelectedColor: return "SelectedColor"
     case BorderColor: return "BorderColor"
-    case PressedBorderColor: return "PressedBorderColor"
+    case PushedBorderColor: return "PushedBorderColor"
     case SelectedBorderColor: return "SelectedBorderColor"
     case TextColor: return "TextColor"
-    case PressedTextColor: return "PressedTextColor"
+    case PushedTextColor: return "PushedTextColor"
     case SelectedTextColor: return "SelectedTextColor"
     case LineColor: return "LineColor"
-    case PressedLineColor: return "PressedLineColor"
+    case PushedLineColor: return "PushedLineColor"
     case SelectedLineColor: return "SelectedLineColor"
     case BarColor: return "BarColor"
-    case PressedBarColor: return "PressedBarColor"
+    case PushedBarColor: return "PushedBarColor"
     case BackgroundColor: return "BackgroundColor"
     case MenuBackgroundColor: return "MenuBackgroundColor"
     case RedColor: return "RedColor"
@@ -78,19 +78,19 @@ func (p ColorPropertyName) String() (string) {
 var (
     EmbedColorProps = []ColorPropertyName{
         Color,
-        PressedColor,
+        PushedColor,
         SelectedColor,
         BorderColor,
-        PressedBorderColor,
+        PushedBorderColor,
         SelectedBorderColor,
         TextColor,
-        PressedTextColor,
+        PushedTextColor,
         SelectedTextColor,
         LineColor,
-        PressedLineColor,
+        PushedLineColor,
         SelectedLineColor,
         BarColor,
-        PressedBarColor,
+        PushedBarColor,
         BackgroundColor,
         MenuBackgroundColor,
     }
@@ -134,7 +134,7 @@ const (
     Width SizePropertyName = iota
     Height
     BorderWidth
-    PressedBorderWidth
+    PushedBorderWidth
     SelectedBorderWidth
     LineWidth
     InnerPadding
@@ -151,7 +151,7 @@ func (p SizePropertyName) String() (string) {
     case Width: return "Width"
     case Height: return "Height"
     case BorderWidth: return "BorderWidth"
-    case PressedBorderWidth: return "PressedBorderWidth"
+    case PushedBorderWidth: return "PushedBorderWidth"
     case SelectedBorderWidth: return "SelectedBorderWidth"
     case LineWidth: return "LineWidth"
     case InnerPadding: return "InnerPadding"
@@ -169,7 +169,7 @@ var (
         Width,
         Height,
         BorderWidth,
-        PressedBorderWidth,
+        PushedBorderWidth,
         SelectedBorderWidth,
         LineWidth,
         InnerPadding,
@@ -326,23 +326,23 @@ func NewDefaultProps() (*Properties) {
 
     p.colorMap = map[ColorPropertyName]color.Color{
         Color:               c1,
-        PressedColor:        c2,
+        PushedColor:        c2,
         SelectedColor:       c3,
 
         BorderColor:         c1,
-        PressedBorderColor:  c2,
+        PushedBorderColor:  c2,
         SelectedBorderColor: c3,
 
         TextColor:           colornames.WhiteSmoke,
-        PressedTextColor:    colornames.Black,
+        PushedTextColor:    colornames.Black,
         SelectedTextColor:   colornames.White,
 
         LineColor:           colornames.WhiteSmoke,
-        PressedLineColor:    colornames.Black,
+        PushedLineColor:    colornames.Black,
         SelectedLineColor:   colornames.WhiteSmoke,
 
         BarColor:            colornames.DarkSlateGray.Dark(0.5),
-        PressedBarColor:     colornames.DarkSlateGray.Dark(0.5),
+        PushedBarColor:     colornames.DarkSlateGray.Dark(0.5),
         
         BackgroundColor:     colornames.Navy.Dark(0.8),
         MenuBackgroundColor: colornames.DarkGreen.Dark(0.8),
@@ -375,7 +375,7 @@ func NewDefaultProps() (*Properties) {
         Height:              0.0,
 
         BorderWidth:         0.0,
-        PressedBorderWidth:  0.0,
+        PushedBorderWidth:  0.0,
         SelectedBorderWidth: 0.0,
 
         LineWidth:           2.0,

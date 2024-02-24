@@ -1,3 +1,5 @@
+//go:generate go run gen.go
+
 // Enthält eine Sammlung von gebundenen Datentypen.
 package binding
 

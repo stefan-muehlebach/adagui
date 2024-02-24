@@ -25,11 +25,11 @@ func (pe *PropertyEmbed) SetColor(c color.Color) {
     pe.prop.SetColor(Color, c)
 }
 
-func (pe *PropertyEmbed) PressedColor() (color.Color) {
-    return pe.prop.Color(PressedColor)
+func (pe *PropertyEmbed) PushedColor() (color.Color) {
+    return pe.prop.Color(PushedColor)
 }
-func (pe *PropertyEmbed) SetPressedColor(c color.Color) {
-    pe.prop.SetColor(PressedColor, c)
+func (pe *PropertyEmbed) SetPushedColor(c color.Color) {
+    pe.prop.SetColor(PushedColor, c)
 }
 
 func (pe *PropertyEmbed) SelectedColor() (color.Color) {
@@ -46,11 +46,11 @@ func (pe *PropertyEmbed) SetBorderColor(c color.Color) {
     pe.prop.SetColor(BorderColor, c)
 }
 
-func (pe *PropertyEmbed) PressedBorderColor() (color.Color) {
-    return pe.prop.Color(PressedBorderColor)
+func (pe *PropertyEmbed) PushedBorderColor() (color.Color) {
+    return pe.prop.Color(PushedBorderColor)
 }
-func (pe *PropertyEmbed) SetPressedBorderColor(c color.Color) {
-    pe.prop.SetColor(PressedBorderColor, c)
+func (pe *PropertyEmbed) SetPushedBorderColor(c color.Color) {
+    pe.prop.SetColor(PushedBorderColor, c)
 }
 
 func (pe *PropertyEmbed) SelectedBorderColor() (color.Color) {
@@ -67,11 +67,11 @@ func (pe *PropertyEmbed) SetTextColor(c color.Color) {
     pe.prop.SetColor(TextColor, c)
 }
 
-func (pe *PropertyEmbed) PressedTextColor() (color.Color) {
-    return pe.prop.Color(PressedTextColor)
+func (pe *PropertyEmbed) PushedTextColor() (color.Color) {
+    return pe.prop.Color(PushedTextColor)
 }
-func (pe *PropertyEmbed) SetPressedTextColor(c color.Color) {
-    pe.prop.SetColor(PressedTextColor, c)
+func (pe *PropertyEmbed) SetPushedTextColor(c color.Color) {
+    pe.prop.SetColor(PushedTextColor, c)
 }
 
 func (pe *PropertyEmbed) SelectedTextColor() (color.Color) {
@@ -88,11 +88,11 @@ func (pe *PropertyEmbed) SetLineColor(c color.Color) {
     pe.prop.SetColor(LineColor, c)
 }
 
-func (pe *PropertyEmbed) PressedLineColor() (color.Color) {
-    return pe.prop.Color(PressedLineColor)
+func (pe *PropertyEmbed) PushedLineColor() (color.Color) {
+    return pe.prop.Color(PushedLineColor)
 }
-func (pe *PropertyEmbed) SetPressedLineColor(c color.Color) {
-    pe.prop.SetColor(PressedLineColor, c)
+func (pe *PropertyEmbed) SetPushedLineColor(c color.Color) {
+    pe.prop.SetColor(PushedLineColor, c)
 }
 
 func (pe *PropertyEmbed) SelectedLineColor() (color.Color) {
@@ -109,11 +109,11 @@ func (pe *PropertyEmbed) SetBarColor(c color.Color) {
     pe.prop.SetColor(BarColor, c)
 }
 
-func (pe *PropertyEmbed) PressedBarColor() (color.Color) {
-    return pe.prop.Color(PressedBarColor)
+func (pe *PropertyEmbed) PushedBarColor() (color.Color) {
+    return pe.prop.Color(PushedBarColor)
 }
-func (pe *PropertyEmbed) SetPressedBarColor(c color.Color) {
-    pe.prop.SetColor(PressedBarColor, c)
+func (pe *PropertyEmbed) SetPushedBarColor(c color.Color) {
+    pe.prop.SetColor(PushedBarColor, c)
 }
 
 func (pe *PropertyEmbed) BackgroundColor() (color.Color) {
@@ -158,11 +158,11 @@ func (pe *PropertyEmbed) SetBorderWidth(s float64) {
     pe.prop.SetSize(BorderWidth, s)
 }
 
-func (pe *PropertyEmbed) PressedBorderWidth() (float64) {
-    return pe.prop.Size(PressedBorderWidth)
+func (pe *PropertyEmbed) PushedBorderWidth() (float64) {
+    return pe.prop.Size(PushedBorderWidth)
 }
-func (pe *PropertyEmbed) SetPressedBorderWidth(s float64) {
-    pe.prop.SetSize(PressedBorderWidth, s)
+func (pe *PropertyEmbed) SetPushedBorderWidth(s float64) {
+    pe.prop.SetSize(PushedBorderWidth, s)
 }
 
 func (pe *PropertyEmbed) SelectedBorderWidth() (float64) {

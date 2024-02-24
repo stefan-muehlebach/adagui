@@ -270,8 +270,8 @@ func (b *Button) Paint(gc *gg.Context) {
     gc.DrawRoundedRectangle(0.0, 0.0, b.Size().X, b.Size().Y,
             b.CornerRadius())
     if b.Pushed() {
-        gc.SetFillColor(b.PressedColor())
-        gc.SetStrokeColor(b.PressedBorderColor())
+        gc.SetFillColor(b.PushedColor())
+        gc.SetStrokeColor(b.PushedBorderColor())
     } else {
         if b.checked {
             gc.SetFillColor(b.SelectedColor())
@@ -372,7 +372,7 @@ func (b *TextButton) Paint(gc *gg.Context) {
     b.Button.Paint(gc)
     gc.SetFontFace(b.fontFace)
     if b.Pushed() {
-        gc.SetStrokeColor(b.PressedTextColor())
+        gc.SetStrokeColor(b.PushedTextColor())
     } else {
         if b.checked {
             gc.SetStrokeColor(b.SelectedTextColor())
@@ -430,7 +430,7 @@ func (b *ListButton) Paint(gc *gg.Context) {
     b.Button.Paint(gc)
     gc.SetFontFace(b.fontFace)
     if b.Pushed() {
-        gc.SetStrokeColor(b.PressedTextColor())
+        gc.SetStrokeColor(b.PushedTextColor())
     } else {
         if b.checked {
             gc.SetStrokeColor(b.SelectedTextColor())
@@ -443,7 +443,7 @@ func (b *ListButton) Paint(gc *gg.Context) {
 
     gc.SetStrokeWidth(b.BorderWidth())
     if b.Pushed() {
-        gc.SetStrokeColor(b.PressedBorderColor())
+        gc.SetStrokeColor(b.PushedBorderColor())
     } else {
         gc.SetStrokeColor(b.BorderColor())
     }
@@ -459,8 +459,8 @@ func (b *ListButton) Paint(gc *gg.Context) {
 
     gc.SetLineCapRound()
     if b.Pushed() {
-        gc.SetFillColor(b.PressedLineColor())
-        gc.SetStrokeColor(b.PressedLineColor())
+        gc.SetFillColor(b.PushedLineColor())
+        gc.SetStrokeColor(b.PushedLineColor())
     } else {
         gc.SetFillColor(b.LineColor())
         gc.SetStrokeColor(b.LineColor())
@@ -657,8 +657,8 @@ func (b *TabButton) Paint(gc *gg.Context) {
             b.Size().X, b.Size().Y+b.CornerRadius(),
             b.CornerRadius())
     if b.Pushed() {
-        gc.SetFillColor(b.PressedColor())
-        gc.SetStrokeColor(b.PressedBorderColor())
+        gc.SetFillColor(b.PushedColor())
+        gc.SetStrokeColor(b.PushedBorderColor())
     } else {
         if b.checked {
             gc.SetFillColor(b.SelectedColor())
@@ -672,7 +672,7 @@ func (b *TabButton) Paint(gc *gg.Context) {
 
     mp := b.Bounds().Center()
     if b.Pushed() {
-        gc.SetStrokeColor(b.PressedTextColor())
+        gc.SetStrokeColor(b.PushedTextColor())
     } else {
         if b.checked {
             gc.SetStrokeColor(b.SelectedTextColor())
@@ -773,8 +773,8 @@ func (c *Checkbox) Paint(gc *gg.Context) {
     gc.DrawRoundedRectangle(0.0, 0.0, c.Width(), c.Height(),
             c.CornerRadius())
     if c.Pushed() {
-        gc.SetFillColor(c.PressedColor())
-        gc.SetStrokeColor(c.PressedBorderColor())
+        gc.SetFillColor(c.PushedColor())
+        gc.SetStrokeColor(c.PushedBorderColor())
     } else {
         gc.SetFillColor(c.Color())
         gc.SetStrokeColor(c.BorderColor())
@@ -784,7 +784,7 @@ func (c *Checkbox) Paint(gc *gg.Context) {
     if c.Checked() {
         gc.SetStrokeWidth(c.LineWidth())
         if c.Pushed() {
-            gc.SetStrokeColor(c.PressedLineColor())
+            gc.SetStrokeColor(c.PushedLineColor())
         } else {
             gc.SetStrokeColor(c.LineColor())
         }
@@ -861,8 +861,8 @@ func (b *RadioButton) Paint(gc *gg.Context) {
     mp := geom.Point{0.5*b.Width(), 0.5*b.Height()}
     gc.DrawCircle(mp.X, mp.Y, 0.5*b.Width())
     if b.Pushed() {
-        gc.SetFillColor(b.PressedColor())
-        gc.SetStrokeColor(b.PressedBorderColor())
+        gc.SetFillColor(b.PushedColor())
+        gc.SetStrokeColor(b.PushedBorderColor())
     } else {
         gc.SetFillColor(b.Color())
         gc.SetStrokeColor(b.BorderColor())
@@ -871,7 +871,7 @@ func (b *RadioButton) Paint(gc *gg.Context) {
     gc.FillStroke()
     if b.checked {
         if b.Pushed() {
-	        gc.SetFillColor(b.PressedLineColor())
+	        gc.SetFillColor(b.PushedLineColor())
         } else {
       	    gc.SetFillColor(b.LineColor())
         }
@@ -1013,7 +1013,7 @@ func (s *Scrollbar) updateCtrl() {
 func (s *Scrollbar) Paint(gc *gg.Context) {
 //    var pt1, pt2 geom.Point
     if s.Pushed() {
-        gc.SetStrokeColor(s.PressedBarColor())
+        gc.SetStrokeColor(s.PushedBarColor())
     } else {
         gc.SetStrokeColor(s.BarColor())
     }
@@ -1022,7 +1022,7 @@ func (s *Scrollbar) Paint(gc *gg.Context) {
     gc.Stroke()
 
     if s.Pushed() {
-        gc.SetStrokeColor(s.PressedColor())
+        gc.SetStrokeColor(s.PushedColor())
     } else {
         gc.SetStrokeColor(s.Color())
     }
@@ -1171,7 +1171,7 @@ func (s *Slider) updateCtrl() {
 func (s *Slider) Paint(gc *gg.Context) {
     //log.Printf("Slider.Paint()")
     if s.Pushed() {
-        gc.SetStrokeColor(s.PressedBarColor())
+        gc.SetStrokeColor(s.PushedBarColor())
     } else {
         gc.SetStrokeColor(s.BarColor())
     }
@@ -1180,7 +1180,7 @@ func (s *Slider) Paint(gc *gg.Context) {
     gc.Stroke()
 
     if s.Pushed() {
-        gc.SetStrokeColor(s.PressedColor())
+        gc.SetStrokeColor(s.PushedColor())
     } else {
         gc.SetStrokeColor(s.Color())
     }

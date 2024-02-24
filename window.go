@@ -27,7 +27,6 @@ type Window struct {
     s *Screen
     gc *gg.Context
     paintCloseQ chan bool
-    //paintQ chan bool
     paintTicker *time.Ticker
     eventQ chan touch.Event
     quitQ  chan bool
@@ -46,7 +45,6 @@ func newWindow(s *Screen) (*Window) {
     w.Rect = geom.NewRectangleWH(0.0, 0.0, float64(width), float64(height))
     w.gc = gg.NewContext(width, height)
     w.paintCloseQ = make(chan bool)
-    //w.paintQ = make(chan bool, 1)
     w.paintTicker = time.NewTicker(30 * time.Millisecond)
     w.eventQ = make(chan touch.Event)
     w.quitQ  = make(chan bool)
@@ -63,7 +61,6 @@ func newWindow(s *Screen) (*Window) {
 func (w *Window) Close() {
     close(w.eventQ)
     <- w.quitQ
-    //close(w.paintQ)
     w.paintCloseQ <- true
     <- w.quitQ
 }
@@ -129,29 +126,6 @@ func (w *Window) paintThread() {
     }
 }
 
-/*
-func (w *Window) paintThread() {
-    for range w.paintQ {
-        if w.stage != StageVisible {
-            continue
-        }
-        for len(w.paintQ) > 0 {
-            <- w.paintQ
-        }
-        w.gc.SetFillColor(color.Black)
-        w.gc.Clear()
-        w.gc.Identity()
-        w.mutex.Lock()
-        if w.root != nil {
-            w.root.Wrappee().Paint(w.gc)
-        }
-        w.mutex.Unlock()
-        w.s.disp.Draw(w.gc.Image())
-    }
-    w.quitQ <- true
-}
-*/
-
 // Mit dieser Go-Routine werden die Events vom Screen-Objekt empfangen und
 // weiterverarbeitet.
 func (w *Window) eventThread() {
@@ -169,10 +143,10 @@ func (w *Window) eventThread() {
         if evt.Type == touch.TypePress {
             target = w.root.SelectTarget(evt.Pos)
             Debugf(Events, "new target    : %T", target)
-            if target == nil {
-                continue
-            }
             onTarget = true
+        }
+        if target == nil {
+            continue
         }
         evt.InitPos = target.Screen2Local(evt.InitPos)
         evt.Pos = target.Screen2Local(evt.Pos)
@@ -206,4 +180,3 @@ func (w *Window) eventThread() {
     }
     w.quitQ <- true
 }
-

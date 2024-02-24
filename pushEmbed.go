@@ -38,6 +38,8 @@ func (e *PushEmbed) OnInputEvent(evt touch.Event) {
         e.pushed.Set(true)
     case touch.TypeRelease, touch.TypeLeave:
         e.pushed.Set(false)
+    case touch.TypeDrag:
+        e.pushed.Set(true)
     }
 }
 
