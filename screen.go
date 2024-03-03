@@ -1,7 +1,7 @@
 package adagui
 
 import (
-    "flag"
+//    "flag"
     "log"
     "time"
     "github.com/stefan-muehlebach/adatft"
@@ -12,12 +12,12 @@ import (
 var (
     numScreen int = 0
     screen *Screen
-    rotation adatft.RotationType = adatft.Rotate000
+//    rotation adatft.RotationType = adatft.Rotate000
 )
 
-func init() {
-    flag.Var(&rotation, "rotation", "display rotation")
-}
+//func init() {
+//    flag.Var(&rotation, "rotation", "display rotation")
+//}
 
 // Dies ist die Datenstruktur, welche das TFT-Display aus einer hoeheren
 // Abstraktion beschreibt. Diese Struktur darf es nur einmal (1) in einer
@@ -32,7 +32,7 @@ type Screen struct {
 // Objekte in Zusammenhang mit der Ansteuerung des Bildschirm und Touch-
 // Screens erzeugt. Aktuell darf es nur ein (1) solches Objekt geben - ein
 // mehrfaches Aufrufen von NewScreen führt zu einem Abbruch der Applikation.
-func NewScreen() (*Screen) {
+func NewScreen(rotation adatft.RotationType) (*Screen) {
     if numScreen > 0 {
         log.Fatal("there is already a 'Screen' object in this application")
     }

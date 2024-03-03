@@ -4,11 +4,11 @@
 package main
 
 import (
-    "log"
-    "os"
-    "path"
-    "runtime"
-    "text/template"
+	"log"
+	"os"
+	"path"
+	"runtime"
+	"text/template"
 )
 
 const itemBindTemplate = `
@@ -269,87 +269,86 @@ func (s *stringTo{{ .Name }}) DataChanged(data DataItem) {
 `
 
 type bindValues struct {
-    Name, Type, Default  string
-    Format               string
-    FromString, ToString string // function names...
-    Comparator           string // comparator function name
+	Name, Type, Default  string
+	Format               string
+	FromString, ToString string // function names...
+	Comparator           string // comparator function name
 }
 
 func newFile(name string) (*os.File, error) {
-    _, dirname, _, _ := runtime.Caller(0)
-    filepath := path.Join(path.Dir(dirname), name+".go")
-    os.Remove(filepath)
-    f, err := os.Create(filepath)
-    if err != nil {
-        log.Fatalf("Unable to open file %s: %v", f.Name(), err)
-        return nil, err
-    }
+	_, dirname, _, _ := runtime.Caller(0)
+	filepath := path.Join(path.Dir(dirname), name+".go")
+	os.Remove(filepath)
+	f, err := os.Create(filepath)
+	if err != nil {
+		log.Fatalf("Unable to open file %s: %v", f.Name(), err)
+		return nil, err
+	}
 
-    f.WriteString(`// auto-generated
+	f.WriteString(`// auto-generated
 // **** THIS FILE IS AUTO-GENERATED, PLEASE DO NOT EDIT IT **** //
 
 package binding
 `)
-    return f, nil
+	return f, nil
 }
 
 func writeFile(f *os.File, t *template.Template, d interface{}) {
-    if err := t.Execute(f, d); err != nil {
-        log.Fatalf("Unable to write file %s: %v", f.Name(), err)
-    }
+	if err := t.Execute(f, d); err != nil {
+		log.Fatalf("Unable to write file %s: %v", f.Name(), err)
+	}
 }
 
 func main() {
-    itemFile, err := newFile("binditems")
-    if err != nil {
-        return
-    }
-    defer itemFile.Close()
-    itemFile.WriteString(`
+	itemFile, err := newFile("binditems")
+	if err != nil {
+		return
+	}
+	defer itemFile.Close()
+	itemFile.WriteString(`
 import (
     "bytes"
 )
 `)
 
-    convertFile, err := newFile("convert")
-    if err != nil {
-        return
-    }
-    defer convertFile.Close()
-    convertFile.WriteString(`
+	convertFile, err := newFile("convert")
+	if err != nil {
+		return
+	}
+	defer convertFile.Close()
+	convertFile.WriteString(`
 import (
     "fmt"
 )
 `)
 
-    item := template.Must(template.New("item").Parse(itemBindTemplate))
-    fromString := template.Must(template.New("fromString").Parse(fromStringTemplate))
-    toString := template.Must(template.New("toString").Parse(toStringTemplate))
-    //preference := template.Must(template.New("preference").Parse(prefTemplate))
-    //list := template.Must(template.New("list").Parse(listBindTemplate))
-    binds := []bindValues{
-        bindValues{Name: "Bool", Type: "bool", Default: "false", Format: "%t"},
-        bindValues{Name: "Bytes", Type: "[]byte", Default: "nil", Comparator: "bytes.Equal"},
-        bindValues{Name: "Float", Type: "float64", Default: "0.0", Format: "%f"},
-        bindValues{Name: "Int", Type: "int", Default: "0", Format: "%d"},
-        bindValues{Name: "Rune", Type: "rune", Default: "rune(0)"},
-        bindValues{Name: "String", Type: "string", Default: "\"\""},
-        //bindValues{Name: "Untyped", Type: "interface{}", Default: "nil"},
-        //bindValues{Name: "Untyped", Type: "interface{}", Default: "nil", Since: "2.1"},
-        //bindValues{Name: "URI", Type: "fyne.URI", Default: "fyne.URI(nil)", Since: "2.1",
-            //FromString: "uriFromString", ToString: "uriToString", Comparator: "compareURI"},
-    }
-    for _, b := range binds {
-        writeFile(itemFile, item, b)
+	item := template.Must(template.New("item").Parse(itemBindTemplate))
+	fromString := template.Must(template.New("fromString").Parse(fromStringTemplate))
+	toString := template.Must(template.New("toString").Parse(toStringTemplate))
+	//preference := template.Must(template.New("preference").Parse(prefTemplate))
+	//list := template.Must(template.New("list").Parse(listBindTemplate))
+	binds := []bindValues{
+		bindValues{Name: "Bool", Type: "bool", Default: "false", Format: "%t"},
+		bindValues{Name: "Bytes", Type: "[]byte", Default: "nil", Comparator: "bytes.Equal"},
+		bindValues{Name: "Float", Type: "float64", Default: "0.0", Format: "%f"},
+		bindValues{Name: "Int", Type: "int", Default: "0", Format: "%d"},
+		bindValues{Name: "Rune", Type: "rune", Default: "rune(0)"},
+		bindValues{Name: "String", Type: "string", Default: "\"\""},
+		//bindValues{Name: "Untyped", Type: "interface{}", Default: "nil"},
+		//bindValues{Name: "Untyped", Type: "interface{}", Default: "nil", Since: "2.1"},
+		//bindValues{Name: "URI", Type: "fyne.URI", Default: "fyne.URI(nil)", Since: "2.1",
+		//FromString: "uriFromString", ToString: "uriToString", Comparator: "compareURI"},
+	}
+	for _, b := range binds {
+		writeFile(itemFile, item, b)
 
-        if b.Format != "" || b.ToString != "" {
-            writeFile(convertFile, toString, b)
-        }
-    }
-    for _, b := range binds {
-        if b.Format != "" || b.ToString != "" {
-            writeFile(convertFile, fromString, b)
-        }
-    }
+		if b.Format != "" || b.ToString != "" {
+			writeFile(convertFile, toString, b)
+		}
+	}
+	for _, b := range binds {
+		if b.Format != "" || b.ToString != "" {
+			writeFile(convertFile, fromString, b)
+		}
+	}
 }
-

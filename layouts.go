@@ -278,18 +278,22 @@ func (l *CenterLayout) MinSize(childList *list.List) (geom.Point) {
     return minSize
 }
 
-// GridLayout ordnet die Kinder in Spalten oder Zeilen an - je nachdem ob
-// NewColumn... oder NewRow... aufgerufen wird.
+// GridLayout ordnet die Kinder in einer bestimmten, fixen Anzahl Spalten
+// (resp. Zeilen) an. Ueberschreitet die Anzahl der hinzugefuegten Kinder diese
+// Groesse, dann wird eine weitere Zeile (resp. Spalte) erstellt und
+// weitere Kinder analog zur ersten Zeile fortlaufend angeordnet.
 type GridLayout struct {
     Cols   int
     orient Orientation
 }
 
+// Fixiert die Anzahl Spalten des GridLayouts.
 func NewColumnGridLayout(cols int) (LayoutManager) {
     l := &GridLayout{Cols: cols, orient: Horizontal}
     return l
 }
 
+// Fixiert die Anzahl Zeilen des GridLayouts.
 func NewRowGridLayout(rows int) (LayoutManager) {
     l := &GridLayout{Cols: rows, orient: Vertical}
     return l

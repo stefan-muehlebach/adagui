@@ -937,13 +937,14 @@ func NewScrollbar(len float64, orient Orientation) (*Scrollbar) {
     s.PropertyEmbed.Init(ScrollbarProps)
     s.PushEmbed.Init(s, nil)
     s.orient = orient
+    d := max(0.5*s.BarWidth(), 0.5*s.CtrlWidth())
     if s.orient == Horizontal {
         s.SetMinSize(geom.Point{len, s.Height()})
+        s.barStart = geom.Point{0, d}
     } else {
         s.SetMinSize(geom.Point{s.Width(), len})
+        s.barStart = geom.Point{d, 0}
     }
-    d := max(0.5*s.BarWidth(), 0.5*s.CtrlWidth())
-    s.barStart = geom.Point{d, d}
     s.initValue = 0.0
     s.visiRange = 0.1
     s.value     = binding.NewFloat()
@@ -1092,13 +1093,14 @@ func (s *Scrollbar) OnInputEvent(evt touch.Event) {
 // vertikal im GUI positionieren. Als Werte sind aktuell nur Fliesskommazahlen
 // vorgesehen.
 var (
-    SliderProps =  NewProps(DefProps,
-        nil, nil,
+    SliderProps = NewProps(
+        DefProps,
+        nil,
+        nil,
         map[SizePropertyName]float64{
             Width:    18.0,
             Height:   18.0,
             BarWidth:  3.0,
-            
         })
 )
 
@@ -1121,13 +1123,14 @@ func NewSlider(len float64, orient Orientation) (*Slider) {
     s.PushEmbed.Init(s, nil)
 
     s.orient = orient
+    d := max(0.5*s.BarWidth(), 0.5*s.CtrlWidth())
     if s.orient == Horizontal {
         s.SetMinSize(geom.Point{len, s.Height()})
+        s.barStart = geom.Point{0, d}
     } else {
         s.SetMinSize(geom.Point{s.Width(), len})
+        s.barStart = geom.Point{d, 0}
     }
-    d := max(0.5*s.BarWidth(), 0.5*s.CtrlWidth())
-    s.barStart = geom.Point{d, d}
     s.initValue = 0.0
     s.minValue  = 0.0
     s.maxValue  = 1.0
@@ -1161,10 +1164,14 @@ func (s *Slider) updateCtrl() {
     s.barEnd = s.Size().Sub(s.barStart)
     if s.orient == Horizontal {
         s.barLen = s.barEnd.X - s.barStart.X
-        s.ctrlPos = s.barStart.Interpolate(s.barEnd, s.Factor())
+        p0 := s.barStart.AddXY(0.5*s.CtrlWidth(), 0)
+        p1 := s.barEnd.AddXY(-0.5*s.CtrlWidth(), 0)
+        s.ctrlPos = p0.Interpolate(p1, s.Factor())
     } else {
         s.barLen = s.barEnd.Y - s.barStart.Y
-        s.ctrlPos = s.barStart.Interpolate(s.barEnd, 1.0 - s.Factor())
+        p0 := s.barStart.AddXY(0, 0.5*s.CtrlWidth())
+        p1 := s.barEnd.AddXY(0, -0.5*s.CtrlWidth())
+        s.ctrlPos = p0.Interpolate(p1, 1.0 - s.Factor())
     }
 }
 
@@ -1246,7 +1253,7 @@ func (s *Slider) OnInputEvent(evt touch.Event) {
     switch evt.Type {
     case touch.TypeDrag:
         v := 0.0
-        r := s.Rect().Inset(s.barStart.X, s.barStart.Y)
+        r := s.Rect().Inset(0.5*s.CtrlWidth(), 0.5*s.CtrlWidth())
         if s.orient == Horizontal {
             v, _ = r.PosRel(evt.Pos)
         } else {
