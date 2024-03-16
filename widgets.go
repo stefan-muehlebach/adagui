@@ -534,6 +534,15 @@ func (b *ListButton) prev() {
 // Der IconButton stellt ein kleines Bild dar, welches als PNG-Datei beim
 // Erstellen des Buttons angegeben wird. Die Groesse des Buttons passt sich
 // der Groess der Bilddatei an.
+var (
+    IconButtonProps = NewProps(ButtonProps,
+        nil,
+        nil,
+        map[SizePropertyName]float64{
+            InnerPadding: 3.0,
+        })
+)
+
 type IconButton struct {
     Button
     img image.Image
@@ -546,9 +555,10 @@ func NewIconButton(imgFile string) (*IconButton) {
     b.Wrapper = b
     b.LeafEmbed.Init()
     b.PushEmbed.Init(b, nil)
-    b.PropertyEmbed.Init(ButtonProps)
+    b.PropertyEmbed.Init(IconButtonProps)
     b.img, _ = gg.LoadPNG(imgFile)
     i := b.InnerPadding()
+    //rect := geom.NewRectangleIMG(b.img.Bounds())
     rect := geom.NewRectangleIMG(b.img.Bounds()).Inset(-i, -i)
     b.SetMinSize(rect.Size())
     b.data = binding.NewInt()
