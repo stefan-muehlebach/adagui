@@ -52,6 +52,10 @@ func CurrentScreen() (*Screen) {
     return screen
 }
 
+func (s *Screen) Save(fileName string) {
+    s.Window().Save(fileName)
+}
+
 // Mit NewWindow wird ein neues Fenster erzeugt. Im Gegensatz zum Screen
 // darf es in einer Applikation beliebig viele Fenster geben, von denen jedoch
 // nur eines sichtbar, resp. aktiv ist.

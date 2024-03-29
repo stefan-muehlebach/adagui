@@ -1,7 +1,9 @@
 package adagui
 
 import (
-//    "log"
+    "image/png"
+    "log"
+    "os"
     "sync"
     "time"
     "github.com/stefan-muehlebach/adatft"
@@ -81,6 +83,18 @@ func (w *Window) SetRoot(root Node) {
     n.Win = w
     root.SetPos(w.Rect.Min)
     root.SetSize(w.Rect.Size())
+}
+
+func (w *Window) Save(fileName string) {
+    fh, err := os.Create(fileName)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer fh.Close()
+
+    if err = png.Encode(fh, w.gc.Image()); err != nil {
+        log.Fatal(err)
+    }
 }
 
 // Mit dieser Methode wird ein Neuaufbau des Bildschirms angestossen. Ueber die
