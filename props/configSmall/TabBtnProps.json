@@ -1,0 +1,36 @@
+{
+	"ColorMap": {
+		"Color": {
+			"R": 0,
+			"G": 0.3922,
+			"B": 0,
+			"A": 0.4
+		},
+		"BorderColor": {
+			"R": 0,
+			"G": 0.3922,
+			"B": 0,
+			"A": 0.4
+		},
+		"TextColor": {
+			"R": 0.9608,
+			"G": 0.9608,
+			"B": 0.9608,
+			"A": 0.4
+		},
+		"SelectedTextColor": {
+			"R": 0,
+			"G": 0,
+			"B": 0,
+			"A": 1
+		}
+    },
+	"SizeMap": {
+		"Width": 30,
+		"Height": 18,
+		"BorderWidth": 0,
+		"CornerRadius": 10,
+		"Padding": 15,
+		"FontSize": 12
+	}
+}

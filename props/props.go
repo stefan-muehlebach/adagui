@@ -1,184 +1,247 @@
+//go:generate go run gen.go
+
 package props
 
 import (
-    "github.com/stefan-muehlebach/gg/color"
-    "github.com/stefan-muehlebach/gg/colornames"
-    "github.com/stefan-muehlebach/gg/fonts"
-    "golang.org/x/image/font/opentype"
+	"embed"
+	"encoding/json"
+	"errors"
+    "path/filepath"
+	"github.com/stefan-muehlebach/gg/color"
+	"github.com/stefan-muehlebach/gg/colornames"
+	"github.com/stefan-muehlebach/gg/fonts"
+	"log"
 )
 
+//go:embed config/*.json
+var propFiles embed.FS
+
 var (
-    DefProps = NewDefaultProps()
+	DefProps = NewPropsFromFile(nil, "DefProps.json")
 )
 
 type ColorPropertyName int
 
 const (
-    Color ColorPropertyName = iota
-    PushedColor
-    SelectedColor
-    BorderColor
-    PushedBorderColor
-    SelectedBorderColor
-    TextColor
-    PushedTextColor
-    SelectedTextColor
-    LineColor
-    PushedLineColor
-    SelectedLineColor
-    BarColor
-    PushedBarColor
-    BackgroundColor
-    MenuBackgroundColor
-    RedColor
-    OrangeColor
-    YellowColor
-    GreenColor
-    BlueColor
-    PurpleColor
-    BrownColor
-    GrayColor
-    BlackColor
-    WhiteColor
-    NumColorProperties
+	Color ColorPropertyName = iota
+	PushedColor
+	SelectedColor
+	BorderColor
+	PushedBorderColor
+	SelectedBorderColor
+	TextColor
+	PushedTextColor
+	SelectedTextColor
+	LineColor
+	PushedLineColor
+	SelectedLineColor
+	BarColor
+	PushedBarColor
+	BackgroundColor
+	MenuBackgroundColor
+	RedColor
+	OrangeColor
+	YellowColor
+	GreenColor
+	BlueColor
+	PurpleColor
+	BrownColor
+	GrayColor
+	BlackColor
+	WhiteColor
+	NumColorProperties
 )
 
-func (p ColorPropertyName) String() (string) {
-    switch p {
-    case Color: return "Color"
-    case PushedColor: return "PushedColor"
-    case SelectedColor: return "SelectedColor"
-    case BorderColor: return "BorderColor"
-    case PushedBorderColor: return "PushedBorderColor"
-    case SelectedBorderColor: return "SelectedBorderColor"
-    case TextColor: return "TextColor"
-    case PushedTextColor: return "PushedTextColor"
-    case SelectedTextColor: return "SelectedTextColor"
-    case LineColor: return "LineColor"
-    case PushedLineColor: return "PushedLineColor"
-    case SelectedLineColor: return "SelectedLineColor"
-    case BarColor: return "BarColor"
-    case PushedBarColor: return "PushedBarColor"
-    case BackgroundColor: return "BackgroundColor"
-    case MenuBackgroundColor: return "MenuBackgroundColor"
-    case RedColor: return "RedColor"
-    case OrangeColor: return "OrangeColor"
-    case YellowColor: return "YellowColor"
-    case GreenColor: return "GreenColor"
-    case BlueColor: return "BlueColor"
-    case PurpleColor: return "PurpleColor"
-    case BrownColor: return "BrownColor"
-    case GrayColor: return "GrayColor"
-    case BlackColor: return "BlackColor"
-    case WhiteColor: return "WhiteColor"
-    }
-    return "(unknown property)"
+var (
+	ColorPropertyList = []string{
+		"Color",
+		"PushedColor",
+		"SelectedColor",
+		"BorderColor",
+		"PushedBorderColor",
+		"SelectedBorderColor",
+		"TextColor",
+		"PushedTextColor",
+		"SelectedTextColor",
+		"LineColor",
+		"PushedLineColor",
+		"SelectedLineColor",
+		"BarColor",
+		"PushedBarColor",
+		"BackgroundColor",
+		"MenuBackgroundColor",
+		"RedColor",
+		"OrangeColor",
+		"YellowColor",
+		"GreenColor",
+		"BlueColor",
+		"PurpleColor",
+		"BrownColor",
+		"GrayColor",
+		"BlackColor",
+		"WhiteColor",
+	}
+)
+
+func (p ColorPropertyName) String() string {
+	return ColorPropertyList[p]
+}
+
+func (p ColorPropertyName) MarshalText() ([]byte, error) {
+	return []byte(ColorPropertyList[p]), nil
+}
+
+func (p *ColorPropertyName) UnmarshalText(text []byte) error {
+	txt := string(text)
+	for i, t := range ColorPropertyList {
+		if t == txt {
+			*p = ColorPropertyName(i)
+			return nil
+		}
+	}
+	return errors.New("No such property")
 }
 
 var (
-    EmbedColorProps = []ColorPropertyName{
-        Color,
-        PushedColor,
-        SelectedColor,
-        BorderColor,
-        PushedBorderColor,
-        SelectedBorderColor,
-        TextColor,
-        PushedTextColor,
-        SelectedTextColor,
-        LineColor,
-        PushedLineColor,
-        SelectedLineColor,
-        BarColor,
-        PushedBarColor,
-        BackgroundColor,
-        MenuBackgroundColor,
-    }
+	EmbedColorProps = []ColorPropertyName{
+		Color,
+		PushedColor,
+		SelectedColor,
+		BorderColor,
+		PushedBorderColor,
+		SelectedBorderColor,
+		TextColor,
+		PushedTextColor,
+		SelectedTextColor,
+		LineColor,
+		PushedLineColor,
+		SelectedLineColor,
+		BarColor,
+		PushedBarColor,
+		BackgroundColor,
+		MenuBackgroundColor,
+	}
 )
 
 type FontPropertyName int
 
 const (
-    Font FontPropertyName = iota
-    RegularFont
-    BoldFont
-    ItalicFont
-    BoldItalicFont
-    MonoFont
-    MonoBoldFont
-    NumFontProperties
+	Font FontPropertyName = iota
+	RegularFont
+	BoldFont
+	ItalicFont
+	BoldItalicFont
+	MonoFont
+	MonoBoldFont
+	NumFontProperties
 )
 
-func (p FontPropertyName) String() (string) {
-    switch p {
-    case Font: return "Font"
-    case RegularFont: return "RegularFont"
-    case BoldFont: return "BoldFont"
-    case ItalicFont: return "ItalicFont"
-    case BoldItalicFont: return "BoldItalicFont"
-    case MonoFont: return "MonoFont"
-    case MonoBoldFont: return "MonoBoldFont"
-    }
-    return "(unknown property)"
+var (
+	FontPropertyList = []string{
+		"Font",
+		"RegularFont",
+		"BoldFont",
+		"ItalicFont",
+		"BoldItalicFont",
+		"MonoFont",
+		"MonoBoldFont",
+	}
+)
+
+func (p FontPropertyName) String() string {
+	return FontPropertyList[p]
+}
+
+func (p FontPropertyName) MarshalText() ([]byte, error) {
+	return []byte(FontPropertyList[p]), nil
+}
+
+func (p *FontPropertyName) UnmarshalText(text []byte) error {
+	txt := string(text)
+	for i, t := range FontPropertyList {
+		if t == txt {
+			*p = FontPropertyName(i)
+			return nil
+		}
+	}
+	return errors.New("No such property")
 }
 
 var (
-    EmbedFontProps = []FontPropertyName{
-        Font,
-    }
+	EmbedFontProps = []FontPropertyName{
+		Font,
+	}
 )
 
 type SizePropertyName int
 
 const (
-    Width SizePropertyName = iota
-    Height
-    BorderWidth
-    PushedBorderWidth
-    SelectedBorderWidth
-    LineWidth
-    InnerPadding
-    Padding
-    CornerRadius
-    FontSize
-    BarWidth
-    CtrlWidth
-    NumSizeProperties
+	Width SizePropertyName = iota
+	Height
+	BorderWidth
+	PushedBorderWidth
+	SelectedBorderWidth
+	LineWidth
+	InnerPadding
+	Padding
+	CornerRadius
+	FontSize
+	BarWidth
+	CtrlWidth
+	NumSizeProperties
 )
 
-func (p SizePropertyName) String() (string) {
-    switch p {
-    case Width: return "Width"
-    case Height: return "Height"
-    case BorderWidth: return "BorderWidth"
-    case PushedBorderWidth: return "PushedBorderWidth"
-    case SelectedBorderWidth: return "SelectedBorderWidth"
-    case LineWidth: return "LineWidth"
-    case InnerPadding: return "InnerPadding"
-    case Padding: return "Padding"
-    case CornerRadius: return "CornerRadius"
-    case FontSize: return "FontSize"
-    case BarWidth: return "BarWidth"
-    case CtrlWidth: return "CtrlWidth"
-    }
-    return "(unknown property)"
+var (
+	SizePropertyList = []string{
+		"Width",
+		"Height",
+		"BorderWidth",
+		"PushedBorderWidth",
+		"SelectedBorderWidth",
+		"LineWidth",
+		"InnerPadding",
+		"Padding",
+		"CornerRadius",
+		"FontSize",
+		"BarWidth",
+		"CtrlWidth",
+	}
+)
+
+func (p SizePropertyName) String() string {
+	return SizePropertyList[p]
+}
+
+func (p SizePropertyName) MarshalText() ([]byte, error) {
+	return []byte(SizePropertyList[p]), nil
+}
+
+func (p *SizePropertyName) UnmarshalText(text []byte) error {
+	txt := string(text)
+	for i, t := range SizePropertyList {
+		if t == txt {
+			*p = SizePropertyName(i)
+			return nil
+		}
+	}
+	return errors.New("No such property")
 }
 
 var (
-    EmbedSizeProps = []SizePropertyName{
-        Width,
-        Height,
-        BorderWidth,
-        PushedBorderWidth,
-        SelectedBorderWidth,
-        LineWidth,
-        InnerPadding,
-        Padding,
-        CornerRadius,
-        FontSize,
-        BarWidth,
-        CtrlWidth,
-    }
+	EmbedSizeProps = []SizePropertyName{
+		Width,
+		Height,
+		BorderWidth,
+		PushedBorderWidth,
+		SelectedBorderWidth,
+		LineWidth,
+		InnerPadding,
+		Padding,
+		CornerRadius,
+		FontSize,
+		BarWidth,
+		CtrlWidth,
+	}
 )
 
 // ----------------------------------------------------------------------------
@@ -190,94 +253,131 @@ var (
 // es möglich für einzelne Widgets vom Standard abweichende Eigenschaften
 // zu definieren.
 type Properties struct {
-    parent   *Properties
-    colorMap map[ColorPropertyName]color.Color
-    fontMap  map[FontPropertyName]*opentype.Font
-    sizeMap  map[SizePropertyName]float64
+	parent   *Properties
+	ColorMap map[ColorPropertyName]color.Color
+	FontMap  map[FontPropertyName]*fonts.Font
+	SizeMap  map[SizePropertyName]float64
 }
 
 // Erzeugt ein neues Property-Objekt und hinterlegt parent als Vater-Property.
-func NewProperties(parent *Properties) (*Properties) {
-    p := &Properties{}
+func NewProperties(parent *Properties) *Properties {
+	p := &Properties{}
 
-    p.parent   = parent
-    p.colorMap = make(map[ColorPropertyName]color.Color)
-    p.fontMap  = make(map[FontPropertyName]*opentype.Font)
-    p.sizeMap  = make(map[SizePropertyName]float64)
+	p.parent = parent
+	p.ColorMap = make(map[ColorPropertyName]color.Color)
+	p.FontMap = make(map[FontPropertyName]*fonts.Font)
+	p.SizeMap = make(map[SizePropertyName]float64)
 
-    return p
+	return p
 }
+
+func NewPropsFromFile(parent *Properties, fileName string) *Properties {
+	prop := struct {
+		ColorMap map[ColorPropertyName]color.RGBAF
+		FontMap  map[FontPropertyName]*fonts.Font
+		SizeMap  map[SizePropertyName]float64
+	}{}
+
+	b, err := propFiles.ReadFile(filepath.Join("config", fileName))
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = json.Unmarshal(b, &prop)
+	if err != nil {
+		log.Fatal(err)
+	}
+	p := NewProperties(parent)
+	for key, val := range prop.ColorMap {
+		p.ColorMap[key] = val
+	}
+	p.FontMap = prop.FontMap
+	p.SizeMap = prop.SizeMap
+	return p
+}
+
+/*
+func (p *Properties) Write(fileName string) {
+	b, err := json.MarshalIndent(p, "", "\t")
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.WriteFile(fileName, b, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+*/
 
 // Interne Funktion. Damit werden die Properties für Widget-Kategorien
 // (Buttons, Labels, etc) erzeugt.
-func newProps(parent *Properties, colorMap map[ColorPropertyName]color.Color,
-        fontMap map[FontPropertyName]*opentype.Font,
-        sizeMap map[SizePropertyName]float64) (*Properties) {
-    p := &Properties{}
+func newProps(parent *Properties, ColorMap map[ColorPropertyName]color.Color,
+	FontMap map[FontPropertyName]*fonts.Font,
+	SizeMap map[SizePropertyName]float64) *Properties {
+	p := &Properties{}
 
-    p.parent   = parent
+	p.parent = parent
 
-    if colorMap == nil {
-        colorMap = make(map[ColorPropertyName]color.Color)
-    }
-    p.colorMap = colorMap
-    if fontMap == nil {
-        fontMap = make(map[FontPropertyName]*opentype.Font)
-    }
-    p.fontMap  = fontMap
-    if sizeMap == nil {
-        sizeMap = make(map[SizePropertyName]float64)
-    }
-    p.sizeMap  = sizeMap
+	if ColorMap == nil {
+		ColorMap = make(map[ColorPropertyName]color.Color)
+	}
+	p.ColorMap = ColorMap
+	if FontMap == nil {
+		FontMap = make(map[FontPropertyName]*fonts.Font)
+	}
+	p.FontMap = FontMap
+	if SizeMap == nil {
+		SizeMap = make(map[SizePropertyName]float64)
+	}
+	p.SizeMap = SizeMap
 
-    return p
+	return p
 }
 
 var (
-    NewProps func(*Properties, map[ColorPropertyName]color.Color,
-        map[FontPropertyName]*opentype.Font,
-        map[SizePropertyName]float64) (*Properties) = newProps
+	NewProps func(*Properties, map[ColorPropertyName]color.Color,
+		map[FontPropertyName]*fonts.Font,
+		map[SizePropertyName]float64) *Properties = newProps
 )
 
 // Das sind die Hauptmethoden, um Farben, Font oder Groessen aus den
 // Properties zu lesen. Kann ein Property nicht gefunden werden, dann
 // wird (falls vorhanden) das Parent-Property angefragt.
-func (p *Properties) Color(name ColorPropertyName) (color.Color) {
-    if col, ok := p.colorMap[name]; !ok && p.parent != nil {
-        return p.parent.Color(name)
-    } else {
-        return col
-    }
+func (p *Properties) Color(name ColorPropertyName) color.Color {
+	if col, ok := p.ColorMap[name]; !ok && p.parent != nil {
+		return p.parent.Color(name)
+	} else {
+		return col
+	}
 }
 
-func (p *Properties) Font(name FontPropertyName) (*opentype.Font) {
-    if fnt, ok := p.fontMap[name]; !ok && p.parent != nil {
-        return p.parent.Font(name)
-    } else {
-        return fnt
-    }
+func (p *Properties) Font(name FontPropertyName) *fonts.Font {
+	if fnt, ok := p.FontMap[name]; !ok && p.parent != nil {
+		return p.parent.Font(name)
+	} else {
+		return fnt
+	}
 }
 
-func (p *Properties) Size(name SizePropertyName) (float64) {
-    if siz, ok := p.sizeMap[name]; !ok && p.parent != nil {
-        return p.parent.Size(name)
-    } else {
-        return siz
-    }
+func (p *Properties) Size(name SizePropertyName) float64 {
+	if siz, ok := p.SizeMap[name]; !ok && p.parent != nil {
+		return p.parent.Size(name)
+	} else {
+		return siz
+	}
 }
 
 // Über diese Methoden können einzelne Eigenschaften auf Typen- oder Objekt-
 // ebene definiert werden.
 func (p *Properties) SetColor(name ColorPropertyName, col color.Color) {
-    p.colorMap[name] = col
+	p.ColorMap[name] = col
 }
 
-func (p *Properties) SetFont(name FontPropertyName, fnt *opentype.Font) {
-    p.fontMap[name] = fnt
+func (p *Properties) SetFont(name FontPropertyName, fnt *fonts.Font) {
+	p.FontMap[name] = fnt
 }
 
 func (p *Properties) SetSize(name SizePropertyName, size float64) {
-    p.sizeMap[name] = size
+	p.SizeMap[name] = size
 }
 
 // Auf Typen- oder Objekt-Stufe definierte Eigenschaften können mit den
@@ -286,24 +386,24 @@ func (p *Properties) SetSize(name SizePropertyName, size float64) {
 // die Methoden no-op. Auf Properties der obersten Hierarchiestufe (d.h. mit
 // parent == nil) haben die Methoden keinen Einfluss.
 func (p *Properties) DelColor(name ColorPropertyName) {
-    if p.parent == nil {
-        return
-    }
-    delete(p.colorMap, name)
+	if p.parent == nil {
+		return
+	}
+	delete(p.ColorMap, name)
 }
 
 func (p *Properties) DelFont(name FontPropertyName) {
-    if p.parent == nil {
-        return
-    }
-    delete(p.fontMap, name)
+	if p.parent == nil {
+		return
+	}
+	delete(p.FontMap, name)
 }
 
 func (p *Properties) DelSize(name SizePropertyName) {
-    if p.parent == nil {
-        return
-    }
-    delete(p.sizeMap, name)
+	if p.parent == nil {
+		return
+	}
+	delete(p.SizeMap, name)
 }
 
 // ----------------------------------------------------------------------------
@@ -311,81 +411,80 @@ func (p *Properties) DelSize(name SizePropertyName) {
 // Erstellt ein neues Default-Property Objekt. Die Default Properties muessen
 // fur jedes Property einen Wert bereitstellen. Mit den Tests in props_test.go
 // kann geprüft werden, ob dies erfüllt ist.
-func NewDefaultProps() (*Properties) {
-    p := &Properties{}
+func NewDefaultProps() *Properties {
+	var c1, c2, c3 color.Color
 
-    //c1 := colornames.Navy.Dark(0.4)
-    //c2 := colornames.DeepSkyBlue.Dark(0.3)
-    //c3 := colornames.DeepSkyBlue.Dark(0.3)
-    //c1 := colornames.DarkRed
-    //c2 := colornames.Gold
-    //c3 := colornames.YellowGreen
-    c1 := colornames.DarkGreen
-    c2 := c1.Interpolate(colornames.YellowGreen, 0.9)
-    c3 := c1.Interpolate(colornames.YellowGreen, 0.7)
+	p := &Properties{}
 
-    p.colorMap = map[ColorPropertyName]color.Color{
-        Color:               c1,
-        PushedColor:        c2,
-        SelectedColor:       c3,
+	//c1 := colornames.Navy.Dark(0.4)
+	//c2 := colornames.DeepSkyBlue.Dark(0.3)
+	//c3 := colornames.DeepSkyBlue.Dark(0.3)
+	//c1 := colornames.DarkRed
+	//c2 := colornames.Gold
+	//c3 := colornames.YellowGreen
+	c1 = colornames.DarkGreen
+	c2 = c1.Interpolate(colornames.YellowGreen, 0.9)
+	c3 = c1.Interpolate(colornames.YellowGreen, 0.7)
 
-        BorderColor:         c1,
-        PushedBorderColor:  c2,
-        SelectedBorderColor: c3,
+	p.ColorMap = map[ColorPropertyName]color.Color{
+		Color:         c1,
+		PushedColor:   c2,
+		SelectedColor: c3,
 
-        TextColor:           colornames.WhiteSmoke,
-        PushedTextColor:    colornames.Black,
-        SelectedTextColor:   colornames.White,
+		BorderColor:         c1,
+		PushedBorderColor:   c2,
+		SelectedBorderColor: c3,
 
-        LineColor:           colornames.WhiteSmoke,
-        PushedLineColor:    colornames.Black,
-        SelectedLineColor:   colornames.WhiteSmoke,
+		TextColor:         colornames.WhiteSmoke,
+		PushedTextColor:   colornames.Black,
+		SelectedTextColor: colornames.White,
 
-        BarColor:            colornames.DarkSlateGray.Dark(0.5),
-        PushedBarColor:     colornames.DarkSlateGray.Dark(0.5),
-        
-        BackgroundColor:     colornames.Navy.Dark(0.8),
-        MenuBackgroundColor: colornames.DarkGreen.Dark(0.8),
+		LineColor:         colornames.WhiteSmoke,
+		PushedLineColor:   colornames.Black,
+		SelectedLineColor: colornames.WhiteSmoke,
 
-        // Out
-        RedColor:            colornames.Red,
-        OrangeColor:         colornames.Orange,
-        YellowColor:         colornames.Yellow,
-        GreenColor:          colornames.Green,
-        BlueColor:           colornames.Blue,
-        PurpleColor:         colornames.Purple,
-        BrownColor:          colornames.Brown,
-        GrayColor:           colornames.Gray,
-        BlackColor:          colornames.Black,
-        WhiteColor:          colornames.WhiteSmoke,
-    }
+		BarColor:       colornames.DarkSlateGray.Dark(0.5),
+		PushedBarColor: colornames.DarkSlateGray.Dark(0.5),
 
-    p.fontMap = map[FontPropertyName]*opentype.Font{
-        Font:           fonts.GoRegular,
-        RegularFont:    fonts.GoRegular,
-        BoldFont:       fonts.GoBold,
-        ItalicFont:     fonts.GoItalic,
-        BoldItalicFont: fonts.GoBoldItalic,
-        MonoFont:       fonts.GoMono,
-        MonoBoldFont:   fonts.GoMonoBold,
-    }
+		BackgroundColor:     colornames.Navy.Dark(0.8),
+		MenuBackgroundColor: colornames.DarkGreen.Dark(0.8),
 
-    p.sizeMap = map[SizePropertyName]float64{
-        Width:               0.0,
-        Height:              0.0,
+		// Out
+		RedColor:    colornames.Red,
+		OrangeColor: colornames.Orange,
+		YellowColor: colornames.Yellow,
+		GreenColor:  colornames.Green,
+		BlueColor:   colornames.Blue,
+		PurpleColor: colornames.Purple,
+		BrownColor:  colornames.Brown,
+		GrayColor:   colornames.Gray,
+		BlackColor:  colornames.Black,
+		WhiteColor:  colornames.WhiteSmoke,
+	}
 
-        BorderWidth:         0.0,
-        PushedBorderWidth:  0.0,
-        SelectedBorderWidth: 0.0,
+	p.FontMap = map[FontPropertyName]*fonts.Font{
+		Font:           fonts.GoRegular,
+		RegularFont:    fonts.GoRegular,
+		BoldFont:       fonts.GoBold,
+		ItalicFont:     fonts.GoItalic,
+		BoldItalicFont: fonts.GoBoldItalic,
+		MonoFont:       fonts.GoMono,
+		MonoBoldFont:   fonts.GoMonoBold,
+	}
 
-        LineWidth:           2.0,
-        InnerPadding:        5.0,
-        Padding:            15.0,
-        CornerRadius:        6.0,
-        FontSize:           15.0,
-        BarWidth:           18.0,
-        CtrlWidth:          18.0,
-    }
-    return p
+	p.SizeMap = map[SizePropertyName]float64{
+		Width:               0.0,
+		Height:              0.0,
+		BorderWidth:         0.0,
+		PushedBorderWidth:   0.0,
+		SelectedBorderWidth: 0.0,
+		LineWidth:           2.5,
+		InnerPadding:        5.0,
+		Padding:             15.0,
+		CornerRadius:        6.0,
+		FontSize:            15.0,
+		BarWidth:            18.0,
+		CtrlWidth:           18.0,
+	}
+	return p
 }
-

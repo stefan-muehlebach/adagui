@@ -4,12 +4,12 @@
 package main
 
 import (
-    "log"
-    "os"
-    "path"
-    "runtime"
-    "text/template"
-    "github.com/stefan-muehlebach/adagui/props"
+	"github.com/stefan-muehlebach/adagui/props"
+	"log"
+	"os"
+	"path"
+	"runtime"
+	"text/template"
 )
 
 const colorPropTempl = `
@@ -21,10 +21,10 @@ func (pe *PropertyEmbed) Set{{ .Name }}(c color.Color) {
 }
 `
 const fontPropTempl = `
-func (pe *PropertyEmbed) {{ .Name }}() (*opentype.Font) {
+func (pe *PropertyEmbed) {{ .Name }}() (*fonts.Font) {
     return pe.prop.Font({{ .Name }})
 }
-func (pe *PropertyEmbed) Set{{ .Name }}(f *opentype.Font) {
+func (pe *PropertyEmbed) Set{{ .Name }}(f *fonts.Font) {
     pe.prop.SetFont({{ .Name }}, f)
 }
 `
@@ -38,41 +38,41 @@ func (pe *PropertyEmbed) Set{{ .Name }}(s float64) {
 `
 
 type ColorPropInfo struct {
-    Templ  *template.Template
-    List []props.ColorPropertyName
+	Templ *template.Template
+	List  []props.ColorPropertyName
 }
 type FontPropInfo struct {
-    Templ  *template.Template
-    List []props.FontPropertyName
+	Templ *template.Template
+	List  []props.FontPropertyName
 }
 type SizePropInfo struct {
-    Templ  *template.Template
-    List []props.SizePropertyName
+	Templ *template.Template
+	List  []props.SizePropertyName
 }
 
 type PropName struct {
-    Name string
+	Name string
 }
 
 func main() {
-    _, dirName, _, _ := runtime.Caller(0)
-    filePath := path.Join(path.Dir(dirName), "propsEmbed.go")
-    os.Remove(filePath)
-    propFile, err := os.Create(filePath)
-    if err != nil {
-        log.Fatalf("Unable to open file: %v", err)
-        return
-    }
-    defer propFile.Close()
-    propFile.WriteString(`//
+	_, dirName, _, _ := runtime.Caller(0)
+	filePath := path.Join(path.Dir(dirName), "propsEmbed.go")
+	os.Remove(filePath)
+	propFile, err := os.Create(filePath)
+	if err != nil {
+		log.Fatalf("Unable to open file: %v", err)
+		return
+	}
+	defer propFile.Close()
+	propFile.WriteString(`//
 // THIS FILE IS AUTO-GENERATED, PLEASE DO NOT EDTI
 //
 
 package props
 
 import (
-    "golang.org/x/image/font/opentype"
     "github.com/stefan-muehlebach/gg/color"
+    "github.com/stefan-muehlebach/gg/fonts"
 )
 
 type PropertyEmbed struct {
@@ -82,40 +82,41 @@ type PropertyEmbed struct {
 func (pe *PropertyEmbed) Init(parent *Properties) {
     pe.prop = NewProperties(parent)
 }
+func (pe *PropertyEmbed) Init2(parent *Properties, propFile string) {
+    pe.prop = NewPropsFromFile(parent, propFile)
+}
 
 `)
 
-    colorProps := ColorPropInfo{
-        Templ: template.Must(template.New("color").Parse(colorPropTempl)),
-        List:  props.EmbedColorProps,
-    }
-    fontProps := FontPropInfo{
-        Templ: template.Must(template.New("font").Parse(fontPropTempl)),
-        List:  props.EmbedFontProps,
-    }
-    sizeProps := SizePropInfo{
-        Templ: template.Must(template.New("size").Parse(sizePropTempl)),
-        List:  props.EmbedSizeProps,
-    }
+	colorProps := ColorPropInfo{
+		Templ: template.Must(template.New("color").Parse(colorPropTempl)),
+		List:  props.EmbedColorProps,
+	}
+	fontProps := FontPropInfo{
+		Templ: template.Must(template.New("font").Parse(fontPropTempl)),
+		List:  props.EmbedFontProps,
+	}
+	sizeProps := SizePropInfo{
+		Templ: template.Must(template.New("size").Parse(sizePropTempl)),
+		List:  props.EmbedSizeProps,
+	}
 
-    for _, pr := range colorProps.List {
-        pn := PropName{Name: pr.String()}
-        if err := colorProps.Templ.Execute(propFile, pn); err != nil {
-            log.Fatalf("Unable to write file: %v", err)
-        }
-    }
-    for _, pr := range fontProps.List {
-        pn := PropName{Name: pr.String()}
-        if err := fontProps.Templ.Execute(propFile, pn); err != nil {
-            log.Fatalf("Unable to write file: %v", err)
-        }
-    }
-    for _, pr := range sizeProps.List {
-        pn := PropName{Name: pr.String()}
-        if err := sizeProps.Templ.Execute(propFile, pn); err != nil {
-            log.Fatalf("Unable to write file: %v", err)
-        }
-    }
+	for _, pr := range colorProps.List {
+		pn := PropName{Name: pr.String()}
+		if err := colorProps.Templ.Execute(propFile, pn); err != nil {
+			log.Fatalf("Unable to write file: %v", err)
+		}
+	}
+	for _, pr := range fontProps.List {
+		pn := PropName{Name: pr.String()}
+		if err := fontProps.Templ.Execute(propFile, pn); err != nil {
+			log.Fatalf("Unable to write file: %v", err)
+		}
+	}
+	for _, pr := range sizeProps.List {
+		pn := PropName{Name: pr.String()}
+		if err := sizeProps.Templ.Execute(propFile, pn); err != nil {
+			log.Fatalf("Unable to write file: %v", err)
+		}
+	}
 }
-
-

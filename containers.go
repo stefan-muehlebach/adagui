@@ -163,6 +163,13 @@ func NewGroup() *Group {
 	return g
 }
 
+func NewGroupPL(parent Container, layout LayoutManager) *Group {
+    g := NewGroup()
+    g.Layout = layout
+    parent.Add(g)
+    return g
+}
+
 func (g *Group) Paint(gc *gg.Context) {
 	Debugf(Painting, "[%T]", g.Wrapper)
 	g.ContainerEmbed.Paint(gc)

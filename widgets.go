@@ -25,12 +25,11 @@ import (
     "github.com/stefan-muehlebach/adagui/touch"
     . "github.com/stefan-muehlebach/adagui/props"
     "github.com/stefan-muehlebach/gg"
-    "github.com/stefan-muehlebach/gg/color"
-    "github.com/stefan-muehlebach/gg/colornames"
+    //"github.com/stefan-muehlebach/gg/color"
+    //"github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/fonts"
     "github.com/stefan-muehlebach/gg/geom"
     "golang.org/x/image/font"
-    "golang.org/x/image/font/opentype"
 )
 
 // Die init-Funktion ist vorallem hier, damit der Import des Log-Packages
@@ -99,7 +98,7 @@ func (s *Separator) Paint(gc *gg.Context) {
 // Unter einem Label verstehen wir einfach eine Konserve für Text,
 // kurzen Text!
 var (
-    LabelProps = NewProps(DefProps, nil, nil, nil)
+    LabelProps = NewPropsFromFile(DefProps, "LabelProps.json")
 )
 
 type Label struct {
@@ -158,7 +157,7 @@ func (l *Label) SetText(str string) {
 
 // Die Property-Funktionen SetFont und SetFontSize muessen ueberschrieben
 // werden, da sie ggf. die Groesse des Widgets beeinflussen.
-func (l *Label) SetFont(fontFont *opentype.Font) {
+func (l *Label) SetFont(fontFont *fonts.Font) {
     l.PropertyEmbed.SetFont(fontFont)
     l.updateSize()
 }
@@ -239,14 +238,7 @@ func (l *Label) Paint(gc *gg.Context) {
 // generische Grundlage fuer die weiter unten definierten Text- oder Icon-
 // Buttons.
 var (
-    ButtonProps = NewProps(DefProps, nil,
-        map[FontPropertyName]*opentype.Font{
-            Font:  fonts.GoBold,
-        },
-        map[SizePropertyName]float64{
-            Width :  32.0,
-            Height:  32.0,
-        })
+    ButtonProps = NewPropsFromFile(DefProps, "ButtonProps.json")
 )
 
 type Button struct {
@@ -334,6 +326,16 @@ func (b *TextButton) Align() (AlignType) {
 func (b *TextButton) SetAlign(a AlignType) {
     b.align = a
     b.updateRefPoint()
+}
+
+func (b *TextButton) SetFont(fontFont *fonts.Font) {
+    b.PropertyEmbed.SetFont(fontFont)
+    b.updateSize()
+}
+
+func (b *TextButton) SetFontSize(fontSize float64) {
+    b.PropertyEmbed.SetFontSize(fontSize)
+    b.updateSize()
 }
 
 func (b *TextButton) updateSize() {
@@ -535,12 +537,7 @@ func (b *ListButton) prev() {
 // Erstellen des Buttons angegeben wird. Die Groesse des Buttons passt sich
 // der Groess der Bilddatei an.
 var (
-    IconButtonProps = NewProps(ButtonProps,
-        nil,
-        nil,
-        map[SizePropertyName]float64{
-            InnerPadding: 3.0,
-        })
+    IconButtonProps = NewPropsFromFile(ButtonProps, "IconBtnProps.json")
 )
 
 type IconButton struct {
@@ -612,7 +609,8 @@ func (b *IconButton) DataChanged(data binding.DataItem) {
 }
 
 var (
-    TabButtonProps = NewProps(ButtonProps,
+    TabButtonProps = NewPropsFromFile(ButtonProps, "TabBtnProps.json")
+/*
         map[ColorPropertyName]color.Color{
             Color:             ButtonProps.Color(Color).Alpha(0.4),
             BorderColor:       ButtonProps.Color(BorderColor).Alpha(0.4),
@@ -628,6 +626,7 @@ var (
             Padding:      15.0,
             FontSize:     12.0,
         })
+*/
 )
 
 type TabButton struct {
@@ -731,8 +730,9 @@ func (b *TabButton) DataChanged(data binding.DataItem) {
 // Checkboxen verhalten sich sehr aehnlich zu RadioButtons, sind jedoch eigen-
 // staendig und nicht Teil einer Gruppe.
 var (
-    CheckboxProps = NewProps(ButtonProps, nil,
-        map[FontPropertyName]*opentype.Font{
+    CheckboxProps = NewPropsFromFile(ButtonProps, "CheckboxProps.json")
+/*
+        map[FontPropertyName]*fonts.Font{
             Font:         fonts.GoRegular,
         },
         map[SizePropertyName]float64{
@@ -741,6 +741,7 @@ var (
             LineWidth:     4.0,
             CornerRadius:  5.0,
         })
+*/
 )
 
 type Checkbox struct {
@@ -830,8 +831,9 @@ func (c *Checkbox) SetChecked(val bool) {
 // haben kann (aktiv und nicht aktiv) und moeglicherweise einer Gruppe von
 // RadioButtons angehoert, von denen nur einer aktiviert sein kann.
 var (
-    RadioButtonProps = NewProps(ButtonProps, nil,
-        map[FontPropertyName]*opentype.Font{
+    RadioButtonProps = NewPropsFromFile(ButtonProps, "RadioBtnProps.json")
+/*
+        map[FontPropertyName]*fonts.Font{
             Font:         fonts.GoRegular,
         },
         map[SizePropertyName]float64{
@@ -839,6 +841,7 @@ var (
             Height:       18.0,
             LineWidth:     8.0,
         })
+*/
 )
 
 type RadioButton struct {
@@ -919,12 +922,14 @@ func (b *RadioButton) DataChanged(data binding.DataItem) {
 // vertikal im GUI positionieren. Als Werte sind aktuell nur Fliesskommazahlen
 // vorgesehen.
 var (
-    ScrollbarProps =  NewProps(DefProps, nil, nil,
+    ScrollbarProps = NewPropsFromFile(DefProps, "ScrollbarProps.json")
+/*
         map[SizePropertyName]float64{
             Width:    18.0,
             Height:   18.0,
             BarWidth:  3.0,
         })
+*/
 )
 
 type Scrollbar struct {
@@ -1103,7 +1108,8 @@ func (s *Scrollbar) OnInputEvent(evt touch.Event) {
 // vertikal im GUI positionieren. Als Werte sind aktuell nur Fliesskommazahlen
 // vorgesehen.
 var (
-    SliderProps = NewProps(
+    SliderProps = NewPropsFromFile(DefProps, "SliderProps.json")
+/*(
         DefProps,
         nil,
         nil,
@@ -1112,6 +1118,7 @@ var (
             Height:   18.0,
             BarWidth:  3.0,
         })
+*/
 )
 
 type Slider struct {

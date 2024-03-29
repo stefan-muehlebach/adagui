@@ -1,0 +1,11 @@
+{
+	"FontMap": {
+		"Font": "GoRegular"
+	},
+	"SizeMap": {
+		"Width": 18,
+		"Height": 18,
+		"LineWidth": 4,
+		"CornerRadius": 5
+	}
+}

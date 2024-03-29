@@ -5,8 +5,8 @@
 package props
 
 import (
-    "golang.org/x/image/font/opentype"
     "github.com/stefan-muehlebach/gg/color"
+    "github.com/stefan-muehlebach/gg/fonts"
 )
 
 type PropertyEmbed struct {
@@ -15,6 +15,9 @@ type PropertyEmbed struct {
 
 func (pe *PropertyEmbed) Init(parent *Properties) {
     pe.prop = NewProperties(parent)
+}
+func (pe *PropertyEmbed) Init2(parent *Properties, propFile string) {
+    pe.prop = NewPropsFromFile(parent, propFile)
 }
 
 
@@ -130,10 +133,10 @@ func (pe *PropertyEmbed) SetMenuBackgroundColor(c color.Color) {
     pe.prop.SetColor(MenuBackgroundColor, c)
 }
 
-func (pe *PropertyEmbed) Font() (*opentype.Font) {
+func (pe *PropertyEmbed) Font() (*fonts.Font) {
     return pe.prop.Font(Font)
 }
-func (pe *PropertyEmbed) SetFont(f *opentype.Font) {
+func (pe *PropertyEmbed) SetFont(f *fonts.Font) {
     pe.prop.SetFont(Font, f)
 }
 
