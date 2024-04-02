@@ -8,22 +8,20 @@ import (
 // Mit diesem Embed erhaelt ein Widget die Moeglichkeit, "ausgewaehlt"
 // oder "selektiert" zu werden.
 type SelectEmbed struct {
-    BindVar binding.Untyped
-    BindValue any
     node Node
+    BindVar binding.Bool
 }
 
 // Initialisert wird das Embed mit einem Verweis auf das eigentliche Widget
 // und der Moeglichkeit, den Status mit anderen Widgets zu teilen.
-func (e *SelectEmbed) Init(node Node, extData binding.Untyped, value any) {
+func (e *SelectEmbed) Init(node Node, extData binding.Bool) {
     e.node = node
     if extData == nil {
-        e.BindVar = binding.NewUntyped()
-        e.BindVar.Set(nil)
+        e.BindVar = binding.NewBool()
+        e.BindVar.Set(false)
     } else {
         e.BindVar = extData
     }
-    e.BindValue = value
     e.BindVar.AddListener(e)
 }
 
@@ -32,7 +30,7 @@ func (e *SelectEmbed) Selected() (bool) {
     if e.node == nil {
         return false
     }
-    return e.BindVar.Get() == e.BindValue
+    return e.BindVar.Get()
 }
 
 // Muss vom umschliessenden Widget aufgerufen werden.
@@ -43,11 +41,7 @@ func (e *SelectEmbed) OnInputEvent(evt touch.Event) {
     }
     switch evt.Type {
     case touch.TypeTap:
-//        if e.Selected() {
-//            e.BindVar.Set(nil)
-//        } else {
-            e.BindVar.Set(e.BindValue)
-//        }
+        e.BindVar.Set(!e.BindVar.Get())
     }
 }
 

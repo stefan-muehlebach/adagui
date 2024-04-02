@@ -349,13 +349,13 @@ func (b *TextButton) updateSize() {
 
 func (b *TextButton) updateRefPoint() {
     if b.align & AlignLeft != 0 {
-        b.refPt.X = b.Bounds().Min.X + b.InnerPadding()
+        b.refPt.X = b.Bounds().Min.X + b.Padding()
         b.ax = 0.0
     } else if b.align & AlignCenter != 0 {
         b.refPt.X = b.Bounds().Center().X
         b.ax = 0.5
     } else {
-        b.refPt.X = b.Bounds().Max.X - b.InnerPadding()
+        b.refPt.X = b.Bounds().Max.X - b.Padding()
         b.ax = 1.0
     }
     if b.align & AlignBottom != 0 {
@@ -555,7 +555,6 @@ func NewIconButton(imgFile string) (*IconButton) {
     b.PropertyEmbed.Init(IconButtonProps)
     b.img, _ = gg.LoadPNG(imgFile)
     i := b.InnerPadding()
-    //rect := geom.NewRectangleIMG(b.img.Bounds())
     rect := geom.NewRectangleIMG(b.img.Bounds()).Inset(-i, -i)
     b.SetMinSize(rect.Size())
     b.data = binding.NewInt()

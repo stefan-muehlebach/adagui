@@ -1,0 +1,19 @@
+{
+	"ColorMap": {
+		"Color": {
+			"R": 0,
+			"G": 0,
+			"B": 0,
+			"A": 1
+		},
+		"BorderColor": {
+			"R": 0,
+			"G": 0,
+			"B": 0,
+			"A": 1
+		}
+	},
+	"SizeMap": {
+		"BorderWidth": 0.0
+	}
+}

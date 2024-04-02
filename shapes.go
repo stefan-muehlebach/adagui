@@ -17,7 +17,8 @@ import (
     "github.com/stefan-muehlebach/adagui/touch"
     . "github.com/stefan-muehlebach/adagui/props"
     "github.com/stefan-muehlebach/gg"
-    "github.com/stefan-muehlebach/gg/color"
+    //"github.com/stefan-muehlebach/gg/color"
+    //"github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/geom"
 )
 
@@ -26,14 +27,18 @@ import (
 var (
     fangRadius = 5.0
 
+    ShapeProps = NewPropsFromFile(DefProps, "ShapeProps.json")
+    PointProps = NewPropsFromFile(ShapeProps, "PointProps.json")
+
+/*
     ShapeProps = NewProps(DefProps,
         map[ColorPropertyName]color.Color{
             Color:               color.Transparent,
             PushedColor:         color.Transparent,
             SelectedColor:       color.Transparent,
-            BorderColor:         DefProps.Color(WhiteColor),
-            PushedBorderColor:   DefProps.Color(WhiteColor).Alpha(0.5),
-            SelectedBorderColor: DefProps.Color(WhiteColor),
+            BorderColor:         color.White,
+            PushedBorderColor:   color.White.Alpha(0.5),
+            SelectedBorderColor: color.White,
         },
         nil,
         map[SizePropertyName]float64{
@@ -44,9 +49,9 @@ var (
 
     PointProps = NewProps(ShapeProps,
         map[ColorPropertyName]color.Color{
-            Color:               DefProps.Color(WhiteColor),
-            PushedColor:         DefProps.Color(WhiteColor).Alpha(0.5),
-            SelectedColor:       DefProps.Color(RedColor),
+            Color:               color.White,
+            PushedColor:         color.White.Alpha(0.5),
+            SelectedColor:       colornames.Red,
         },
         nil,
         map[SizePropertyName]float64{
@@ -56,6 +61,7 @@ var (
             PushedBorderWidth:   4.0,
             SelectedBorderWidth: 4.0,
         })
+*/
 )
 
 // Abstrakter, allgemeiner Typ fuer geometrische Formen
@@ -68,7 +74,7 @@ type Shape struct {
 func (s *Shape) Init() {
     s.LeafEmbed.Init()
     s.PushEmbed.Init(s, nil)
-    s.SelectEmbed.Init(s, nil, nil)
+    s.SelectEmbed.Init(s, nil)
 }
 
 func (s *Shape) OnInputEvent(evt touch.Event) {
@@ -76,27 +82,6 @@ func (s *Shape) OnInputEvent(evt touch.Event) {
     s.PushEmbed.OnInputEvent(evt)
     s.SelectEmbed.OnInputEvent(evt)
     s.CallTouchFunc(evt)
-}
-
-func (s *Shape) Paint(gc *gg.Context) {
-    if s.Pushed() {
-        Debugf(Painting, "paint pushed")
-        gc.SetFillColor(s.PushedColor())
-        gc.SetStrokeWidth(s.PushedBorderWidth())
-        gc.SetStrokeColor(s.PushedBorderColor())
-    } else {
-        if s.Selected() {
-            Debugf(Painting, "paint selected")
-            gc.SetFillColor(s.SelectedColor())
-            gc.SetStrokeWidth(s.SelectedBorderWidth())
-            gc.SetStrokeColor(s.SelectedBorderColor())
-        } else {
-            Debugf(Painting, "paint normally")
-            gc.SetFillColor(s.Color())
-            gc.SetStrokeWidth(s.BorderWidth())
-            gc.SetStrokeColor(s.BorderColor())
-        }
-    }
 }
 
 // Kreis
@@ -115,11 +100,17 @@ func NewCircle(r float64) (*Circle) {
 
 func (c *Circle) Paint(gc *gg.Context) {
     Debugf(Painting, "")
-    c.Shape.Paint(gc)
     mp := c.LocalBounds().Center()
     r  := 0.5 * c.Size().X
     gc.DrawCircle(mp.X, mp.Y, r)
-    gc.FillStroke()
+    if c.Pushed() || c.Selected() {
+        gc.SetStrokeWidth(c.PushedBorderWidth())
+        gc.SetStrokeColor(c.PushedBorderColor())
+        gc.StrokePreserve()
+    }
+    gc.SetStrokeWidth(c.BorderWidth())
+    gc.SetStrokeColor(c.BorderColor())
+    gc.Stroke()
 }
 
 func (c *Circle) Contains(pt geom.Point) (bool) {
@@ -162,10 +153,16 @@ func NewPoint() (*Point) {
 
 func (p *Point) Paint(gc *gg.Context) {
     Debugf(Painting, "")
-    p.Shape.Paint(gc)
     mp := p.LocalBounds().Center()
     gc.DrawPoint(mp.X, mp.Y, p.Width()/2)
-    gc.FillStroke()
+    if p.Pushed() || p.Selected() {
+        gc.SetStrokeWidth(p.PushedBorderWidth())
+        gc.SetStrokeColor(p.PushedBorderColor())
+        gc.StrokePreserve()
+    }
+    gc.SetStrokeWidth(p.BorderWidth())
+    gc.SetStrokeColor(p.BorderColor())
+    gc.Stroke()
 }
 
 func (p *Point) Contains(pt geom.Point) (bool) {
@@ -238,9 +235,15 @@ func (l *Line) SetP1(pt geom.Point) {
 
 func (l *Line) Paint(gc *gg.Context) {
     Debugf(Painting, "")
-    l.Shape.Paint(gc)
     gc.MoveTo(l.p0.AsCoord())
     gc.LineTo(l.p1.AsCoord())
+    if l.Pushed() || l.Selected() {
+        gc.SetStrokeWidth(l.PushedBorderWidth())
+        gc.SetStrokeColor(l.PushedBorderColor())
+        gc.StrokePreserve()
+    }
+    gc.SetStrokeWidth(l.BorderWidth())
+    gc.SetStrokeColor(l.BorderColor())
     gc.Stroke()
 }
 
@@ -270,11 +273,17 @@ func NewEllipse(rx, ry float64) (*Ellipse) {
 
 func (e *Ellipse) Paint(gc *gg.Context) {
     Debugf(Painting, "")
-    e.Shape.Paint(gc)
     mp := e.LocalBounds().Center()
     w, h := e.Size().AsCoord()
     gc.DrawEllipse(mp.X, mp.Y, 0.5*w, 0.5*h)
-    gc.FillStroke()
+    if e.Pushed() || e.Selected() {
+        gc.SetStrokeWidth(e.PushedBorderWidth())
+        gc.SetStrokeColor(e.PushedBorderColor())
+        gc.StrokePreserve()
+    }
+    gc.SetStrokeWidth(e.BorderWidth())
+    gc.SetStrokeColor(e.BorderColor())
+    gc.Stroke()
 }
 
 func (e *Ellipse) Contains(pt geom.Point) (bool) {
@@ -326,9 +335,15 @@ func (r *Rectangle) Contains(pt geom.Point) (bool) {
 
 func (r *Rectangle) Paint(gc *gg.Context) {
     Debugf(Painting, "")
-    r.Shape.Paint(gc)
     gc.DrawRectangle(r.LocalBounds().AsCoord())
-    gc.FillStroke()
+    if r.Pushed() || r.Selected() {
+        gc.SetStrokeWidth(r.PushedBorderWidth())
+        gc.SetStrokeColor(r.PushedBorderColor())
+        gc.StrokePreserve()
+    }
+    gc.SetStrokeWidth(r.BorderWidth())
+    gc.SetStrokeColor(r.BorderColor())
+    gc.Stroke()
 }
 
 //-----------------------------------------------------------------------------

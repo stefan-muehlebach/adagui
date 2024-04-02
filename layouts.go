@@ -8,6 +8,10 @@ import (
     . "github.com/stefan-muehlebach/adagui/props"
 )
 
+var (
+    LayoutProps = NewPropsFromFile(DefProps, "LayoutProps.json")
+)
+
 // Mit dem NullLayout werden die verwalteten Nodes per SetPos platziert und
 // werden durch den Container nicht mehr weiter verwaltet. MinSize liefert
 // die maximale Grösse aller verwalteten Nodes.
@@ -36,7 +40,7 @@ type PaddedLayout struct {
 
 // Mit den variablen Parametern pads können die Ränder definiert werden.
 // Dabei gilt:
-//   -       : verwende das Property 'InnerPadding'
+//   -       : verwende das Property 'Padding'
 //   a       : verwende a für alle Ränder
 //   a,b     : verwende a für die horizontalen und b für die vertikalen
 //             Ränder
@@ -46,7 +50,7 @@ func NewPaddedLayout(pads... float64) *PaddedLayout {
     var l, t, r, b float64
     switch len(pads) {
     case 0:
-        p := DefProps.Size(InnerPadding)
+        p := LayoutProps.Size(Padding)
         l, t, r, b = p, p, p, p
     case 1:
         l, t, r, b = pads[0], pads[0], pads[0], pads[0]
@@ -62,8 +66,8 @@ func NewPaddedLayout(pads... float64) *PaddedLayout {
 
 func (l *PaddedLayout) Layout(childList *list.List, size geom.Point) {
     pos := geom.Point{l.pad[Left], l.pad[Top]}
-    siz := geom.Point{size.X-(l.pad[Left]+l.pad[Right]),
-            size.Y-(l.pad[Top]+l.pad[Bottom])}
+    siz := geom.Point{size.X-l.pad[Left]-l.pad[Right],
+            size.Y-l.pad[Top]-l.pad[Bottom]}
     for elem := childList.Front(); elem != nil; elem = elem.Next() {
         child := elem.Value.(*Embed).Wrapper
         child.SetSize(siz)
@@ -96,7 +100,7 @@ type BoxLayout struct {
 }
 
 func NewHBoxLayout(pads... float64) *BoxLayout {
-    pad := DefProps.Size(InnerPadding)
+    pad := LayoutProps.Size(Padding)
     if len(pads) > 0 {
         pad = pads[0]
     }
@@ -104,7 +108,7 @@ func NewHBoxLayout(pads... float64) *BoxLayout {
 }
 
 func NewVBoxLayout(pads... float64) *BoxLayout {
-    pad := DefProps.Size(InnerPadding)
+    pad := LayoutProps.Size(Padding)
     if len(pads) > 0 {
         pad = pads[0]
     }
@@ -318,16 +322,16 @@ func (l *GridLayout) countRows(childList *list.List) (int) {
 }
 
 func getLeading(size float64, offset int) (float64) {
-    return (size + float64(DefProps.Size(InnerPadding))) * float64(offset)
+    return (size + float64(LayoutProps.Size(Padding))) * float64(offset)
 }
 
 func getTrailing(size float64, offset int) (float64) {
-    return getLeading(size, offset+1) - DefProps.Size(InnerPadding)
+    return getLeading(size, offset+1) - LayoutProps.Size(Padding)
 }
 
 func (l *GridLayout) Layout(childList *list.List, size geom.Point) {
     rows := l.countRows(childList)
-    padding    := DefProps.Size(InnerPadding)
+    padding    := LayoutProps.Size(Padding)
     padWidth   := float64(l.Cols-1) * padding
     padHeight  := float64(rows-1) * padding
     cellWidth  := float64(size.X-padWidth) / float64(l.Cols)
@@ -384,7 +388,7 @@ func (l *GridLayout) MinSize(childList *list.List) (geom.Point) {
         minSize = minSize.Max(child.MinSize())
     }
 
-    pad := DefProps.Size(InnerPadding)
+    pad := LayoutProps.Size(Padding)
     if l.horizontal() {
         minContentSize := geom.Point{minSize.X*float64(l.Cols),
                 minSize.Y*float64(rows)}
@@ -408,7 +412,7 @@ type BorderLayout struct {
 }
 
 func NewBorderLayout(top, bottom, left, right Node) LayoutManager {
-    l := &BorderLayout{top, bottom, left, right, DefProps.Size(InnerPadding)}
+    l := &BorderLayout{top, bottom, left, right, LayoutProps.Size(Padding)}
     return l
 }
 

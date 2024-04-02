@@ -6,11 +6,13 @@ import (
 	"embed"
 	"encoding/json"
 	"errors"
+    "fmt"
     "path/filepath"
 	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/colornames"
 	"github.com/stefan-muehlebach/gg/fonts"
 	"log"
+    "os"
 )
 
 //go:embed config/*.json
@@ -39,16 +41,16 @@ const (
 	PushedBarColor
 	BackgroundColor
 	MenuBackgroundColor
-	RedColor
-	OrangeColor
-	YellowColor
-	GreenColor
-	BlueColor
-	PurpleColor
-	BrownColor
-	GrayColor
-	BlackColor
-	WhiteColor
+//	RedColor
+//	OrangeColor
+//	YellowColor
+//	GreenColor
+//	BlueColor
+//	PurpleColor
+//	BrownColor
+//	GrayColor
+//	BlackColor
+//	WhiteColor
 	NumColorProperties
 )
 
@@ -70,16 +72,16 @@ var (
 		"PushedBarColor",
 		"BackgroundColor",
 		"MenuBackgroundColor",
-		"RedColor",
-		"OrangeColor",
-		"YellowColor",
-		"GreenColor",
-		"BlueColor",
-		"PurpleColor",
-		"BrownColor",
-		"GrayColor",
-		"BlackColor",
-		"WhiteColor",
+//		"RedColor",
+//		"OrangeColor",
+//		"YellowColor",
+//		"GreenColor",
+//		"BlueColor",
+//		"PurpleColor",
+//		"BrownColor",
+//		"GrayColor",
+//		"BlackColor",
+//		"WhiteColor",
 	}
 )
 
@@ -99,7 +101,7 @@ func (p *ColorPropertyName) UnmarshalText(text []byte) error {
 			return nil
 		}
 	}
-	return errors.New("No such property")
+	return errors.New(fmt.Sprintf("Color  property '%s' in file but not in the prop list", txt))
 }
 
 var (
@@ -164,7 +166,7 @@ func (p *FontPropertyName) UnmarshalText(text []byte) error {
 			return nil
 		}
 	}
-	return errors.New("No such property")
+	return errors.New(fmt.Sprintf("Font property '%s' in file but not in the prop list", txt))
 }
 
 var (
@@ -224,7 +226,7 @@ func (p *SizePropertyName) UnmarshalText(text []byte) error {
 			return nil
 		}
 	}
-	return errors.New("No such property")
+	return errors.New(fmt.Sprintf("Size property '%s' in file but not in the prop list", txt))
 }
 
 var (
@@ -272,17 +274,29 @@ func NewProperties(parent *Properties) *Properties {
 }
 
 func NewPropsFromFile(parent *Properties, fileName string) *Properties {
+    data, err := propFiles.ReadFile(filepath.Join("config", fileName))
+	if err != nil {
+		log.Fatal(err)
+	}
+    return NewPropsFromData(parent, data)
+}
+
+func NewPropsFromUser(parent *Properties, fileName string) *Properties {
+    data, err := os.ReadFile(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+    return NewPropsFromData(parent, data)
+}
+
+func NewPropsFromData(parent *Properties, data []byte) *Properties {
 	prop := struct {
 		ColorMap map[ColorPropertyName]color.RGBAF
 		FontMap  map[FontPropertyName]*fonts.Font
 		SizeMap  map[SizePropertyName]float64
 	}{}
 
-	b, err := propFiles.ReadFile(filepath.Join("config", fileName))
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = json.Unmarshal(b, &prop)
+	err := json.Unmarshal(data, &prop)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -450,16 +464,16 @@ func NewDefaultProps() *Properties {
 		MenuBackgroundColor: colornames.DarkGreen.Dark(0.8),
 
 		// Out
-		RedColor:    colornames.Red,
-		OrangeColor: colornames.Orange,
-		YellowColor: colornames.Yellow,
-		GreenColor:  colornames.Green,
-		BlueColor:   colornames.Blue,
-		PurpleColor: colornames.Purple,
-		BrownColor:  colornames.Brown,
-		GrayColor:   colornames.Gray,
-		BlackColor:  colornames.Black,
-		WhiteColor:  colornames.WhiteSmoke,
+		//RedColor:    colornames.Red,
+		//OrangeColor: colornames.Orange,
+		//YellowColor: colornames.Yellow,
+		//GreenColor:  colornames.Green,
+		//BlueColor:   colornames.Blue,
+		//PurpleColor: colornames.Purple,
+		//BrownColor:  colornames.Brown,
+		//GrayColor:   colornames.Gray,
+		//BlackColor:  colornames.Black,
+		//WhiteColor:  colornames.WhiteSmoke,
 	}
 
 	p.FontMap = map[FontPropertyName]*fonts.Font{

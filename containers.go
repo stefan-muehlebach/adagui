@@ -15,8 +15,8 @@ import (
 	"github.com/stefan-muehlebach/adagui/touch"
 	. "github.com/stefan-muehlebach/adagui/props"
 	"github.com/stefan-muehlebach/gg"
-	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
+//	"github.com/stefan-muehlebach/gg/color"
+//	"github.com/stefan-muehlebach/gg/colornames"
 	"github.com/stefan-muehlebach/gg/geom"
 	"golang.org/x/image/draw"
 	"image"
@@ -166,7 +166,9 @@ func NewGroup() *Group {
 func NewGroupPL(parent Container, layout LayoutManager) *Group {
     g := NewGroup()
     g.Layout = layout
-    parent.Add(g)
+    if parent != nil {
+        parent.Add(g)
+    }
     return g
 }
 
@@ -181,6 +183,8 @@ func (g *Group) Paint(gc *gg.Context) {
 // ihren Inhalt auf ihre Groesse. Sie koennen eine Hintergrundfarbe oder
 // ein Hitergundbild haben.
 var (
+    PanelProps = NewPropsFromFile(DefProps, "PanelProps.json")
+/*
 	PanelProps = NewProps(DefProps,
 		map[ColorPropertyName]color.Color{
 			Color:       colornames.Black,
@@ -190,6 +194,7 @@ var (
 		map[SizePropertyName]float64{
 			BorderWidth: 0.0,
 		})
+*/
 )
 
 // Einfaches Panel, welches seine Objekte
@@ -307,6 +312,8 @@ func (p *ScrollPanel) SetVirtualSize(sz geom.Point) {
 
 // TabPanel und TabButton sind fuer Tabbed Windows gedacht.
 var (
+    TabPanelProps = NewPropsFromFile(DefProps, "TabPanelProps.json")
+/*
 	TabPanelProps = NewProps(DefProps,
 		map[ColorPropertyName]color.Color{
 			Color:       colornames.Black,
@@ -316,6 +323,7 @@ var (
 		map[SizePropertyName]float64{
 			BorderWidth: 0.0,
 		})
+*/
 )
 
 type TabPanel struct {
