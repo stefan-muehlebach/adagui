@@ -18,9 +18,15 @@ var (
 )
 
 func init() {
-	defProps = NewDefaultProps()
-	typeProps = NewProperties(defProps)
-	objProps = NewProperties(typeProps)
+	defProps  = PropsMap["Default"]
+	typeProps = PropsMap["Button"]
+    
+	objProps  = NewProperties(typeProps)
+
+}
+
+func TestPropertyTree(t *testing.T) {
+    t.Logf("Object color: %+v", objProps.Color(colorPropName))
 }
 
 // Prüft, ob in den Default-Properties zu allen Property-Namen ein Eintrag

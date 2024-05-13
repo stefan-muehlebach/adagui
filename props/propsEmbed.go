@@ -19,6 +19,9 @@ func (pe *PropertyEmbed) Init(parent *Properties) {
 func (pe *PropertyEmbed) Init2(parent *Properties, propFile string) {
     pe.prop = NewPropsFromFile(parent, propFile)
 }
+func (pe *PropertyEmbed) InitByName(name string) {
+    pe.prop = NewProperties(PropsMap[name])
+}
 
 
 func (pe *PropertyEmbed) Color() (color.Color) {
@@ -210,16 +213,16 @@ func (pe *PropertyEmbed) SetFontSize(s float64) {
     pe.prop.SetSize(FontSize, s)
 }
 
-func (pe *PropertyEmbed) BarWidth() (float64) {
-    return pe.prop.Size(BarWidth)
+func (pe *PropertyEmbed) BarSize() (float64) {
+    return pe.prop.Size(BarSize)
 }
-func (pe *PropertyEmbed) SetBarWidth(s float64) {
-    pe.prop.SetSize(BarWidth, s)
+func (pe *PropertyEmbed) SetBarSize(s float64) {
+    pe.prop.SetSize(BarSize, s)
 }
 
-func (pe *PropertyEmbed) CtrlWidth() (float64) {
-    return pe.prop.Size(CtrlWidth)
+func (pe *PropertyEmbed) CtrlSize() (float64) {
+    return pe.prop.Size(CtrlSize)
 }
-func (pe *PropertyEmbed) SetCtrlWidth(s float64) {
-    pe.prop.SetSize(CtrlWidth, s)
+func (pe *PropertyEmbed) SetCtrlSize(s float64) {
+    pe.prop.SetSize(CtrlSize, s)
 }

@@ -13,7 +13,6 @@ import (
 	"container/list"
 	"github.com/stefan-muehlebach/adagui/binding"
 	"github.com/stefan-muehlebach/adagui/touch"
-	. "github.com/stefan-muehlebach/adagui/props"
 	"github.com/stefan-muehlebach/gg"
 //	"github.com/stefan-muehlebach/gg/color"
 //	"github.com/stefan-muehlebach/gg/colornames"
@@ -158,7 +157,7 @@ func NewGroup() *Group {
 	g := &Group{}
 	g.Wrapper = g
 	g.Init()
-	g.PropertyEmbed.Init(DefProps)
+	g.PropertyEmbed.InitByName("Default")
 	g.selectable = false
 	return g
 }
@@ -182,22 +181,6 @@ func (g *Group) Paint(gc *gg.Context) {
 // laesst sich die visuelle Erscheinung beeinflussen. Panels beschneiden
 // ihren Inhalt auf ihre Groesse. Sie koennen eine Hintergrundfarbe oder
 // ein Hitergundbild haben.
-var (
-    PanelProps = NewPropsFromFile(DefProps, "PanelProps.json")
-/*
-	PanelProps = NewProps(DefProps,
-		map[ColorPropertyName]color.Color{
-			Color:       colornames.Black,
-			BorderColor: colornames.Black,
-		},
-		nil,
-		map[SizePropertyName]float64{
-			BorderWidth: 0.0,
-		})
-*/
-)
-
-// Einfaches Panel, welches seine Objekte
 type Panel struct {
 	ContainerEmbed
 	Image image.Image
@@ -207,7 +190,7 @@ func NewPanel(w, h float64) *Panel {
 	p := &Panel{}
 	p.Wrapper = p
 	p.Init()
-	p.PropertyEmbed.Init(PanelProps)
+	p.PropertyEmbed.InitByName("Panel")
 	p.SetMinSize(geom.Point{w, h})
 	return p
 }
@@ -244,7 +227,7 @@ func NewScrollPanel(w, h float64) *ScrollPanel {
 	p := &ScrollPanel{}
 	p.Wrapper = p
 	p.Init()
-	p.PropertyEmbed.Init(PanelProps)
+	p.PropertyEmbed.InitByName("Panel")
 
 	p.SetMinSize(geom.Point{w, h})
 	p.SetVirtualSize(p.Size())
@@ -311,21 +294,6 @@ func (p *ScrollPanel) SetVirtualSize(sz geom.Point) {
 }
 
 // TabPanel und TabButton sind fuer Tabbed Windows gedacht.
-var (
-    TabPanelProps = NewPropsFromFile(DefProps, "TabPanelProps.json")
-/*
-	TabPanelProps = NewProps(DefProps,
-		map[ColorPropertyName]color.Color{
-			Color:       colornames.Black,
-			BorderColor: colornames.Black,
-		},
-		nil,
-		map[SizePropertyName]float64{
-			BorderWidth: 0.0,
-		})
-*/
-)
-
 type TabPanel struct {
 	ContainerEmbed
 	menu    *TabMenu
@@ -336,7 +304,7 @@ func NewTabPanel(w, h float64, menu *TabMenu, content *Panel) *TabPanel {
 	p := &TabPanel{}
 	p.Wrapper = p
 	p.Init()
-	p.PropertyEmbed.Init(TabPanelProps)
+	p.PropertyEmbed.InitByName("TabPanel")
 	p.SetMinSize(geom.Point{w, h})
 	p.Layout = NewVBoxLayout(0)
 	p.menu = menu
@@ -345,12 +313,6 @@ func NewTabPanel(w, h float64, menu *TabMenu, content *Panel) *TabPanel {
 	p.Add(p.menu, p.content)
 	return p
 }
-
-//----------------------------------------------------------------------------
-
-var (
-	TabMenuProps = NewProps(TabPanelProps, nil, nil, nil)
-)
 
 type TabMenu struct {
 	ContainerEmbed
@@ -363,7 +325,7 @@ func NewTabMenu() *TabMenu {
 	m := &TabMenu{}
 	m.Wrapper = m
 	m.Init()
-	m.PropertyEmbed.Init(TabMenuProps)
+	m.PropertyEmbed.InitByName("TabPanel")
 	m.Layout = NewHBoxLayout(0)
 	m.data = binding.NewInt()
 	m.data.Set(-1)

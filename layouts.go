@@ -1,7 +1,6 @@
 package adagui
 
 import (
-//    "log"
     "math"
     "container/list"
     "github.com/stefan-muehlebach/gg/geom"
@@ -9,7 +8,7 @@ import (
 )
 
 var (
-    LayoutProps = NewPropsFromFile(DefProps, "LayoutProps.json")
+    LayoutProps = PropsMap["Layout"]
 )
 
 // Mit dem NullLayout werden die verwalteten Nodes per SetPos platziert und

@@ -18,7 +18,7 @@ type Embed struct {
     Wrapper Node
     Parent *ContainerEmbed
     pos, size, minSize geom.Point
-    transl, rotate, scale, transf geom.Matrix
+    transl, rotate, scale, transf *geom.Matrix
     Marks Marks
     visible bool
     selectable bool
@@ -245,7 +245,7 @@ func (m *Embed) ScaleAbout(sp geom.Point, sx, sy float64) {
 }
 
 // Liefert die aktuelle Transformationsmatrix des Nodes.
-func (m *Embed) Matrix() (geom.Matrix) {
+func (m *Embed) Matrix() (*geom.Matrix) {
     if m.Marks.NeedsRecalc() {
         m.Marks.UnmarkNeedsRecalc()
         m.transf = m.transl.Multiply(m.scale.Multiply(m.rotate))

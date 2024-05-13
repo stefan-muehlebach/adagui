@@ -1,24 +1,11 @@
-// In diesem File befinden sich alle Widgets, die im Zusammenhang mit adagui
-// existieren. Aktuell sind dies:
-//
-// Leaf Widgets (Graphik bezogen)
-// ------------------------------
-//   Circle
-//   Rectangle
-//   Line       (Geplant)
-//
 package adagui
 
 import (
     "container/list"
-    //"log"
     "math"
     "sync"
     "github.com/stefan-muehlebach/adagui/touch"
-    . "github.com/stefan-muehlebach/adagui/props"
     "github.com/stefan-muehlebach/gg"
-    //"github.com/stefan-muehlebach/gg/color"
-    //"github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/geom"
 )
 
@@ -26,42 +13,6 @@ import (
 // Widget-Typ auf den Schirm zaubern.
 var (
     fangRadius = 5.0
-
-    ShapeProps = NewPropsFromFile(DefProps, "ShapeProps.json")
-    PointProps = NewPropsFromFile(ShapeProps, "PointProps.json")
-
-/*
-    ShapeProps = NewProps(DefProps,
-        map[ColorPropertyName]color.Color{
-            Color:               color.Transparent,
-            PushedColor:         color.Transparent,
-            SelectedColor:       color.Transparent,
-            BorderColor:         color.White,
-            PushedBorderColor:   color.White.Alpha(0.5),
-            SelectedBorderColor: color.White,
-        },
-        nil,
-        map[SizePropertyName]float64{
-            BorderWidth:         2.0,
-            PushedBorderWidth:   2.0,
-            SelectedBorderWidth: 2.0,
-        })
-
-    PointProps = NewProps(ShapeProps,
-        map[ColorPropertyName]color.Color{
-            Color:               color.White,
-            PushedColor:         color.White.Alpha(0.5),
-            SelectedColor:       colornames.Red,
-        },
-        nil,
-        map[SizePropertyName]float64{
-            Width:               8.0,
-            Height:              8.0,
-            BorderWidth:         0.0,
-            PushedBorderWidth:   4.0,
-            SelectedBorderWidth: 4.0,
-        })
-*/
 )
 
 // Abstrakter, allgemeiner Typ fuer geometrische Formen
@@ -93,7 +44,7 @@ func NewCircle(r float64) (*Circle) {
     c := &Circle{}
     c.Wrapper = c
     c.Shape.Init()
-    c.PropertyEmbed.Init(ShapeProps)
+    c.PropertyEmbed.InitByName("Shape")
     c.SetMinSize(geom.Point{2*r, 2*r})
     return c
 }
@@ -104,13 +55,14 @@ func (c *Circle) Paint(gc *gg.Context) {
     r  := 0.5 * c.Size().X
     gc.DrawCircle(mp.X, mp.Y, r)
     if c.Pushed() || c.Selected() {
-        gc.SetStrokeWidth(c.PushedBorderWidth())
         gc.SetStrokeColor(c.PushedBorderColor())
+        gc.SetStrokeWidth(c.PushedBorderWidth())
         gc.StrokePreserve()
     }
-    gc.SetStrokeWidth(c.BorderWidth())
+    gc.SetFillColor(c.Color())
     gc.SetStrokeColor(c.BorderColor())
-    gc.Stroke()
+    gc.SetStrokeWidth(c.BorderWidth())
+    gc.FillStroke()
 }
 
 func (c *Circle) Contains(pt geom.Point) (bool) {
@@ -146,7 +98,7 @@ func NewPoint() (*Point) {
     p := &Point{}
     p.Wrapper = p
     p.Shape.Init()
-    p.PropertyEmbed.Init(PointProps)
+    p.PropertyEmbed.InitByName("Point")
     p.SetMinSize(geom.Point{p.Width(), p.Height()})
     return p
 }
@@ -190,7 +142,7 @@ func NewLine(p0, p1 geom.Point) (*Line) {
     l := &Line{}
     l.Wrapper = l
     l.Shape.Init()
-    l.PropertyEmbed.Init(ShapeProps)
+    l.PropertyEmbed.InitByName("Shape")
     l.SetPos(p0.Min(p1))
     l.p0 = geom.Point{}
     l.p1 = geom.Point{}
@@ -266,7 +218,7 @@ func NewEllipse(rx, ry float64) (*Ellipse) {
     e := &Ellipse{}
     e.Wrapper = e
     e.Shape.Init()
-    e.PropertyEmbed.Init(ShapeProps)
+    e.PropertyEmbed.InitByName("Shape")
     e.SetMinSize(geom.Point{2*rx, 2*ry})
     return e
 }
@@ -281,9 +233,10 @@ func (e *Ellipse) Paint(gc *gg.Context) {
         gc.SetStrokeColor(e.PushedBorderColor())
         gc.StrokePreserve()
     }
+    gc.SetFillColor(e.Color())
     gc.SetStrokeWidth(e.BorderWidth())
     gc.SetStrokeColor(e.BorderColor())
-    gc.Stroke()
+    gc.FillStroke()
 }
 
 func (e *Ellipse) Contains(pt geom.Point) (bool) {
@@ -322,7 +275,7 @@ func NewRectangle(w, h float64) (*Rectangle) {
     r := &Rectangle{}
     r.Wrapper = r
     r.Shape.Init()
-    r.PropertyEmbed.Init(ShapeProps)
+    r.PropertyEmbed.InitByName("Shape")
     r.SetMinSize(geom.Point{w, h})
     return r
 }
@@ -341,9 +294,10 @@ func (r *Rectangle) Paint(gc *gg.Context) {
         gc.SetStrokeColor(r.PushedBorderColor())
         gc.StrokePreserve()
     }
+    gc.SetFillColor(r.Color())
     gc.SetStrokeWidth(r.BorderWidth())
     gc.SetStrokeColor(r.BorderColor())
-    gc.Stroke()
+    gc.FillStroke()
 }
 
 //-----------------------------------------------------------------------------
@@ -359,7 +313,7 @@ func NewCanvas(w, h float64) (*Canvas) {
     c := &Canvas{}
     c.Wrapper = c
     c.Init()
-    c.PropertyEmbed.Init(DefProps)
+    c.PropertyEmbed.InitByName("Default")
     c.SetSize(geom.Point{w, h})
     c.Clip        = false
     c.ObjList     = list.New()

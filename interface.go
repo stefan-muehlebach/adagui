@@ -84,7 +84,7 @@ type Node interface {
     RotateAbout(rp geom.Point, a float64)
     Scale(sx, sy float64)
     ScaleAbout(sp geom.Point, sx, sy float64)
-    Matrix() (geom.Matrix)
+    Matrix() (*geom.Matrix)
 }
 
 // Dieses Interface implementieren zusaetzlich alle Nodes, welche als

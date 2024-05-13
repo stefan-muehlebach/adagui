@@ -1,8 +1,10 @@
 module github.com/stefan-muehlebach/adagui
 
-go 1.22.1
+go 1.22.2
 
 replace github.com/stefan-muehlebach/adatft => ../adatft
+
+replace github.com/stefan-muehlebach/gg => ../gg
 
 require (
 	github.com/stefan-muehlebach/adatft v1.2.0

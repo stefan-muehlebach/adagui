@@ -85,6 +85,9 @@ func (pe *PropertyEmbed) Init(parent *Properties) {
 func (pe *PropertyEmbed) Init2(parent *Properties, propFile string) {
     pe.prop = NewPropsFromFile(parent, propFile)
 }
+func (pe *PropertyEmbed) InitByName(name string) {
+    pe.prop = NewProperties(PropsMap[name])
+}
 
 `)
 
