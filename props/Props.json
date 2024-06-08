@@ -235,5 +235,16 @@
         	"Width":  8.0,
         	"Height": 8.0
     	}
+	},
+
+	{
+		"Name": "Polygon",
+		"ParentName": "Shape",
+		"Colors": {
+        	"BorderColor"        : {"R": 1, "G": 1, "B": 1, "A": 1.0}
+    	},
+    	"Sizes": {
+        	"BorderWidth":          4.0
+    	}
 	}
 ]

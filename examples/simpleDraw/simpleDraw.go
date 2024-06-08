@@ -1,8 +1,10 @@
 package main
 
 import (
-	_ "fmt"
+	"fmt"
 	_ "image"
+    "os"
+    "image/png"
 	//"image/color"
 	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/adagui/binding"
@@ -14,6 +16,7 @@ import (
 	//"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/colornames"
 	"github.com/stefan-muehlebach/gg/geom"
+    "github.com/cpmech/gosl/fun/fftw"
 )
 
 // Dieses Programm dient der Demonstration, wie mit dem Touchscreen umgegangen
@@ -26,6 +29,7 @@ const (
 	CircleTool ToolType = iota
 	RectangleTool
 	EllipseTool
+    PolygonTool
 )
 
 func init() {
@@ -37,6 +41,7 @@ var (
 	screen *adagui.Screen
 	win    *adagui.Window
 	tool   ToolType
+    poly *adagui.Polygon
 )
 
 // Erstellt ein neues Panel der angegebenen Groesse und legt alle wichtigen
@@ -47,6 +52,8 @@ func NewPanel(w, h float64) *adagui.Panel {
 	var elli *adagui.Ellipse
 
 	p := adagui.NewPanel(w, h)
+    fh, _ := os.Open("taube.png")
+    p.Image, _ = png.Decode(fh)
 
 	p.SetOnTap(func(evt touch.Event) {
 		switch tool {
@@ -83,6 +90,13 @@ func NewPanel(w, h float64) *adagui.Panel {
 			elli = NewEllipse(1.0, 1.0)
 			elli.SetPos(evt.Pos)
 			p.Add(elli)
+        case PolygonTool:
+            if poly != nil {
+                poly.Remove()
+            }
+            poly = adagui.NewPolygon(evt.Pos)
+            poly.Closed = true
+            p.Add(poly)
 		}
 		p.Mark(adagui.MarkNeedsPaint)
 	})
@@ -101,6 +115,8 @@ func NewPanel(w, h float64) *adagui.Panel {
 		case EllipseTool:
 			rx, ry := evt.Pos.Sub(evt.InitPos).AsCoord()
 			elli.SetRadius(rx, ry)
+        case PolygonTool:
+            poly.AddPoint(evt.Pos)
 		}
 		p.Mark(adagui.MarkNeedsPaint)
 	})
@@ -120,6 +136,9 @@ func NewPanel(w, h float64) *adagui.Panel {
 			elli.SetPos(r.Min)
 			elli.SetSize(r.Size())
 			elli.Mark(adagui.MarkNeedsPaint)
+        case PolygonTool:
+            poly.Flatten()
+			poly.Mark(adagui.MarkNeedsPaint)
 		}
 	})
 
@@ -268,44 +287,72 @@ func main() {
 	screen = adagui.NewScreen(adatft.Rotate090)
 	win = screen.NewWindow()
 
-	group := adagui.NewGroup()
+	group := adagui.NewGroupPL(nil, adagui.NewVBoxLayout())
 	win.SetRoot(group)
 
-	btn1 := adagui.NewTextButton("Quit")
-	w, h := btn1.Size().AsCoord()
-	btn1.SetPos(geom.Point{320 - w - 5, 240 - h - 5})
-	group.Add(btn1)
-	btn1.SetOnTap(func(evt touch.Event) {
-		screen.Quit()
-	})
+	panel := NewPanel(float64(adatft.Width-10), float64(adatft.Height-10-40))
+	//panel.SetColor(colornames.Gray)
+	group.Add(panel)
+
+    btnGrp := adagui.NewGroupPL(group, adagui.NewHBoxLayout())
 
 	btnData := binding.NewInt()
 	btnData.Set(-1)
+
+	btn5 := adagui.NewIconButtonWithData("icons/line.png", int(PolygonTool), btnData)
+	btn5.SetOnTap(func(evt touch.Event) {
+		tool = PolygonTool
+	})
+
 	btn2 := adagui.NewIconButtonWithData("icons/circle.png", int(CircleTool), btnData)
-	btn2.SetPos(geom.Point{5, btn1.Rect().Y0()})
-	group.Add(btn2)
 	btn2.SetOnTap(func(evt touch.Event) {
 		tool = CircleTool
 	})
 
 	btn3 := adagui.NewIconButtonWithData("icons/rectangle.png", int(RectangleTool), btnData)
-	btn3.SetPos(geom.Point{btn2.Rect().X1() + 5, btn1.Rect().Y0()})
-	group.Add(btn3)
 	btn3.SetOnTap(func(evt touch.Event) {
 		tool = RectangleTool
 	})
 
 	btn4 := adagui.NewIconButtonWithData("icons/ellipse.png", int(EllipseTool), btnData)
-	btn4.SetPos(geom.Point{btn3.Rect().X1() + 5, btn1.Rect().Y0()})
-	group.Add(btn4)
 	btn4.SetOnTap(func(evt touch.Event) {
 		tool = EllipseTool
 	})
 
-	panel := NewPanel(310, btn1.Rect().Y0()-10)
-	panel.SetPos(geom.Point{5, 5})
-	panel.SetColor(colornames.Gray)
-	group.Add(panel)
+    btnFFT := adagui.NewTextButton("FFT")
+    btnFFT.SetOnTap(func(evt touch.Event) {
+        if poly == nil {
+            return
+        }
+        pts := poly.Points()
+        data := make([]complex128, len(pts))
+        fftPlan := fftw.NewPlan1d(data, false, true)
+        for i, pt := range pts {
+            data[i] = complex(pt.X, pt.Y)
+        }
+        fftPlan.Execute()
+        n := complex(float64(len(data)), 0.0)
+        fmt.Printf("package main\n")
+        fmt.Printf("var (\n")
+        fmt.Printf("    CoeffList = []FourierCoeff{\n")
+        for i, dat := range data[:len(data)/2] {
+            fmt.Printf("        FourierCoeff{%3d, %+9.4f},\n", i, dat/n)
+            if i > 0 {
+                fmt.Printf("        FourierCoeff{%3d, %+9.4f},\n", -i, data[len(data)-i]/n)
+            }
+        }
+        fmt.Printf("    }\n")
+        fmt.Printf(")\n")
+        fftPlan.Free()
+    })
+
+	btnGrp.Add(btn5, btn2, btn3, btn4, btnFFT, adagui.NewSpacer())
+
+	btnQuit := adagui.NewTextButton("Quit")
+	btnGrp.Add(btnQuit)
+	btnQuit.SetOnTap(func(evt touch.Event) {
+		screen.Quit()
+	})
 
 	screen.SetWindow(win)
 	screen.Run()

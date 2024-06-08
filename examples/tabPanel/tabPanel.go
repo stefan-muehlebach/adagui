@@ -910,8 +910,6 @@ func main() {
 	for _, panelInfo := range panelList {
 		tabMenu.AddTab(panelInfo.name, panelInfo.panel)
 	}
-	tabMenu.SetTab(3)
-
 	win.SetRoot(tabPanel)
 	scr.SetWindow(win)
 	scr.Run()

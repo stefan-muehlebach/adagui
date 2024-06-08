@@ -5,6 +5,7 @@ go 1.22.3
 replace github.com/stefan-muehlebach/adatft => ../adatft
 
 require (
+	github.com/cpmech/gosl v1.2.12
 	github.com/stefan-muehlebach/adatft v1.2.0
 	github.com/stefan-muehlebach/gg v1.3.0
 	github.com/stefan-muehlebach/mandel v1.2.0

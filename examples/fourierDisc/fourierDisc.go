@@ -17,9 +17,9 @@ import (
 )
 
 const (
-    F float64 = 40.0
-    MaxFreq   = 19
-    Dt float64 = 0.02 / float64(MaxFreq)
+    F float64   = 1.0
+    DefMaxFreq  = 19
+    Dt float64  = 0.02 / float64(DefMaxFreq)
 )
 
 var (
@@ -57,6 +57,7 @@ var (
         FourierCoeff{ -9, (  -0.0014  -0.0048i)},
     }
 */
+/*
     CoeffList = []FourierCoeff{
         FourierCoeff{  0, (  +1.1720  -1.3875i)},
         FourierCoeff{  1, (  -0.3010  -0.5965i)},
@@ -98,6 +99,7 @@ var (
         FourierCoeff{ 19, (  +0.0074  +0.0306i)},
         FourierCoeff{-19, (  +0.0165  +0.0445i)},
     }
+*/
 
 /*
 	CoeffList = []FourierCoeff{
@@ -165,8 +167,8 @@ func (d *FourierDisc) SetPos(mp geom.Point) {
 
 func (d *FourierDisc) SetAngle(angle float64) {
 	d.angle = math.Mod(d.initAngle+angle, 2.0*math.Pi)
-	w := math.Cos(d.angle) * d.radius
-	h := math.Sin(d.angle) * d.radius
+	w := math.Sin(d.angle) * d.radius
+	h := math.Cos(d.angle) * d.radius
 	d.nextMp = geom.Point{w, -h}
 	if d.child != nil {
 		d.child.SetPos(d.nextMp)
@@ -311,9 +313,11 @@ func main() {
 	var firstDisc *FourierDisc
 	var syncQ, quitQ chan bool
 	var sigChan chan os.Signal
+    var maxFreq int
 
 	flag.DurationVar(&step, "step", 30*time.Millisecond,
 		"time step of the animation")
+    flag.IntVar(&maxFreq, "freq", DefMaxFreq, "Max. Frequence")
 	flag.Parse()
 
 	disp = adatft.OpenDisplay(adatft.Rotate000)
@@ -325,17 +329,13 @@ func main() {
 
 	firstDisc = NewFourierDisc(CoeffList[0], nil)
 	disc := firstDisc
-	//log.Printf("freq : %f\n", disc.freq)
-	//log.Printf("angle: %f\n", disc.angle)
-	for _, coeff := range CoeffList[1:2*MaxFreq+1] {
+	for _, coeff := range CoeffList[1:2*maxFreq+1] {
 		disc = NewFourierDisc(coeff, disc)
-		//log.Printf("freq : %f\n", disc.freq)
-		//log.Printf("angle: %f\n", disc.angle)
 	}
 	NewFourierPen(img, disc)
 	firstDisc.SetPos(geom.Point{float64(adatft.Width) / 2.0,
 		float64(adatft.Height) / 2.0})
-	firstDisc.SetAngle(0.0)
+    firstDisc.SetAngle(0.0)
 
 	syncQ = make(chan bool)
 	quitQ = make(chan bool)

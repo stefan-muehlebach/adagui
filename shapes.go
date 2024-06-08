@@ -1,11 +1,12 @@
 package adagui
 
 import (
-    "container/list"
+//    "container/list"
     "math"
-    "sync"
+//    "sync"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg"
+//    "github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/geom"
 )
 
@@ -130,6 +131,79 @@ func (p *Point) Pos() (geom.Point) {
 }
 func (p *Point) SetPos(mp geom.Point) {
     p.Wrappee().SetPos(mp.Sub(p.Size().Mul(0.5)))
+}
+
+// Polygone
+type Polygon struct {
+    Shape
+    pts []geom.Point
+    Closed bool
+}
+
+func NewPolygon(p0 geom.Point) (*Polygon) {
+    p := &Polygon{}
+    p.Wrapper = p
+    p.Shape.Init()
+    p.PropertyEmbed.InitByName("Polygon")
+    p.SetPos(p0)
+    p.pts = make([]geom.Point, 1)
+    p.pts[0] = geom.Point{}
+    p.Closed = false
+    return p
+}
+
+func (p *Polygon) Paint(gc *gg.Context) {
+    gc.SetStrokeWidth(p.BorderWidth())
+    gc.SetStrokeColor(p.BorderColor())
+    for _, pt := range p.pts {
+        gc.LineTo(pt.X, pt.Y)
+    }
+    if p.Closed {
+        gc.LineTo(p.pts[0].X, p.pts[0].Y)
+    }
+    gc.Stroke()
+/*
+    gc.SetFillColor(colornames.Black)
+    for _, pt := range p.pts {
+        gc.DrawPoint(pt.X, pt.Y, 2.0)
+    }
+    gc.Fill()
+*/
+}
+
+func (p *Polygon) Contains(pt geom.Point) bool {
+    return false
+}
+
+func (p *Polygon) AddPoint(pt geom.Point) {
+    lpt := pt.Sub(p.Pos())
+    p.pts = append(p.pts, lpt)
+    min := pt.Min(p.Pos())
+    max := pt.Max(p.Pos().Add(p.Size()))
+    p.SetMinSize(max.Sub(min))
+}
+
+func (p *Polygon) Flatten() {
+    pts := make([]geom.Point, 1)
+    p0 := p.pts[0]
+    pts[0] = p0
+    for _, p1 := range p.pts[1:] {
+        if p0.Distance(p1) < 4.0 {
+            continue
+        }
+        pts = append(pts, p1)
+        p0 = p1
+    }
+    p.pts = pts
+}
+
+func (p *Polygon) Points() []geom.Point {
+    pts := make([]geom.Point, len(p.pts))
+    for i, pt := range p.pts {
+        pts[i] = pt
+        //pts[i] = pt.Add(p.Pos())
+    }
+    return pts
 }
 
 // Geraden
@@ -302,6 +376,7 @@ func (r *Rectangle) Paint(gc *gg.Context) {
 
 //-----------------------------------------------------------------------------
 
+/*
 type Canvas struct {
     LeafEmbed
     Clip bool
@@ -350,4 +425,4 @@ func (c *Canvas) Paint(gc *gg.Context) {
 func (c *Canvas) Add(obj CanvasObject) {
     c.ObjList.PushBack(obj)
 }
-
+*/
