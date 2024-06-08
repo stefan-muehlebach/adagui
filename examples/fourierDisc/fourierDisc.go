@@ -8,24 +8,27 @@ import (
 	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/colornames"
 	"github.com/stefan-muehlebach/gg/geom"
-	//"log"
+	"log"
 	"math"
 	"math/cmplx"
 	"os"
 	"os/signal"
 	"time"
+    "encoding/json"
 )
 
 const (
     F float64   = 1.0
     DefMaxFreq  = 19
     Dt float64  = 0.02 / float64(DefMaxFreq)
+    DefCoeffFile = "coeff.json"
 )
 
 var (
 	disp    *adatft.Display
 	gc, img *gg.Context
 	tmp     = math.Sqrt(3.0) / 2.0
+    coeffFile string
 )
 
 type FourierCoeff struct {
@@ -303,6 +306,20 @@ ForeverLoop:
 
 //-----------------------------------------------------------------------------
 
+type Complex struct {
+    Re, Im float64
+}       
+        
+func NewComplex(c complex128) Complex {
+    return Complex{real(c), imag(c)}
+}
+
+func (c *Complex) AsComplex() complex128 {
+    return complex(c.Re, c.Im)
+}
+
+//-----------------------------------------------------------------------------
+
 var (
 	step              time.Duration
 	singleStep        bool = false
@@ -318,7 +335,18 @@ func main() {
 	flag.DurationVar(&step, "step", 30*time.Millisecond,
 		"time step of the animation")
     flag.IntVar(&maxFreq, "freq", DefMaxFreq, "Max. Frequence")
+    flag.StringVar(&coeffFile, "in", DefCoeffFile, "Input file with coeff.")
 	flag.Parse()
+
+    in := make([]Complex, 0)
+    fh, err := os.Open(coeffFile)
+    if err != nil {
+        log.Fatal(err)
+    }
+    err = json.Unmarshal(fh, &in)
+    if err != nil {
+        log.Fatal(err)
+    }
 
 	disp = adatft.OpenDisplay(adatft.Rotate000)
 

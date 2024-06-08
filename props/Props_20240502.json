@@ -1,0 +1,253 @@
+[
+	{
+    	"Name": "Default",
+		"ParentName": null,
+
+    	"Colors": {
+    		"Color": {
+    			"R": 0.000, "G": 0.392, "B": 0.000, "A": 1.000
+    		},
+    		"PushedColor": {
+    			"R": 0.544, "G": 0.763, "B": 0.176, "A": 1.000
+    		},
+    		"SelectedColor": {
+    			"R": 0.423, "G": 0.680, "B": 0.137, "A": 1.000
+    		},
+    		"BorderColor": {
+    			"R": 0.000, "G": 0.392, "B": 0.000, "A": 1.000
+    		},
+    		"PushedBorderColor": {
+    			"R": 0.544, "G": 0.763, "B": 0.176, "A": 1.000
+    		},
+    		"SelectedBorderColor": {
+    			"R": 0.423, "G": 0.680, "B": 0.137, "A": 1.000
+    		},
+    		"LineColor": {
+    			"R": 0.961, "G": 0.961, "B": 0.961, "A": 1.000
+    		},
+    		"PushedLineColor": {
+    			"R": 0.000, "G": 0.000, "B": 0.000, "A": 1.000
+    		},
+    		"SelectedLineColor": {
+    			"R": 0.961, "G": 0.961, "B": 0.961, "A": 1.000
+    		},
+    		"TextColor": {
+    			"R": 0.980, "G": 0.941, "B": 0.902, "A": 1.000
+    		},
+    		"PushedTextColor": {
+    			"R": 0.000, "G": 0.000, "B": 0.000, "A": 1.000
+    		},
+    		"SelectedTextColor": {
+    			"R": 1.000, "G": 1.000, "B": 1.000, "A": 1.000
+    		},
+    		"BackgroundColor": {
+    			"R": 0.000, "G": 0.000, "B": 0.100, "A": 1.000
+    		},
+    		"BarColor": {
+    			"R": 0.092, "G": 0.155, "B": 0.155, "A": 1.000
+    		},
+    		"PushedBarColor": {
+    			"R": 0.092, "G": 0.155, "B": 0.155, "A": 1.000
+    		},
+    		"MenuBackgroundColor": {
+    			"R": 0.000, "G": 0.078, "B": 0.000, "A": 1.000
+    		}
+    	},
+    
+    	"Fonts": {
+    		"Font":           "GoRegular",
+    		"RegularFont":    "GoRegular",
+    		"BoldFont":       "GoBold",
+    		"ItalicFont":     "GoItalic",
+    		"BoldItalicFont": "GoBoldItalic",
+    		"MonoFont":       "GoMono",
+    		"MonoBoldFont":   "GoMonoBold"
+    	},
+    
+    	"Sizes": {
+    		"Width":                0,
+    		"Height":               0,
+    		"BorderWidth":          0,
+    		"PushedBorderWidth":    0,
+    		"SelectedBorderWidth":  0,
+    		"CornerRadius":         6,
+    		"BarSize":              3,
+    		"CtrlSize":            20,
+    		"LineWidth":            2.5,
+    		"FontSize":            16,
+    		"Padding":             15,
+    		"InnerPadding":         5
+    	}
+    },
+
+	{
+		"Name": "Panel",
+		"ParentName": "Default",
+		"Colors": {
+		    "Color": { "R": 0, "G": 0, "B": 0, "A": 1 },
+		    "BorderColor": { "R": 0, "G": 0, "B": 0, "A": 1 }
+		},
+		"Sizes": {
+			"BorderWidth":         0,
+    		"PushedBorderWidth":   0,
+    		"SelectedBorderWidth": 0
+        }
+	},
+
+	{
+		"Name": "TabPanel",
+		"ParentName": "Default",
+	    "Colors": {
+		    "Color": { "R": 0, "G": 0, "B": 0, "A": 1 },
+		    "BorderColor": { "R": 0, "G": 0, "B": 0, "A": 1 }
+		},
+		"Sizes": {
+			"BorderWidth":         0,
+    		"PushedBorderWidth":   0,
+    		"SelectedBorderWidth": 0
+		}
+	},
+
+	{
+		"Name": "Layout",
+		"ParentName": "Default",
+		"Sizes": {
+			"Padding": 5
+		}
+	},
+
+	{
+		"Name": "Label",
+		"ParentName": "Default"
+    },
+
+	{
+		"Name": "Button",
+        "ParentName": "Default",
+		"Fonts": {
+			"Font": "GoBold"
+		},
+		"Sizes": {
+			"Width":        36,
+			"Height":       36,
+       	 	"InnerPadding": 15
+		}
+	},
+
+	{
+		"Name": "TabButton",
+		"ParentName": "Button",
+		"Colors": {
+    		"Color": {
+    			"R": 0, "G": 0.392, "B": 0, "A": 0.4
+    		},
+    		"BorderColor": {
+    			"R": 0, "G": 0.392, "B": 0, "A": 0.4
+    		},
+    		"TextColor": {
+    			"R": 0.961, "G": 0.961, "B": 0.961, "A": 0.4
+    		},
+    		"SelectedTextColor": {
+    			"R": 0, "G": 0, "B": 0, "A": 1
+    		}
+        },
+    	"Sizes": {
+    		"Width":        30,
+    		"Height":       20,
+    		"BorderWidth":   0,
+    		"CornerRadius": 10,
+    		"FontSize":     14,
+    		"InnerPadding": 15
+    	}
+    },
+
+	{
+		"Name": "IconButton",
+		"ParentName": "Button",
+		"Sizes": {
+			"InnerPadding": 3
+		}
+	},
+
+	{
+		"Name": "Checkbox",
+		"ParentName": "Button",
+		"Fonts": {
+			"Font": "GoRegular"
+		},
+		"Sizes": {
+			"Width":        20,
+			"Height":       20,
+			"LineWidth":     4,
+			"InnerPadding":  5,
+			"CornerRadius":  5
+		}
+	},
+
+	{
+		"Name": "RadioButton",
+		"ParentName": "Button",
+		"Fonts": {
+			"Font": "GoRegular"
+		},
+		"Sizes": {
+			"Width":        20,
+			"Height":       20,
+			"LineWidth":     8,
+			"InnerPadding":  5
+		}
+	},
+
+	{
+		"Name": "Slider",
+		"ParentName": "Default",
+    	"Colors": {
+	        "BarColor":       { "R": 0.45, "G": 0.45, "B": 0.45, "A": 1.0 },
+	        "PushedBarColor": { "R": 0.45, "G": 0.45, "B": 0.45, "A": 1.0 }
+    	},
+		"Sizes": {
+			"Width":    20,
+			"Height":   20
+		}
+	},
+
+	{
+		"Name": "Scrollbar",
+		"ParentName": "Default",
+    	"Colors": {
+	        "BarColor":       { "R": 0.45, "G": 0.45, "B": 0.45, "A": 1.0 },
+	        "PushedBarColor": { "R": 0.45, "G": 0.45, "B": 0.45, "A": 1.0 }
+    	},
+		"Sizes": {
+			"Width":    20,
+			"Height":   20
+		}
+	},
+
+	{
+		"Name": "Shape",
+		"ParentName": "Default",
+		"Colors": {
+        	"Color"              : {"R": 0, "G": 0, "B": 0, "A": 0},
+        	"PushedColor"        : {"R": 0, "G": 0, "B": 0, "A": 0},
+        	"SelectedColor"      : {"R": 0, "G": 0, "B": 0, "A": 0},
+        	"BorderColor"        : {"R": 0.4, "G": 0.4, "B": 0.4, "A": 1.0},
+        	"PushedBorderColor"  : {"R": 0.0, "G": 0.0, "B": 0.0, "A": 0.1},
+        	"SelectedBorderColor": {"R": 0.0, "G": 0.0, "B": 0.0, "A": 0.1}
+    	},
+    	"Sizes": {
+        	"BorderWidth":          2.0,
+        	"PushedBorderWidth":   12.0,
+        	"SelectedBorderWidth": 12.0
+    	}
+	},
+
+	{
+		"Name": "Point",
+		"ParentName": "Shape",
+    	"Sizes": {
+        	"Width":  8.0,
+        	"Height": 8.0
+    	}
+	}
+]

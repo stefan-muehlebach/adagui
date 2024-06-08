@@ -30,7 +30,6 @@ var (
 func SignalHandler() {
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt)
-	<-sigChan
 	scr.Quit()
 }
 

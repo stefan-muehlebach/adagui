@@ -1,10 +1,9 @@
 package main
 
 import (
-	"fmt"
-	_ "image"
+	"flag"
     "os"
-    "image/png"
+    _ "image/png"
 	//"image/color"
 	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/adagui/binding"
@@ -13,6 +12,7 @@ import (
 	"log"
 	"math/rand"
 	_ "sync"
+    "encoding/json"
 	//"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/colornames"
 	"github.com/stefan-muehlebach/gg/geom"
@@ -42,7 +42,22 @@ var (
 	win    *adagui.Window
 	tool   ToolType
     poly *adagui.Polygon
+    outFile string
 )
+
+//-----------------------------------------------------------------------------
+//
+type Complex struct {
+    Re, Im float64
+}
+
+func NewComplex(c complex128) Complex {
+    return Complex{real(c), imag(c)}
+}
+
+func (c *Complex) AsComplex() complex128 {
+    return complex(c.Re, c.Im)
+}
 
 // Erstellt ein neues Panel der angegebenen Groesse und legt alle wichtigen
 // Handler fuer das Touch-Event fest.
@@ -52,8 +67,8 @@ func NewPanel(w, h float64) *adagui.Panel {
 	var elli *adagui.Ellipse
 
 	p := adagui.NewPanel(w, h)
-    fh, _ := os.Open("taube.png")
-    p.Image, _ = png.Decode(fh)
+//    fh, _ := os.Open("taube.png")
+//    p.Image, _ = png.Decode(fh)
 
 	p.SetOnTap(func(evt touch.Event) {
 		switch tool {
@@ -284,6 +299,9 @@ func NewRectangle(w, h float64) *adagui.Rectangle {
 
 // Hauptprogramm.
 func main() {
+    flag.StringVar(&outFile, "out", "coeff.json", "Output File")
+    flag.Parse()
+
 	screen = adagui.NewScreen(adatft.Rotate090)
 	win = screen.NewWindow()
 
@@ -326,12 +344,34 @@ func main() {
         }
         pts := poly.Points()
         data := make([]complex128, len(pts))
+        out  := make([]Complex, len(pts))
         fftPlan := fftw.NewPlan1d(data, false, true)
         for i, pt := range pts {
             data[i] = complex(pt.X, pt.Y)
         }
         fftPlan.Execute()
         n := complex(float64(len(data)), 0.0)
+        idx := 0
+        for i, dat := range data[:len(data)/2] {
+            out[idx] = NewComplex(dat / n)
+            idx++
+            if i > 0 {
+                out[idx] = NewComplex(data[len(data)-i]/n)
+                idx++
+            }
+        }
+
+        fh, err := os.Create(outFile)
+        if err != nil {
+            log.Fatal(err)
+        }
+        b, err := json.Marshal(out)
+        if err != nil {
+            log.Fatal(err)
+        }
+        fh.Write(b)
+        fh.Close()
+/*
         fmt.Printf("package main\n")
         fmt.Printf("var (\n")
         fmt.Printf("    CoeffList = []FourierCoeff{\n")
@@ -343,6 +383,7 @@ func main() {
         }
         fmt.Printf("    }\n")
         fmt.Printf(")\n")
+*/
         fftPlan.Free()
     })
 
