@@ -1,14 +1,13 @@
 module github.com/stefan-muehlebach/adagui
 
-go 1.22.2
+go 1.22.3
 
 replace github.com/stefan-muehlebach/adatft => ../adatft
 
-replace github.com/stefan-muehlebach/gg => ../gg
-
 require (
 	github.com/stefan-muehlebach/adatft v1.2.0
-	github.com/stefan-muehlebach/gg v1.2.2
+	github.com/stefan-muehlebach/gg v1.3.0
+	github.com/stefan-muehlebach/mandel v1.2.0
 	golang.org/x/image v0.15.0
 )
 

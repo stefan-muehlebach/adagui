@@ -1,0 +1,18 @@
+{
+    "Colors": {
+        "Color"              : {"R": 1.000, "G": 0.980, "B": 0.980, "A": 1.0},
+        "PushedColor"        : {"R": 1.000, "G": 0.980, "B": 0.980, "A": 1.0},
+        "SelectedColor"      : {"R": 0.447, "G": 0.706, "B": 0.839, "A": 0.3},
+        "BorderColor"        : {"R": 0.447, "G": 0.706, "B": 0.839, "A": 1.0},
+        "PushedBorderColor"  : {"R": 0.447, "G": 0.706, "B": 0.839, "A": 1.0},
+        "SelectedBorderColor": {"R": 0.447, "G": 0.706, "B": 0.839, "A": 1.0}
+    },
+	"Sizes": {
+		"BorderWidth":          1.0,
+		"PushedBorderWidth":    5.0,
+		"SelectedBorderWidth":  1.0,
+        "CornerRadius":         8.0,
+        "InnerPadding":         5.0
+	}
+}
+
