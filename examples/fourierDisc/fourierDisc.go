@@ -19,8 +19,8 @@ import (
 
 const (
     F float64   = 1.0
-    DefMaxFreq  = 19
-    Dt float64  = 0.02 / float64(DefMaxFreq)
+    DefMaxFreq  = 20 
+    Dt float64  = 0.05 / float64(DefMaxFreq)
     DefCoeffFile = "coeff.json"
 )
 
@@ -29,6 +29,7 @@ var (
 	gc, img *gg.Context
 	tmp     = math.Sqrt(3.0) / 2.0
     coeffFile string
+    CoeffList []FourierCoeff
 )
 
 type FourierCoeff struct {
@@ -36,88 +37,29 @@ type FourierCoeff struct {
 	factor complex128
 }
 
-var (
-/*
-    CoeffList = []FourierCoeff{
-        FourierCoeff{  0, (  -0.0000  +0.6688i)},
-        FourierCoeff{  1, (  +0.0077  -0.2466i)},
-        FourierCoeff{ -1, (  +0.1080  +3.4708i)},
-        FourierCoeff{  2, (  +0.0216  -0.3465i)},
-        FourierCoeff{ -2, (  -0.0125  -0.2007i)},
-        FourierCoeff{  3, (  -0.0019  +0.0203i)},
-        FourierCoeff{ -3, (  -0.0238  -0.2542i)},
-        FourierCoeff{  4, (  +0.0127  -0.1016i)},
-        FourierCoeff{ -4, (  -0.0261  -0.2085i)},
-        FourierCoeff{  5, (  -0.0013  +0.0081i)},
-        FourierCoeff{ -5, (  -0.0051  -0.0323i)},
-        FourierCoeff{  6, (  +0.0085  -0.0452i)},
-        FourierCoeff{ -6, (  -0.0104  -0.0550i)},
-        FourierCoeff{  7, (  -0.0008  +0.0034i)},
-        FourierCoeff{ -7, (  -0.0014  -0.0065i)},
-        FourierCoeff{  8, (  +0.0060  -0.0234i)},
-        FourierCoeff{ -8, (  -0.0078  -0.0308i)},
-        FourierCoeff{  9, (  -0.0014  +0.0048i)},
-        FourierCoeff{ -9, (  -0.0014  -0.0048i)},
-    }
-*/
-/*
-    CoeffList = []FourierCoeff{
-        FourierCoeff{  0, (  +1.1720  -1.3875i)},
-        FourierCoeff{  1, (  -0.3010  -0.5965i)},
-        FourierCoeff{ -1, (  -1.4220  -2.0622i)},
-        FourierCoeff{  2, (  -0.4890  +0.6058i)},
-        FourierCoeff{ -2, (  +0.4454  +0.3561i)},
-        FourierCoeff{  3, (  +0.0548  -0.1308i)},
-        FourierCoeff{ -3, (  -0.3568  -0.5938i)},
-        FourierCoeff{  4, (  -0.1810  +0.2281i)},
-        FourierCoeff{ -4, (  +0.1254  -0.0810i)},
-        FourierCoeff{  5, (  -0.0960  +0.1690i)},
-        FourierCoeff{ -5, (  +0.1017  -0.3047i)},
-        FourierCoeff{  6, (  +0.1180  +0.2466i)},
-        FourierCoeff{ -6, (  +0.1081  +0.1222i)},
-        FourierCoeff{  7, (  +0.0885  +0.0887i)},
-        FourierCoeff{ -7, (  -0.0869  -0.0510i)},
-        FourierCoeff{  8, (  +0.3233  -0.0732i)},
-        FourierCoeff{ -8, (  -0.2468  -0.3610i)},
-        FourierCoeff{  9, (  +0.0936  +0.0113i)},
-        FourierCoeff{ -9, (  -0.0682  -0.0434i)},
-        FourierCoeff{ 10, (  -0.0209  +0.1233i)},
-        FourierCoeff{-10, (  +0.2035  +0.2263i)},
-        FourierCoeff{ 11, (  -0.0632  -0.0998i)},
-        FourierCoeff{-11, (  +0.0388  +0.0689i)},
-        FourierCoeff{ 12, (  -0.0126  -0.0264i)},
-        FourierCoeff{-12, (  -0.0330  +0.0401i)},
-        FourierCoeff{ 13, (  -0.0257  -0.0525i)},
-        FourierCoeff{-13, (  +0.0565  +0.0715i)},
-        FourierCoeff{ 14, (  -0.0329  -0.0445i)},
-        FourierCoeff{-14, (  -0.0345  -0.0587i)},
-        FourierCoeff{ 15, (  -0.0112  +0.0007i)},
-        FourierCoeff{-15, (  +0.0426  +0.0256i)},
-        FourierCoeff{ 16, (  -0.0368  +0.0146i)},
-        FourierCoeff{-16, (  +0.0572  -0.0071i)},
-        FourierCoeff{ 17, (  +0.0306  -0.0522i)},
-        FourierCoeff{-17, (  -0.0231  -0.0314i)},
-        FourierCoeff{ 18, (  -0.0037  -0.0023i)},
-        FourierCoeff{-18, (  -0.0255  -0.0158i)},
-        FourierCoeff{ 19, (  +0.0074  +0.0306i)},
-        FourierCoeff{-19, (  +0.0165  +0.0445i)},
-    }
-*/
+type CoeffList struct {
+    data []complex128
+    maxFreq int
+}
 
-/*
-	CoeffList = []FourierCoeff{
-		FourierCoeff{0, 0.0 - 0.0060066i},
-		FourierCoeff{1, 0.0 + 0.0390431i},
-		FourierCoeff{-1, 0.0 + 0.9760778i},
-		FourierCoeff{2, 0.0 - 0.1952156i},
-		FourierCoeff{-2, 0.0 - 0.1952156i},
-		FourierCoeff{3, 0.0 + 0.0780862i},
-		FourierCoeff{-3, 0.0 - 0.2342587i},
-		FourierCoeff{4, 0.0 - 0.0390431i},
-		FourierCoeff{-4, 0.0 - 0.0390431i},
-	}
-*/
-)
+func NewCoeffList(d []complex128) *CoeffList {
+    c := &CoeffList{}
+    c.data = make([]complex128, len(d))
+    copy(c.data, d)
+    c.maxFreq = (len(d)-1)/2
+    return c
+}
+
+func (c *CoeffList) Get(f int) FourierCoeff {
+    if f > c.maxFreq || f < -c.maxFreq {
+        log.Fatalf("frequency %d is out of bound", f)
+    }
+    if f >= 0 {
+        return FourierCoeff{f, c.data[f]}
+    } else {
+        return FourierCoeff{f, c.data[len(c.data)+f]}
+    }
+}
 
 //-----------------------------------------------------------------------------
 
@@ -339,13 +281,20 @@ func main() {
 	flag.Parse()
 
     in := make([]Complex, 0)
-    fh, err := os.Open(coeffFile)
+    b, err := os.ReadFile(coeffFile)
     if err != nil {
         log.Fatal(err)
     }
-    err = json.Unmarshal(fh, &in)
+    err = json.Unmarshal(b, &in)
     if err != nil {
         log.Fatal(err)
+    }
+    CoeffList = make([]FourierCoeff, 2*maxFreq+1)
+    CoeffList[0] = FourierCoeff{0, in[0].AsComplex()}
+    for i := range maxFreq {
+        freq := float64(i+1)
+        CoeffList[2*i+1] = FourierCoeff{ freq, in[i+1].AsComplex()}
+        CoeffList[2*i+2] = FourierCoeff{-freq, in[len(in)-(i+1)].AsComplex()}
     }
 
 	disp = adatft.OpenDisplay(adatft.Rotate000)

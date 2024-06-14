@@ -30,6 +30,7 @@ var (
 func SignalHandler() {
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt)
+    <-sigChan
 	scr.Quit()
 }
 
@@ -909,6 +910,7 @@ func main() {
 	for _, panelInfo := range panelList {
 		tabMenu.AddTab(panelInfo.name, panelInfo.panel)
 	}
+    tabMenu.SetTab(0)
 	win.SetRoot(tabPanel)
 	scr.SetWindow(win)
 	scr.Run()

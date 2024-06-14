@@ -46,7 +46,7 @@ var (
 )
 
 //-----------------------------------------------------------------------------
-//
+
 type Complex struct {
     Re, Im float64
 }
@@ -59,6 +59,8 @@ func (c *Complex) AsComplex() complex128 {
     return complex(c.Re, c.Im)
 }
 
+//-----------------------------------------------------------------------------
+
 // Erstellt ein neues Panel der angegebenen Groesse und legt alle wichtigen
 // Handler fuer das Touch-Event fest.
 func NewPanel(w, h float64) *adagui.Panel {
@@ -67,6 +69,7 @@ func NewPanel(w, h float64) *adagui.Panel {
 	var elli *adagui.Ellipse
 
 	p := adagui.NewPanel(w, h)
+    p.SetColor(colornames.DarkSlateGrey)
 //    fh, _ := os.Open("taube.png")
 //    p.Image, _ = png.Decode(fh)
 
@@ -351,14 +354,8 @@ func main() {
         }
         fftPlan.Execute()
         n := complex(float64(len(data)), 0.0)
-        idx := 0
-        for i, dat := range data[:len(data)/2] {
-            out[idx] = NewComplex(dat / n)
-            idx++
-            if i > 0 {
-                out[idx] = NewComplex(data[len(data)-i]/n)
-                idx++
-            }
+        for i, dat := range data {
+            out[i] = NewComplex(dat / n)
         }
 
         fh, err := os.Create(outFile)

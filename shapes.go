@@ -146,8 +146,7 @@ func NewPolygon(p0 geom.Point) (*Polygon) {
     p.Shape.Init()
     p.PropertyEmbed.InitByName("Polygon")
     p.SetPos(p0)
-    p.pts = make([]geom.Point, 1)
-    p.pts[0] = geom.Point{}
+    p.pts = make([]geom.Point, 0)
     p.Closed = false
     return p
 }
@@ -201,7 +200,6 @@ func (p *Polygon) Points() []geom.Point {
     pts := make([]geom.Point, len(p.pts))
     for i, pt := range p.pts {
         pts[i] = pt
-        //pts[i] = pt.Add(p.Pos())
     }
     return pts
 }

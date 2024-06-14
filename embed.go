@@ -21,6 +21,7 @@ type Embed struct {
     transl, rotate, scale, transf *geom.Matrix
     Marks Marks
     visible bool
+    enabled bool
     selectable bool
     props.PropertyEmbed
 }
@@ -31,6 +32,7 @@ func (m *Embed) Init() {
     m.scale   = geom.Identity()
     m.transf  = geom.Identity()
     m.visible = true
+    m.enabled = true
     m.selectable = true
 }
 
@@ -145,6 +147,13 @@ func (m *Embed) Visible() (bool) {
 }
 func (m *Embed) SetVisible(v bool) {
     m.visible = v
+}
+
+func (m *Embed) Enabled() (bool) {
+    return m.enabled
+}
+func (m *Embed) SetEnabled(e bool) {
+    m.enabled = e
 }
 
 func (m *Embed) Mark(marks Marks) {

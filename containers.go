@@ -197,21 +197,21 @@ func NewPanel(w, h float64) *Panel {
 
 func (p *Panel) Paint(gc *gg.Context) {
 	Debugf(Painting, "[%T], LocalBounds: %v", p.Wrapper, p.LocalBounds())
+
 	gc.DrawRectangle(p.LocalBounds().AsCoord())
+	gc.SetFillColor(p.Color())
+	gc.SetStrokeColor(p.BorderColor())
+	gc.SetStrokeWidth(p.BorderWidth())
+	gc.FillStroke()
+
 	if p.Image != nil {
 		dst := gc.Image().(*image.RGBA)
 		draw.NearestNeighbor.Transform(dst, p.Matrix().AsAff3(),
-			p.Image, p.LocalBounds().Int(), draw.Src, nil)
-		//draw.Draw(dst, p.LocalBounds().Int(), p.Image,
-		//        image.Point{0, 0}, draw.Src)
-	} else {
-		gc.SetFillColor(p.Color())
-		gc.FillPreserve()
+			p.Image, p.LocalBounds().Int(), draw.Over, nil)
 	}
-	gc.ClipPreserve()
-	gc.SetStrokeColor(p.BorderColor())
-	gc.SetStrokeWidth(p.BorderWidth())
-	gc.Stroke()
+
+	gc.DrawRectangle(p.LocalBounds().AsCoord())
+	gc.Clip()
 	p.ContainerEmbed.Paint(gc)
 	gc.ResetClip()
 }

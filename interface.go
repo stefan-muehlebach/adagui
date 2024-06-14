@@ -48,6 +48,10 @@ type Node interface {
     Visible() (bool)
     SetVisible(v bool)
 
+    // Ist dieser node aktiv, resp. deaktiviert?
+    Enabled() (bool)
+    SetEnabled(e bool)
+
     // Zeichnet das Widget im Graphik-Kontext von gc. Dabei muss sich das
     // Widget nicht um irgendwelche Koordinaten kuemmern, sondern kann davon
     // ausgehen, dass die notwendigen Transformationen durch das

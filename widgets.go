@@ -189,14 +189,14 @@ func (l *Label) updateRefPoint() {
 
 func (l *Label) Paint(gc *gg.Context) {
     Debugf(Painting, "type %T", l.Wrapper)
-    gc.SetFontFace(l.fontFace)
-    gc.SetStrokeColor(l.TextColor())
-    gc.DrawString(l.text.Get(), l.rPt.X, l.rPt.Y)
-    // Groesse des Labels als Rechteck
     gc.DrawRectangle(l.Bounds().AsCoord())
     gc.SetStrokeColor(l.BorderColor())
     gc.SetStrokeWidth(l.BorderWidth())
-    gc.Stroke()
+    gc.SetFillColor(l.Color())
+    gc.FillStroke()
+    gc.SetFontFace(l.fontFace)
+    gc.SetStrokeColor(l.TextColor())
+    gc.DrawString(l.text.Get(), l.rPt.X, l.rPt.Y)
     // Markierungen um den Bereich fuer den Text
 //    gc.SetStrokeColor(colornames.Crimson)
 //    gc.SetStrokeWidth(2.0)

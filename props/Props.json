@@ -32,13 +32,13 @@
     			"R": 0.961, "G": 0.961, "B": 0.961, "A": 1.000
     		},
     		"TextColor": {
-    			"R": 0.980, "G": 0.941, "B": 0.902, "A": 1.000
+    			"R": 0.980, "G": 0.922, "B": 0.843, "A": 1.000
     		},
     		"PushedTextColor": {
-    			"R": 0.000, "G": 0.000, "B": 0.000, "A": 1.000
+    			"R": 0.980, "G": 0.922, "B": 0.843, "A": 1.000
     		},
     		"SelectedTextColor": {
-    			"R": 1.000, "G": 1.000, "B": 1.000, "A": 1.000
+    			"R": 0.980, "G": 0.922, "B": 0.843, "A": 1.000
     		},
     		"BackgroundColor": {
     			"R": 0.000, "G": 0.000, "B": 0.100, "A": 1.000
@@ -118,7 +118,10 @@
 
 	{
 		"Name": "Label",
-		"ParentName": "Default"
+		"ParentName": "Default",
+	    "Colors": {
+		    "Color": { "R": 0, "G": 0, "B": 0, "A": 0 }
+        }
     },
 
 	{
@@ -139,10 +142,10 @@
 		"ParentName": "Button",
     	"Sizes": {
     		"Width":        30,
-    		"Height":       20,
+    		"Height":       22,
     		"BorderWidth":   0,
-    		"CornerRadius": 10,
-    		"FontSize":     12,
+    		"CornerRadius": 12,
+    		"FontSize":     13,
     		"InnerPadding": 15
     	}
     },
@@ -241,10 +244,10 @@
 		"Name": "Polygon",
 		"ParentName": "Shape",
 		"Colors": {
-        	"BorderColor"        : {"R": 1, "G": 1, "B": 1, "A": 1.0}
+        	"BorderColor" : {"R": 0.980, "G": 0.922, "B": 0.843, "A": 1}
     	},
     	"Sizes": {
-        	"BorderWidth":          4.0
+        	"BorderWidth":          3.5
     	}
 	}
 ]
