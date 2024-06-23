@@ -1,0 +1,246 @@
+[
+	{
+    	"Name": "Default",
+		"ParentName": null,
+
+    	"Colors": {
+    		"Color": {
+			"R": 0.004, "G": 0.678, "B": 0.847, "A": 1.0
+    		},
+    		"PushedColor": {
+    			"R": 0.369, "G": 0.788, "B": 0.890, "A": 1.0
+    		},
+    		"SelectedColor": {
+             "R": 0.200, "G": 0.636, "B": 0.636, "A": 1.0
+    		},
+    		"BorderColor": {
+    			"R": 0.980, "G": 0.922, "B": 0.843, "A": 0.5
+    		},
+    		"PushedBorderColor": {
+    			"R": 0.980, "G": 0.922, "B": 0.843, "A": 0.5
+    		},
+    		"SelectedBorderColor": {
+    			"R": 0.980, "G": 0.922, "B": 0.843, "A": 1.0
+    		},
+    		"LineColor": {
+    			"R": 0.961, "G": 0.961, "B": 0.961, "A": 1.0
+    		},
+    		"PushedLineColor": {
+    			"R": 0.000, "G": 0.000, "B": 0.000, "A": 1.0
+    		},
+    		"SelectedLineColor": {
+    			"R": 0.961, "G": 0.961, "B": 0.961, "A": 1.0
+    		},
+    		"TextColor": {
+    			"R": 0.859, "G": 0.851, "B": 0.839, "A": 1.0
+    		},
+    		"PushedTextColor": {
+    			"R": 0.859, "G": 0.851, "B": 0.839, "A": 1.0
+    		},
+    		"SelectedTextColor": {
+    			"R": 0.859, "G": 0.851, "B": 0.839, "A": 1.0
+    		},
+    		"BackgroundColor": {
+    			"R": 0.000, "G": 0.000, "B": 0.100, "A": 1.0
+    		},
+    		"BarColor": {
+    			"R": 0.333, "G": 0.341, "B": 0.349, "A": 1.0
+    		},
+    		"PushedBarColor": {
+    			"R": 0.333, "G": 0.341, "B": 0.349, "A": 1.0
+    		},
+    		"MenuBackgroundColor": {
+    			"R": 0.000, "G": 0.078, "B": 0.000, "A": 1.0
+    		}
+    	},
+
+    	"Fonts": {
+    		"Font":           "GoRegular",
+    		"RegularFont":    "GoRegular",
+    		"BoldFont":       "GoBold",
+    		"ItalicFont":     "GoItalic",
+    		"BoldItalicFont": "GoBoldItalic",
+    		"MonoFont":       "GoMono",
+    		"MonoBoldFont":   "GoMonoBold"
+    	},
+
+    	"Sizes": {
+    		"Width":                0,
+    		"Height":               0,
+    		"BorderWidth":          0,
+    		"PushedBorderWidth":    0,
+    		"SelectedBorderWidth":  0,
+    		"CornerRadius":         6,
+    		"BarSize":              3,
+    		"CtrlSize":            20,
+    		"FieldSize":            0.0,
+    		"LineWidth":            2.5,
+    		"FontSize":            16,
+    		"Padding":             15,
+    		"InnerPadding":         5
+    	}
+    },
+
+	{
+		"Name": "Panel",
+		"ParentName": "Default",
+		"Colors": {
+		    "Color": { "R": 0, "G": 0, "B": 0, "A": 1 },
+		    "BorderColor": { "R": 0, "G": 0, "B": 0, "A": 1 }
+		},
+		"Sizes": {
+			"BorderWidth":         0,
+    		"PushedBorderWidth":   0,
+    		"SelectedBorderWidth": 0
+        }
+	},
+
+	{
+		"Name": "TabPanel",
+		"ParentName": "Default",
+	    "Colors": {
+		    "Color": { "R": 0, "G": 0, "B": 0, "A": 1 },
+		    "BorderColor": { "R": 0, "G": 0, "B": 0, "A": 1 }
+		},
+		"Sizes": {
+			"BorderWidth":         0,
+    		"PushedBorderWidth":   0,
+    		"SelectedBorderWidth": 0
+		}
+	},
+
+	{
+		"Name": "Layout",
+		"ParentName": "Default",
+		"Sizes": {
+			"Padding": 5
+		}
+	},
+
+	{
+		"Name": "Label",
+		"ParentName": "Default",
+	    "Colors": {
+		    "Color": { "R": 0, "G": 0, "B": 0, "A": 0 }
+        }
+    },
+
+	{
+		"Name": "Button",
+        "ParentName": "Default",
+		"Fonts": {
+			"Font": "GoBold"
+		},
+		"Sizes": {
+			"Width":        36,
+			"Height":       36,
+       	 	"InnerPadding": 15
+		}
+	},
+
+	{
+		"Name": "TabButton",
+		"ParentName": "Button",
+    	"Sizes": {
+    		"Width":        30,
+    		"Height":       22,
+    		"BorderWidth":   0,
+    		"CornerRadius": 12,
+    		"FontSize":     13,
+    		"InnerPadding": 15
+    	}
+    },
+
+	{
+		"Name": "IconButton",
+		"ParentName": "Button",
+		"Sizes": {
+			"InnerPadding": 3
+		}
+	},
+
+	{
+		"Name": "Checkbox",
+		"ParentName": "Button",
+		"Fonts": {
+			"Font": "GoRegular"
+		},
+		"Sizes": {
+			"Width":        20,
+			"Height":       20,
+			"LineWidth":     4,
+			"InnerPadding":  5,
+			"CornerRadius":  5
+		}
+	},
+
+	{
+		"Name": "RadioButton",
+		"ParentName": "Button",
+		"Fonts": {
+			"Font": "GoRegular"
+		},
+		"Sizes": {
+			"Width":        20,
+			"Height":       20,
+			"LineWidth":     8,
+			"InnerPadding":  5
+		}
+	},
+
+	{
+		"Name": "Slider",
+		"ParentName": "Default",
+		"Sizes": {
+			"Width":    20,
+			"Height":   20
+		}
+	},
+
+	{
+		"Name": "Scrollbar",
+		"ParentName": "Default",
+		"Sizes": {
+			"Width":    20,
+			"Height":   20
+		}
+	},
+
+	{
+		"Name": "Shape",
+		"ParentName": "Default",
+		"Colors": {
+        	"Color"              : {"R": 0, "G": 0, "B": 0, "A": 0},
+        	"PushedColor"        : {"R": 0, "G": 0, "B": 0, "A": 0},
+        	"SelectedColor"      : {"R": 0, "G": 0, "B": 0, "A": 0},
+        	"BorderColor"        : {"R": 0.4, "G": 0.4, "B": 0.4, "A": 1.0},
+        	"PushedBorderColor"  : {"R": 0.0, "G": 0.0, "B": 0.0, "A": 0.1},
+        	"SelectedBorderColor": {"R": 0.0, "G": 0.0, "B": 0.0, "A": 0.1}
+    	},
+    	"Sizes": {
+        	"BorderWidth":          2.0,
+        	"PushedBorderWidth":   12.0,
+        	"SelectedBorderWidth": 12.0
+    	}
+	},
+
+	{
+		"Name": "Point",
+		"ParentName": "Shape",
+    	"Sizes": {
+        	"Width":  8.0,
+        	"Height": 8.0
+    	}
+	},
+
+	{
+		"Name": "Polygon",
+		"ParentName": "Shape",
+		"Colors": {
+        	"BorderColor" : {"R": 0.980, "G": 0.922, "B": 0.843, "A": 1}
+    	},
+    	"Sizes": {
+        	"BorderWidth":          3.5
+    	}
+	}
+]
