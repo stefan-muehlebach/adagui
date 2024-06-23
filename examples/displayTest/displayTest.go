@@ -3,13 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/stefan-muehlebach/adatft"
-	"github.com/stefan-muehlebach/gg"
-	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
-	"github.com/stefan-muehlebach/gg/fonts"
-	"golang.org/x/image/font"
-	//"golang.org/x/image/font/opentype"
 	"image"
 	"log"
 	"math"
@@ -22,6 +15,11 @@ import (
 	"runtime/trace"
 	"strings"
 	"time"
+	"github.com/stefan-muehlebach/adatft"
+	"github.com/stefan-muehlebach/gg"
+	"github.com/stefan-muehlebach/gg/color"
+	"github.com/stefan-muehlebach/gg/fonts"
+	"golang.org/x/image/font"
 )
 
 // PolygonAnimation --
@@ -40,7 +38,7 @@ func PolygonAnimation() {
 	gc.SetStrokeWidth(3)
 	gc.SetLineCapRound()
 	gc.SetLineJoinRound()
-	gc.SetFillColor(colornames.Black)
+	gc.SetFillColor(color.Black)
 	gc.Clear()
 
 	ticker := time.NewTicker(30 * time.Millisecond)
@@ -78,8 +76,8 @@ func NewPolygon(dispWidth, dispHeight, edges int) *Polygon {
 		pt.dy = rand.Float64()*5.0 - 2.0
 		p.p[i] = pt
 	}
-	p.strokeColor = colornames.White
-	p.fillColor = colornames.RandColor().Alpha(0.5)
+	p.strokeColor = color.White
+	p.fillColor = color.RandColor().Alpha(0.5)
 	return p
 }
 
@@ -152,7 +150,7 @@ func Cube3DAnimation() {
 		}
 		adatft.PaintWatch.Start()
 
-		gc.SetFillColor(colornames.Black)
+		gc.SetFillColor(color.Black)
 		gc.Clear()
 
 		m = mBase.Multiply(RotateX(alpha)).Multiply(RotateY(beta))
@@ -168,15 +166,15 @@ func Cube3DAnimation() {
 		zAxisT = m.Transform(zAxis)
 
 		gc.SetStrokeWidth(4.0)
-		gc.SetStrokeColor(colornames.DarkRed)
+		gc.SetStrokeColor(color.DarkRed)
 		gc.DrawLine(zeroT.X, zeroT.Y, xAxisT.X, xAxisT.Y)
 		gc.Stroke()
 
-		gc.SetStrokeColor(colornames.DarkGreen)
+		gc.SetStrokeColor(color.DarkGreen)
 		gc.DrawLine(zeroT.X, zeroT.Y, yAxisT.X, yAxisT.Y)
 		gc.Stroke()
 
-		gc.SetStrokeColor(colornames.DarkBlue)
+		gc.SetStrokeColor(color.DarkBlue)
 		gc.DrawLine(zeroT.X, zeroT.Y, zAxisT.X, zAxisT.Y)
 		gc.Stroke()
 
@@ -196,7 +194,7 @@ type Cube struct {
 }
 
 func NewCube(s float64) *Cube {
-	c := &Cube{LineWidth: 3.0, StrokeColor: colornames.Silver}
+	c := &Cube{LineWidth: 3.0, StrokeColor: color.Silver}
 	c.Pts = []Vector{
 		NewVector(-s, -s, -s),
 		NewVector(-s, s, -s),
@@ -254,7 +252,7 @@ func NewCloud(x, y, z, w float64, numObjs int, size float64) *Cloud {
 		pz := rand.NormFloat64()*w + z
 		c.Pts[i] = NewVector(px, py, pz)
 	}
-	c.Color = colornames.YellowGreen
+	c.Color = color.YellowGreen
 	c.Size = size
 	return c
 }
@@ -500,7 +498,7 @@ func TextAnimation() {
 			break
 		}
 		adatft.PaintWatch.Start()
-		gc.SetFillColor(colornames.Black)
+		gc.SetFillColor(color.Black)
 		gc.Clear()
 
 		for _, txtObj := range textList {
@@ -535,7 +533,7 @@ func NewTextObject(txt string, fnt *fonts.Font, size float64) *TextObject {
 	o := &TextObject{}
 	o.txt = txt
 	o.face = fonts.NewFace(fnt, size)
-	o.Color = colornames.RandColor()
+	o.Color = color.RandColor()
 	o.width = float64(font.MeasureString(o.face, o.txt)) / 64.0
 	o.height = float64(o.face.Metrics().Ascent) / 64.0
 	return o
@@ -681,11 +679,11 @@ func PlasmaAnimation() {
 	}
 
 	pal = NewPalette("Simpel",
-		colornames.RandColor(),
-		colornames.RandColor(),
-		colornames.RandColor(),
-		colornames.RandColor(),
-		colornames.RandColor(),
+		color.RandColor(),
+		color.RandColor(),
+		color.RandColor(),
+		color.RandColor(),
+		color.RandColor(),
 	)
 
 	img := gc.Image().(*image.RGBA)
@@ -817,7 +815,7 @@ var (
 	}
 )
 
-func AnimatedText() {
+func ScrollingText() {
 	var face font.Face
 
 	for _, font := range fontList {
@@ -855,9 +853,9 @@ func ScrollText(txt string, face font.Face, x, y, lineSpacing float64,
 		if !runFlag {
 			break
 		}
-		gc.SetFillColor(colornames.Black)
+		gc.SetFillColor(color.Black)
 		gc.Clear()
-		gc.SetStrokeColor(colornames.White)
+		gc.SetStrokeColor(color.White)
 		if scrollUp {
 			y = h - h2
 		} else {
@@ -890,7 +888,7 @@ var (
 
 func NewCircle(w, h int) *Circle {
 	c := &Circle{}
-	c.strokeColor = colornames.RandGroupColor(colornames.Blues)
+	c.strokeColor = color.RandGroupColor(color.Blues)
 	c.borderWidth = 3.0
 	c.Init()
 	return c
@@ -960,7 +958,7 @@ func CircleAnimation() {
 			break
 		}
 		adatft.PaintWatch.Start()
-		gc.SetFillColor(colornames.Black)
+		gc.SetFillColor(color.Black)
 		gc.Clear()
 
 		for i, c := range circleList {
@@ -1027,8 +1025,8 @@ func (c *Curve) Move(xmin, xmax, ymin, ymax float64) {
 }
 
 func (c *Curve) Draw(gc *gg.Context) {
-	gc.SetStrokeColor(colornames.Black)
-	gc.SetFillColor(colornames.Black.Alpha(0.5))
+	gc.SetStrokeColor(color.Black)
+	gc.SetFillColor(color.Black.Alpha(0.5))
 	gc.MoveTo(c.p1.x, c.p1.y)
 	gc.CubicTo(c.c1.x, c.c1.y, c.c2.x, c.c2.y, c.p2.x, c.p2.y)
 	gc.SetStrokeWidth(3)
@@ -1039,7 +1037,7 @@ func (c *Curve) Draw(gc *gg.Context) {
 	gc.LineTo(c.c2.x, c.c2.y)
 	gc.LineTo(c.p2.x, c.p2.y)
 
-	gc.SetStrokeColor(colornames.Red.Alpha(0.5))
+	gc.SetStrokeColor(color.Red.Alpha(0.5))
 	gc.SetStrokeWidth(2)
 	gc.Stroke()
 }
@@ -1063,7 +1061,7 @@ func BezierAnimation() {
 			break
 		}
 		adatft.PaintWatch.Start()
-		gc.SetFillColor(colornames.White)
+		gc.SetFillColor(color.White)
 		gc.Clear()
 		for j := 0; j < H; j++ {
 			for i := 0; i < W; i++ {
@@ -1337,7 +1335,7 @@ func SBBAnimation() {
 	xm = float64(adatft.Width) / 2.0
 	ym = float64(adatft.Height) / 2.0
 
-	gc.SetFillColor(colornames.DeepSkyBlue)
+	gc.SetFillColor(color.DeepSkyBlue)
 	gc.Clear()
 	disp.Draw(gc.Image())
 
@@ -1357,7 +1355,7 @@ func SBBAnimation() {
 		rotationList[2] = c3 * minutes
 		rotationList[3] = c3 * seconds
 
-		gc.SetFillColor(colornames.DeepSkyBlue)
+		gc.SetFillColor(color.DeepSkyBlue)
 		gc.Clear()
 		for i, r := range rotationList {
 			gc.Push()
@@ -1470,13 +1468,13 @@ var (
 		{"Dancing Polygons", PolygonAnimation},
 		{"Rotating Cube (3D)", Cube3DAnimation},
 		{"Text on the run", TextAnimation},
-		{"Beziers wherever you look", BezierAnimation},
-		{"Let's fade the colors", FadingColors},
+		// {"Beziers wherever you look", BezierAnimation},
+		// {"Let's fade the colors", FadingColors},
 		{"Plasma (dont burn yourself!)", PlasmaAnimation},
 		{"Fading Circles", CircleAnimation},
 		{"SBB (are you Swiss?)", SBBAnimation},
-		{"Scrolling Text", AnimatedText},
-		//		{"Matrix Tests", MatrixTest},
+		{"Scrolling Text", ScrollingText},
+		// {"Matrix Tests", MatrixTest},
 	}
 )
 

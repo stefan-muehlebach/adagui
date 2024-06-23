@@ -23,6 +23,7 @@ import (
     "github.com/stefan-muehlebach/adagui/binding"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg"
+    // "github.com/stefan-muehlebach/gg/color"
     "github.com/stefan-muehlebach/gg/fonts"
     "github.com/stefan-muehlebach/gg/geom"
     "golang.org/x/image/font"
@@ -65,6 +66,8 @@ const (
     AlignTop
     AlignMiddle
     AlignBottom
+    horizontalAlignMask = (AlignLeft | AlignCenter | AlignRight)
+    verticalAlignMask   = (AlignTop | AlignMiddle | AlignBottom )
 )
 
 // Fuer die visuelle Abgrenzung in Box-Layouts.
@@ -98,7 +101,8 @@ type Label struct {
     text binding.String
     fontFace font.Face
     align AlignType
-    rPt geom.Point
+    basePt geom.Point
+    ax, ay float64
     desc float64
 }
 
@@ -107,7 +111,8 @@ func newLabel() (*Label) {
     l.Wrapper = l
     l.Init()
     l.PropertyEmbed.InitByName("Label")
-    l.align = AlignLeft | AlignBottom
+    l.align = AlignLeft | AlignTop
+    l.ax, l.ay = 0.0, 1.0
     return l
 }
 
@@ -126,9 +131,17 @@ func NewLabelWithData(data binding.String) (*Label) {
     return l
 }
 
+func (l *Label) Pos() geom.Point {
+    return l.LeafEmbed.Pos().Add(l.basePt)
+}
+
+func (l *Label) SetPos(p geom.Point) {
+    l.LeafEmbed.SetPos(p.Sub(l.basePt))
+}
+
 func (l *Label) SetSize(size geom.Point) {
     l.LeafEmbed.SetSize(size)
-    l.updateRefPoint()
+    l.updateBasePt()
 }
 
 func (l *Label) Align() (AlignType) {
@@ -136,7 +149,23 @@ func (l *Label) Align() (AlignType) {
 }
 func (l *Label) SetAlign(a AlignType) {
     l.align = a
-    l.updateRefPoint()
+    switch l.align & horizontalAlignMask {
+    case AlignLeft:
+        l.ax = 0.0
+    case AlignCenter:
+        l.ax = 0.5
+    case AlignRight:
+        l.ax = 1.0
+    }
+    switch l.align & verticalAlignMask {
+    case AlignBottom:
+        l.ay = 0.0
+    case AlignMiddle:
+        l.ay = 0.5
+    case AlignTop:
+        l.ay = 1.0
+    }
+    l.updateBasePt()
 }
 
 func (l *Label) Text() (string) {
@@ -161,30 +190,16 @@ func (l *Label) SetFontSize(fontSize float64) {
 func (l *Label) updateSize() {
     l.fontFace = fonts.NewFace(l.Font(), l.FontSize())
     w := float64(font.MeasureString(l.fontFace, l.Text())) / 64.0
-    h := float64(l.fontFace.Metrics().Ascent +
-            l.fontFace.Metrics().Descent) / 64.0
+    h := l.FontSize()
+    //h := float64(l.fontFace.Metrics().Ascent +
+    //        l.fontFace.Metrics().Descent) / 64.0
     l.desc = float64(l.fontFace.Metrics().Descent) / 64.0
     l.SetMinSize(geom.Point{w, h})
-    l.updateRefPoint()
+    l.updateBasePt()
 }
 
-func (l *Label) updateRefPoint() {
-    switch {
-    case l.align & AlignLeft != 0:
-        l.rPt.X = 0.0
-    case l.align & AlignCenter != 0:
-        l.rPt.X = 0.5*(l.Size().X - l.MinSize().X)
-    case l.align & AlignRight != 0:
-        l.rPt.X = l.Size().X - l.MinSize().X
-    }
-    switch {
-    case l.align & AlignTop != 0:
-        l.rPt.Y = l.MinSize().Y - l.desc
-    case l.align & AlignMiddle != 0:
-        l.rPt.Y = 0.5*l.MinSize().Y + 0.5*l.Size().Y - l.desc
-    case l.align & AlignBottom != 0:
-        l.rPt.Y = l.Size().Y - l.desc
-    }
+func (l *Label) updateBasePt() {
+    l.basePt = geom.Point{l.ax*l.Size().X, (1-l.ay)*l.Size().Y}
 }
 
 func (l *Label) Paint(gc *gg.Context) {
@@ -196,33 +211,37 @@ func (l *Label) Paint(gc *gg.Context) {
     gc.FillStroke()
     gc.SetFontFace(l.fontFace)
     gc.SetStrokeColor(l.TextColor())
-    gc.DrawString(l.text.Get(), l.rPt.X, l.rPt.Y)
+    gc.DrawStringAnchored(l.text.Get(), l.basePt.X, l.basePt.Y, l.ax, l.ay)
+
+/*
+    // Only for debugging!
     // Markierungen um den Bereich fuer den Text
-//    gc.SetStrokeColor(colornames.Crimson)
-//    gc.SetStrokeWidth(2.0)
-//    pt0 := l.Bounds().Min
-//    pt1 := l.Bounds().Max
+    gc.SetStrokeColor(color.Crimson)
+    gc.SetStrokeWidth(2.0)
+    pt0 := l.Bounds().Min
+    pt1 := l.Bounds().Max
     // Links oben
-//    gc.MoveTo(pt0.X, pt0.Y+10.0)
-//    gc.LineTo(pt0.X, pt0.Y)
-//    gc.LineTo(pt0.X+10.0, pt0.Y)
+    gc.MoveTo(pt0.X, pt0.Y+10.0)
+    gc.LineTo(pt0.X, pt0.Y)
+    gc.LineTo(pt0.X+10.0, pt0.Y)
     // Links unten
-//    gc.MoveTo(pt0.X, pt1.Y-10.0)
-//    gc.LineTo(pt0.X, pt1.Y)
-//    gc.LineTo(pt0.X+10.0, pt1.Y)
+    gc.MoveTo(pt0.X, pt1.Y-10.0)
+    gc.LineTo(pt0.X, pt1.Y)
+    gc.LineTo(pt0.X+10.0, pt1.Y)
     // Rechts oben
-//    gc.MoveTo(pt1.X-10.0, pt0.Y)
-//    gc.LineTo(pt1.X, pt0.Y)
-//    gc.LineTo(pt1.X, pt0.Y+10.0)
+    gc.MoveTo(pt1.X-10.0, pt0.Y)
+    gc.LineTo(pt1.X, pt0.Y)
+    gc.LineTo(pt1.X, pt0.Y+10.0)
     // Rechts unten
-//    gc.MoveTo(pt1.X, pt1.Y-10.0)
-//    gc.LineTo(pt1.X, pt1.Y)
-//    gc.LineTo(pt1.X-10.0, pt1.Y)
-//    gc.Stroke()
+    gc.MoveTo(pt1.X, pt1.Y-10.0)
+    gc.LineTo(pt1.X, pt1.Y)
+    gc.LineTo(pt1.X-10.0, pt1.Y)
+    gc.Stroke()
     // Referenzpunkt fuer den Text
-//    gc.SetFillColor(colornames.Crimson)
-//    gc.DrawPoint(l.rPt.X, l.rPt.Y, 5.0)
-//    gc.Fill()
+    gc.SetFillColor(color.Crimson)
+    gc.DrawPoint(l.basePt.X, l.basePt.Y, 5.0)
+    gc.Fill()
+*/
 }
 
 // Buttons sind neutrale Knoepfe, ohne spezifischen Inhalt, d.h. ohne Text
@@ -593,6 +612,7 @@ func (b *IconButton) DataChanged(data binding.DataItem) {
     }
 }
 
+// Dieser Button-Typ wird beim Tabbed-Panel verwendet.
 type TabButton struct {
     Button
     label string
@@ -627,18 +647,20 @@ func NewTabButtonWithData(label string, idx int, data binding.Int) (*TabButton) 
 
 func (b *TabButton) Paint(gc *gg.Context) {
     gc.DrawRoundedRectangle(0.0, 0.0,
-            b.Size().X, b.Size().Y+b.CornerRadius(),
-            b.CornerRadius())
+            b.Size().X, b.Size().Y, b.CornerRadius())
     if b.Pushed() {
         gc.SetFillColor(b.PushedColor())
         gc.SetStrokeColor(b.PushedBorderColor())
+        gc.SetStrokeWidth(b.PushedBorderWidth())
     } else {
         if b.checked {
             gc.SetFillColor(b.SelectedColor())
             gc.SetStrokeColor(b.SelectedBorderColor())
+            gc.SetStrokeWidth(b.SelectedBorderWidth())
         } else {
             gc.SetFillColor(b.Color())
             gc.SetStrokeColor(b.BorderColor())
+            gc.SetStrokeWidth(b.BorderWidth())
         }
     }
     gc.FillStroke()

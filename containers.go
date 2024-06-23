@@ -254,6 +254,27 @@ func (p *ScrollPanel) LocalBounds() geom.Rectangle {
 	return geom.Rectangle{Min: p.refPt, Max: p.refPt.Add(p.Size())}
 }
 
+func (p *ScrollPanel) Size() (geom.Point) {
+    return p.size
+}
+
+func (p *ScrollPanel) SetSize(size geom.Point) {
+    Debugf(Layout, "[%T], %+v", p.Wrapper, size)
+	p.Embed.SetSize(size)
+	p.layout()
+}
+
+func (p *ScrollPanel) MinSize() geom.Point {
+	ms := geom.Point{}
+	if p.minSize.Eq(geom.Point{0, 0}) {
+		ms = p.Layout.MinSize(p.ChildList)
+	} else {
+		ms = p.Embed.MinSize()
+	}
+    Debugf(Layout, "[%T], %+v", p.Wrapper, ms)
+	return ms
+}
+
 func (p *ScrollPanel) VisibleRange() geom.Point {
 	if p.virtSize.X == 0.0 && p.virtSize.Y == 0.0 {
 		return geom.Point{1, 1}
@@ -294,6 +315,7 @@ func (p *ScrollPanel) SetVirtualSize(sz geom.Point) {
 }
 
 // TabPanel und TabButton sind fuer Tabbed Windows gedacht.
+/*
 type TabPanel struct {
 	ContainerEmbed
 	menu    *TabMenu
@@ -313,22 +335,25 @@ func NewTabPanel(w, h float64, menu *TabMenu, content *Panel) *TabPanel {
 	p.Add(p.menu, p.content)
 	return p
 }
+*/
 
 type TabMenu struct {
 	ContainerEmbed
-	panel       *TabPanel
+	content     Container
 	data        binding.Int
 	contentList []Node
 }
 
-func NewTabMenu() *TabMenu {
+func NewTabMenu(content Container) *TabMenu {
 	m := &TabMenu{}
 	m.Wrapper = m
 	m.Init()
-	m.PropertyEmbed.InitByName("TabPanel")
+	m.PropertyEmbed.InitByName("TabMenu")
+    m.SetMinSize(geom.Point{m.Width(), m.Height()})
 	m.Layout = NewHBoxLayout(0)
 	m.data = binding.NewInt()
 	m.data.Set(-1)
+    m.content = content
 	m.contentList = make([]Node, 0)
 	m.data.AddCallback(func(d binding.DataItem) {
 		idx := d.(binding.Int).Get()
@@ -336,9 +361,9 @@ func NewTabMenu() *TabMenu {
 			(m.contentList[idx] == nil) {
 			return
 		}
-		m.panel.content.DelAll()
-		m.panel.content.Add(m.contentList[idx])
-		m.panel.content.layout()
+		m.content.DelAll()
+		m.content.Add(m.contentList[idx])
+		m.content.layout()
 	})
 	return m
 }
@@ -360,9 +385,10 @@ func (m *TabMenu) Paint(gc *gg.Context) {
 	Debugf(Painting, "[%T], LocalBounds: %v", m.Wrapper, m.LocalBounds())
 	gc.DrawRectangle(m.LocalBounds().AsCoord())
 	gc.SetFillColor(m.Color())
-	gc.FillPreserve()
-	gc.Clip()
+    gc.Fill()
+//	gc.FillPreserve()
+//	gc.Clip()
 	m.ContainerEmbed.Paint(gc)
-	gc.ResetClip()
+//	gc.ResetClip()
 }
 

@@ -17,7 +17,6 @@ import (
 	"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
 	"github.com/stefan-muehlebach/gg/fonts"
 	"github.com/stefan-muehlebach/gg/geom"
 )
@@ -48,8 +47,9 @@ var (
 		{"Fonts", ScrolledFontPanel, nil},
 		{"Colors", ScrolledColorPanel, nil},
 		{"Draw", NestedTransformations, nil},
-		{"Type", Keyboard, nil},
+//		{"Type", Keyboard, nil},
 		{"Sliders", SliderAndScrollbar, nil},
+        {"Text", TextAlignment, nil},
 		//{"7", BorderLayout, nil},
 		//{"8", EmptyScrollPanel, nil},
 	}
@@ -57,13 +57,13 @@ var (
 
 // WidgetGallery zeigt die meisten der GUI-Elemente in Aktion.
 func WidgetGallery(size geom.Point) adagui.Node {
-	root := adagui.NewGroup()
-	root.Layout = adagui.NewPaddedLayout()
-	root.SetMinSize(size)
+//	root := adagui.NewGroup()
+//	root.Layout = adagui.NewPaddedLayout()
+//	root.SetMinSize(size)
 
 	grpMain := adagui.NewGroup()
 	grpMain.Layout = adagui.NewVBoxLayout()
-	root.Add(grpMain)
+//	root.Add(grpMain)
 
 	grpTop := adagui.NewGroup()
 	grpTop.Layout = adagui.NewHBoxLayout()
@@ -146,7 +146,7 @@ func WidgetGallery(size geom.Point) adagui.Node {
 	})
 	grpBtn.Add(btn1, btn2, adagui.NewSpacer(), btn3)
 
-	return root
+	return grpMain
 }
 
 // ScrolledFontPanel zeigt erstens die Moeglichkeiten, Text in ansprechenden
@@ -154,30 +154,22 @@ func WidgetGallery(size geom.Point) adagui.Node {
 func ScrolledFontPanel(size geom.Point) adagui.Node {
 	var i int
 	var fontName string
+    var scrHori, scrVert *adagui.Scrollbar
+
+    log.Printf("ScrolledFontPanel(size): %+v", size)
 
 	fontSize := 18.0
-	textColor := colornames.WhiteSmoke
+	textColor := color.WhiteSmoke
 	fontList := fonts.Names
 
 	virtualWidth := 2048.0
 	virtualHeight := 3000.0
 
-	root := adagui.NewPanel(size.X, size.Y)
-	root.SetColor(colornames.DarkSlateGray.Dark(0.5))
-	root.SetBorderColor(colornames.DarkSlateGray.Dark(0.5))
-	root.SetMinSize(size)
-
-	s := props.PropsMap["Scrollbar"].Size(props.Width)
-	w, h := size.X-s-2, size.Y-s-2
-
-	panel := adagui.NewScrollPanel(w, h)
+	panel := adagui.NewScrollPanel(0, 0)
 	panel.Layout = adagui.NewVBoxLayout(10)
 	panel.SetVirtualSize(geom.Point{virtualWidth, virtualHeight})
-	panel.SetColor(color.Transparent)
-	panel.SetBorderColor(color.Transparent)
-	root.Add(panel)
 
-	for i, fontName = range fontList {
+	for i, fontName = range fontList[:8] {
 		if fontName == "Elegante" {
 			fontList = fontList[i:]
 			break
@@ -188,6 +180,7 @@ func ScrolledFontPanel(size geom.Point) adagui.Node {
 		lbl.SetFontSize(fontSize)
 		panel.Add(lbl)
 	}
+/*
 	fontSize *= 2
 	for i, fontName = range fontList {
 		if fontName == "Elzevier" {
@@ -208,26 +201,30 @@ func ScrolledFontPanel(size geom.Point) adagui.Node {
 		lbl.SetFontSize(fontSize)
 		panel.Add(lbl)
 	}
+*/
 
-	scrV := adagui.NewScrollbarWithCallback(h, adagui.Vertical,
+	scrVert = adagui.NewScrollbarWithCallback(160, adagui.Vertical,
 		func(f float64) {
 			panel.SetYView(f)
 		})
-	scrV.SetPos(panel.Rect().NE().AddXY(1, 0))
 
-	scrH := adagui.NewScrollbarWithCallback(w, adagui.Horizontal,
+	scrHori = adagui.NewScrollbarWithCallback(240, adagui.Horizontal,
 		func(f float64) {
 			panel.SetXView(f)
 		})
-	scrH.SetPos(panel.Rect().SW().AddXY(0, 1))
 
 	visRange := panel.VisibleRange()
-	scrH.SetVisiRange(visRange.X)
-	scrV.SetVisiRange(visRange.Y)
+	scrHori.SetVisiRange(visRange.X)
+	scrVert.SetVisiRange(visRange.Y)
 
-	root.Add(scrV, scrH)
+    main := adagui.NewPanel(0, 0)
+    layout := adagui.NewBorderLayout(nil, scrHori, nil, scrVert)
+    //layout.(*adagui.BorderLayout).Padding = 5.0
+    main.Layout = layout
+    //main.SetColor(color.DarkRed.Alpha(0.5))
+    main.Add(scrHori, scrVert, panel)
 
-	return root
+	return main
 }
 
 // ScrolledColorPanel
@@ -260,9 +257,9 @@ func ScrolledColorPanel(size geom.Point) adagui.Node {
 	scrV.SetVisiRange(visRange.Y)
 
 	colorList := make([]ColorInfo, 0)
-	for _, nameList := range colornames.Groups {
+	for _, nameList := range color.Groups {
 		for _, name := range nameList {
-			colorList = append(colorList, ColorInfo{name, colornames.Map[name]})
+			colorList = append(colorList, ColorInfo{name, color.Map[name]})
 		}
 	}
 
@@ -307,19 +304,19 @@ func ScrolledColorPanel(size geom.Point) adagui.Node {
 // NestedTransformations
 //
 func NestedTransformations(size geom.Point) adagui.Node {
-	var root *adagui.Group
+//	var root *adagui.Group
 	var panel01, panel02, panel03 *adagui.Panel
 	var color02, color03 color.Color
 	var rotPt1, rotPt2 geom.Point
     var colorFactor float64 = 0.5
 
-	root = adagui.NewGroup()
-	root.Layout = adagui.NewPaddedLayout(0)
-	root.SetMinSize(size)
+//	root = adagui.NewGroup()
+//	root.Layout = adagui.NewPaddedLayout(0)
+//	root.SetMinSize(size)
 
 	panel01 = NewPanel(0, 0)
-	panel01.SetColor(colornames.RandColor().Dark(0.8))
-	root.Add(panel01)
+	panel01.SetColor(color.RandColor().Dark(0.8))
+//	root.Add(panel01)
 
 	grp0 := adagui.NewGroup()
 	grp1 := adagui.NewGroup()
@@ -364,7 +361,7 @@ func NestedTransformations(size geom.Point) adagui.Node {
 	w, h := panel01.Size().AsCoord()
 	w, h = w-2*hSpc, h-2*vSpc-scaleSld1.Size().Y
 
-	color02 = colornames.RandColor().Dark(colorFactor)
+	color02 = color.RandColor().Dark(colorFactor)
 	panel02 = NewPanel(w, h)
 	panel02.SetPos(geom.Point{hSpc, vSpc})
 	panel02.SetColor(color02)
@@ -437,7 +434,7 @@ func NestedTransformations(size geom.Point) adagui.Node {
 	w, h = panel02.Size().AsCoord()
 	w, h = w-hSpc-5, h-vSpc-25.0-5
 
-	color03 = colornames.RandColor().Dark(colorFactor)
+	color03 = color.RandColor().Dark(colorFactor)
 	panel03 = NewPanel(w, h)
 	panel03.SetPos(geom.Point{hSpc, vSpc})
 	panel03.SetColor(color03)
@@ -468,7 +465,7 @@ func NestedTransformations(size geom.Point) adagui.Node {
 	chk.SetPos(geom.Point{5, 5})
 	panel03.Add(chk)
 
-	return root
+	return panel01
 }
 
 func NewPanel(w, h float64) *adagui.Panel {
@@ -508,10 +505,11 @@ func NewCircle(r float64) *adagui.Circle {
 	var dp geom.Point
 
 	c := adagui.NewCircle(r)
-	col := colornames.RandColor()
+	col := color.RandColor()
 
 	c.SetColor(col)
 	c.SetPushedColor(col.Alpha(0.5))
+	c.SetSelectedColor(col.Alpha(0.5))
 
 	c.SetOnPress(func(evt touch.Event) {
 		dp = evt.Pos.Sub(c.Pos())
@@ -595,6 +593,53 @@ func SliderAndScrollbar(size geom.Point) adagui.Node {
 	return root
 }
 
+func TextAlignment(size geom.Point) adagui.Node {
+	root := adagui.NewGroup()
+	root.Layout = adagui.NewPaddedLayout()
+	root.SetMinSize(size)
+
+	panel := adagui.NewGroup()
+    root.Add(panel)
+
+    r := panel.Bounds()
+
+    lbl := adagui.NewLabel("AlignLeft | AlignTop")
+    lbl.SetAlign(adagui.AlignLeft | adagui.AlignTop)
+    lbl.SetFont(fonts.GoBold)
+    lbl.SetFontSize(18.0)
+    lbl.SetPos(r.NW())
+	panel.Add(lbl)
+
+    lbl = adagui.NewLabel("AlignRight | AlignTop")
+    lbl.SetAlign(adagui.AlignRight | adagui.AlignTop)
+    lbl.SetFont(fonts.GoBold)
+    lbl.SetFontSize(18.0)
+    lbl.SetPos(r.NE())
+	panel.Add(lbl)
+
+    lbl = adagui.NewLabel("AlignLeft  | AlignBottom")
+    lbl.SetAlign(adagui.AlignLeft | adagui.AlignBottom)
+    lbl.SetFont(fonts.GoBold)
+    lbl.SetFontSize(18.0)
+    lbl.SetPos(r.SW())
+	panel.Add(lbl)
+
+    lbl = adagui.NewLabel("AlignRight | AlignBottom")
+    lbl.SetAlign(adagui.AlignRight | adagui.AlignBottom)
+    lbl.SetFont(fonts.GoBold)
+    lbl.SetFontSize(18.0)
+    lbl.SetPos(r.SE())
+	panel.Add(lbl)
+
+    lbl = adagui.NewLabel("AlignCenter | AlignMiddle")
+    lbl.SetAlign(adagui.AlignCenter | adagui.AlignMiddle)
+    lbl.SetFont(fonts.GoBold)
+    lbl.SetFontSize(18.0)
+    lbl.SetPos(r.C())
+	panel.Add(lbl)
+
+	return root
+}
 // Keyboard als Miniatur-Tastatur
 var (
 	KeyboardProps              = props.NewProperties(props.PropsMap["Button"])
@@ -740,7 +785,7 @@ func Keyboard(size geom.Point) adagui.Node {
 	lbl := adagui.NewLabelWithData(text)
 	lbl.SetFontSize(24.0)
 	lbl.SetFont(fonts.GoRegular)
-	lbl.SetBorderColor(colornames.Silver)
+	lbl.SetBorderColor(color.Silver)
 	lbl.SetBorderWidth(1.0)
 
 	keyboard := NewKeyboard(text)
@@ -756,7 +801,7 @@ func BorderLayout(size geom.Point) adagui.Node {
 	topWidget.Layout = adagui.NewHBoxLayout()
 
 	lbl := adagui.NewLabel("Euclid on a RaspberryPi")
-	lbl.SetTextColor(colornames.WhiteSmoke)
+	lbl.SetTextColor(color.WhiteSmoke)
 	lbl.SetFont(fonts.LucidaBrightDemibold)
 	lbl.SetFontSize(18.0)
 	topWidget.Add(lbl)
@@ -790,14 +835,14 @@ func BorderLayout(size geom.Point) adagui.Node {
 
 	leftWidget := adagui.NewPanel(20, 20)
 	leftWidget.Layout = adagui.NewVBoxLayout()
-	//leftWidget.FillColor = colornames.Gold
+	//leftWidget.FillColor = color.Gold
 
 	rightWidget := adagui.NewPanel(50, 50)
 	rightWidget.Layout = adagui.NewVBoxLayout()
-	//rightWidget.FillColor = colornames.DarkGreen
+	//rightWidget.FillColor = color.DarkGreen
 
 	centerWidget := adagui.NewPanel(0, 0)
-	centerWidget.SetColor(colornames.MidnightBlue)
+	centerWidget.SetColor(color.MidnightBlue)
 
 	root := adagui.NewGroup()
 	root.Layout = adagui.NewPaddedLayout()
@@ -805,7 +850,7 @@ func BorderLayout(size geom.Point) adagui.Node {
 
 	panel := adagui.NewPanel(0, 0)
 	panel.Layout = adagui.NewBorderLayout(topWidget, bottomWidget, nil, nil)
-	//panel.FillColor = colornames.DimGray
+	//panel.FillColor = color.DimGray
 
 	panel.Add(topWidget, bottomWidget, centerWidget)
 	root.Add(panel)
@@ -827,8 +872,8 @@ func EmptyScrollPanel(size geom.Point) adagui.Node {
 
 	panel := adagui.NewScrollPanel(w, h)
 	panel.SetVirtualSize(geom.Point{virtualWidth, virtualHeight})
-	panel.SetColor(colornames.AntiqueWhite)
-	panel.SetBorderColor(colornames.AntiqueWhite)
+	panel.SetColor(color.AntiqueWhite)
+	panel.SetBorderColor(color.AntiqueWhite)
 	//panel.SetOnPress(func(evt touch.Event) {
 	//	log.Printf("evt: %+v", evt)
 	//	log.Printf("LocalBounds  : %v", panel.LocalBounds())
@@ -881,7 +926,7 @@ func EmptyScrollPanel(size geom.Point) adagui.Node {
 //----------------------------------------------------------------------------
 
 func main() {
-	var tabPanel *adagui.TabPanel
+	var tabPanel *adagui.Panel
 	var tabMenu *adagui.TabMenu
 	var tabContent *adagui.Panel
 
@@ -891,27 +936,34 @@ func main() {
 	scr = adagui.NewScreen(adatft.Rotate090)
 	win = scr.NewWindow()
 
+	tabContent = adagui.NewPanel(0, 0)
+    tabContent.SetColor(color.Teal.Dark(0.8))
+	tabContent.Layout = adagui.NewPaddedLayout()
+	tabMenu = adagui.NewTabMenu(tabContent)
+    tabPanel = adagui.NewPanel(0, 0)
+ //   tabPanel.SetColor(color.DarkViolet.Alpha(0.5))
+    tabPanel.Layout = adagui.NewBorderLayout(tabMenu, nil, nil, nil)
+    tabPanel.Add(tabMenu, tabContent)
+	//tabPanel = adagui.NewTabPanel(float64(adatft.Width),
+	//	float64(adatft.Height), tabMenu, tabContent)
+	win.SetRoot(tabPanel)
+
+    //log.Printf("tabContent.Size(): %v", tabContent.Rect())
+
 	for i, panelInfo := range panelList {
 		if panelInfo.initFunc == nil {
 			continue
 		}
 		panelList[i].panel = panelInfo.initFunc(geom.Point{
-			float64(adatft.Width), float64(adatft.Height - 18)})
+			float64(adatft.Width), float64(adatft.Height) - tabMenu.Height()})
 	}
 
 	go SignalHandler()
 
-	tabMenu = adagui.NewTabMenu()
-	tabContent = adagui.NewPanel(0, 0)
-	tabContent.Layout = adagui.NewPaddedLayout(0)
-
-	tabPanel = adagui.NewTabPanel(float64(adatft.Width),
-		float64(adatft.Height-18), tabMenu, tabContent)
 	for _, panelInfo := range panelList {
 		tabMenu.AddTab(panelInfo.name, panelInfo.panel)
 	}
     tabMenu.SetTab(0)
-	win.SetRoot(tabPanel)
 	scr.SetWindow(win)
 	scr.Run()
 

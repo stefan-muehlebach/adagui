@@ -9,7 +9,7 @@ import (
 	"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
+	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/geom"
 	"os"
 	"os/signal"
@@ -242,7 +242,7 @@ func main() {
 	main := adagui.NewGroupPL(root, adagui.NewVBoxLayout())
 
 	canvas = NewCanvas(0.0, win.Rect.Dy()-88.0)
-	canvas.SetColor(colornames.Snow)
+	canvas.SetColor(color.Snow)
 	canvas.SetBorderWidth(0.0)
 
 	iconBar01 := adagui.NewGroup()

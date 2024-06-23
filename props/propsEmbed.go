@@ -226,3 +226,10 @@ func (pe *PropertyEmbed) CtrlSize() (float64) {
 func (pe *PropertyEmbed) SetCtrlSize(s float64) {
     pe.prop.SetSize(CtrlSize, s)
 }
+
+func (pe *PropertyEmbed) FieldSize() (float64) {
+    return pe.prop.Size(FieldSize)
+}
+func (pe *PropertyEmbed) SetFieldSize(s float64) {
+    pe.prop.SetSize(FieldSize, s)
+}

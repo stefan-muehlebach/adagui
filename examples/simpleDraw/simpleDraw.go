@@ -14,7 +14,7 @@ import (
 	_ "sync"
     "encoding/json"
 	//"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
+	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/geom"
     "github.com/cpmech/gosl/fun/fftw"
 )
@@ -69,7 +69,7 @@ func NewPanel(w, h float64) *adagui.Panel {
 	var elli *adagui.Ellipse
 
 	p := adagui.NewPanel(w, h)
-    p.SetColor(colornames.DarkSlateGrey)
+    p.SetColor(color.DarkSlateGrey)
 //    fh, _ := os.Open("taube.png")
 //    p.Image, _ = png.Decode(fh)
 
@@ -169,7 +169,7 @@ func NewCircle(r float64) *adagui.Circle {
 	var dp geom.Point
 
 	c := adagui.NewCircle(r)
-	col := colornames.RandGroupColor(colornames.Blues)
+	col := color.RandGroupColor(colornames.Blues)
 	c.SetColor(col)
 	c.SetPushedColor(col.Alpha(0.5))
 
@@ -214,7 +214,7 @@ func NewEllipse(rx, ry float64) *adagui.Ellipse {
 	var dp geom.Point
 
 	e := adagui.NewEllipse(rx, ry)
-	col := colornames.RandGroupColor(colornames.Greens)
+	col := color.RandGroupColor(colornames.Greens)
 	e.SetColor(col)
 	e.SetPushedColor(col.Alpha(0.5))
 
@@ -260,7 +260,7 @@ func NewRectangle(w, h float64) *adagui.Rectangle {
 	var dp geom.Point
 
 	r := adagui.NewRectangle(w, h)
-	col := colornames.RandGroupColor(colornames.Reds)
+	col := color.RandGroupColor(colornames.Reds)
 	r.SetColor(col)
 	r.SetPushedColor(col.Alpha(0.5))
 
@@ -312,7 +312,7 @@ func main() {
 	win.SetRoot(group)
 
 	panel := NewPanel(float64(adatft.Width-10), float64(adatft.Height-10-40))
-	//panel.SetColor(colornames.Gray)
+	//panel.SetColor(color.Gray)
 	group.Add(panel)
 
     btnGrp := adagui.NewGroupPL(group, adagui.NewHBoxLayout())

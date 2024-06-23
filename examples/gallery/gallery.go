@@ -14,7 +14,7 @@ import (
 	"os"
 	"os/signal"
 	//	"github.com/stefan-muehlebach/adagui/props"
-	"github.com/stefan-muehlebach/gg/colornames"
+	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/fonts"
 )
 
@@ -78,10 +78,10 @@ func main() {
 	txtBtn02 := adagui.NewTextButton("Close")
 	txtBtn03 := adagui.NewTextButton("Execute")
 	txtBtn03.SetFont(fonts.LucidaHandwritingItalic)
-	txtBtn03.SetColor(colornames.Purple.Dark(0.1))
-	txtBtn03.SetPushedColor(colornames.Purple.Bright(0.8))
-	txtBtn03.SetTextColor(colornames.Gold)
-	txtBtn03.SetPushedTextColor(colornames.Gold.Dark(0.8))
+	txtBtn03.SetColor(color.Purple.Dark(0.1))
+	txtBtn03.SetPushedColor(color.Purple.Bright(0.8))
+	txtBtn03.SetTextColor(color.Gold)
+	txtBtn03.SetPushedTextColor(color.Gold.Dark(0.8))
 	grpBtn.Add(txtBtn01, txtBtn02, txtBtn03)
 
 	grpBtn = adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())

@@ -8,7 +8,7 @@ import (
 	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
+	"github.com/stefan-muehlebach/gg/color"
 	"log"
 	"math/rand"
 	"time"
@@ -43,8 +43,8 @@ func NewPolygon(dispWidth, dispHeight float64, edges int) *Polygon {
 		pt.dy = rand.Float64()*5.0 - 2.0
 		p.ptList[i] = pt
 	}
-	p.StrokeColor = colornames.White
-	p.FillColor = colornames.RandColor().Alpha(0.5)
+	p.StrokeColor = color.White
+	p.FillColor = color.RandColor().Alpha(0.5)
 	p.LineWidth = 3.0
 	return p
 }

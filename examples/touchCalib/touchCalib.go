@@ -6,7 +6,7 @@ import (
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
+	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/fonts"
 	"github.com/stefan-muehlebach/gg/geom"
 	"golang.org/x/image/font"
@@ -48,7 +48,7 @@ func NewText(txt string, pos geom.Point, width float64, face font.Face) *Text {
 	t.width = width
 	t.face = face
 	t.align = gg.AlignLeft
-	t.color = colornames.WhiteSmoke
+	t.color = color.WhiteSmoke
 	t.vis = true
 	return t
 }
@@ -72,9 +72,9 @@ const (
 )
 
 var (
-	fillColorActive   = colornames.ForestGreen
+	fillColorActive   = color.ForestGreen
 	fillColorDeactive = fillColorActive.Dark(0.6)
-	lineColorActive   = colornames.White
+	lineColorActive   = color.White
 	lineColorDeactive = lineColorActive.Dark(0.6)
 
 	numSamples int
@@ -152,7 +152,7 @@ func (t *Target) Draw(gc *gg.Context) {
 	} else {
 		gc.SetStrokeColor(lineColorDeactive)
 	}
-	gc.SetFillColor(colornames.Black)
+	gc.SetFillColor(color.Black)
 	gc.FillStroke()
 
 	gc.DrawCircle(0.0, 0.0, outerRadius)
@@ -195,7 +195,7 @@ var (
 )
 
 func UpdateDisplay() {
-	gc.SetFillColor(colornames.Black)
+	gc.SetFillColor(color.Black)
 	gc.Clear()
 	for _, graphObj := range graphObjList {
 		if !graphObj.IsVisible() {
@@ -282,7 +282,7 @@ func main() {
 
 	//go displayThread(doneQ)
 
-	//gc.SetFillColor(colornames.Black)
+	//gc.SetFillColor(color.Black)
 	//gc.Clear()
 
 	targetList = make([]*Target, adatft.NumRefPoints)

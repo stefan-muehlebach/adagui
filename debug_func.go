@@ -17,7 +17,7 @@ var (
 
 func init() {
     flag.Uint64Var(&debugDomains, "debugDomain",
-            uint64(Painting | Coordinates | Events),
+            uint64(Painting | Coordinates | Events | Layout),
             "whith this flag, you can filter the debug messages.")
 
     Debugf = debugf

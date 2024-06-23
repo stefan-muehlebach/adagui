@@ -2,7 +2,6 @@ package props
 
 import (
 	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
 	"github.com/stefan-muehlebach/gg/fonts"
 	"testing"
 )
@@ -71,8 +70,8 @@ func TestColorHierarchy(t *testing.T) {
 		t.Errorf("Default and object prop differ (got '%v', want '%v'", c3, c1)
 	}
 
-	typeProps.SetColor(colorPropName, colornames.FireBrick)
-	objProps.SetColor(colorPropName, colornames.Yellow)
+	typeProps.SetColor(colorPropName, color.FireBrick)
+	objProps.SetColor(colorPropName, color.Yellow)
 
 	c1 = defProps.Color(colorPropName)
 	c2 = typeProps.Color(colorPropName)
@@ -152,3 +151,9 @@ func BenchmarkGetObjSize(b *testing.B) {
 		s1 = objProps.Size(BorderWidth)
 	}
 }
+
+func TestPropFileRead(t *testing.T) {
+    initPropsMapFromFile("TestProps.json")
+    t.Logf("Default.Color: %+v", PropsMap["Default"].Color(Color))
+}
+

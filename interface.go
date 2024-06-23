@@ -97,6 +97,7 @@ type Container interface {
     Add(n ...Node)
     Del(n Node)
     DelAll()
+    layout()
 }
 
 // LayoutManager eben...

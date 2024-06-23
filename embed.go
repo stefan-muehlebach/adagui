@@ -116,8 +116,9 @@ func (m *Embed) SetPos(p geom.Point) {
 func (m *Embed) Size() (geom.Point) {
     return m.size.Max(m.Wrapper.MinSize())
 }
-func (m *Embed) SetSize(s geom.Point) {
-    m.size = s
+func (m *Embed) SetSize(size geom.Point) {
+    Debugf(Layout, "[%T], %+v", m.Wrapper, size)
+    m.size = size
     //m.Mark(MarkNeedsPaint)
 }
 func (m *Embed) MinSize() (geom.Point) {

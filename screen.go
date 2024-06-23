@@ -4,6 +4,7 @@ import (
 //    "flag"
     "log"
     "time"
+    "sync"
     "github.com/stefan-muehlebach/adatft"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg/geom"
@@ -26,6 +27,10 @@ type Screen struct {
     disp   *adatft.Display
     touch  *adatft.Touch
     window *Window
+    paintTicker *time.Ticker
+    paintCloseQ chan bool
+    quitQ chan bool
+    mutex *sync.Mutex
 }
 
 // Mit NewScreen wird ein neues Screen-Objekt erzeugt und alle technischen
@@ -41,8 +46,16 @@ func NewScreen(rotation adatft.RotationType) (*Screen) {
     s.disp  = adatft.OpenDisplay(rotation)
     s.touch = adatft.OpenTouch()
     s.touch.ReadConfig()
+    s.paintTicker = time.NewTicker(RefreshCycle)
     s.window = nil
+    s.paintCloseQ = make(chan bool)
+    s.quitQ = make(chan bool)
+    s.mutex = &sync.Mutex{}
+
     screen = s
+
+    go s.paintThread()
+
     return s
 }
 
@@ -76,12 +89,14 @@ func (s *Screen) SetWindow(w *Window) {
     if s.window == w {
         return
     }
+    s.mutex.Lock()
     if s.window != nil {
         s.window.stage = StageAlive
     }
     s.window = w
     s.window.stage = StageVisible
-    s.window.Repaint()
+    s.mutex.Unlock()
+    s.Repaint()
 }
 
 // Mit Run schliesslich wird der MainEvent-Loop der Applikation gestartet,
@@ -103,6 +118,46 @@ func (s *Screen) Run() {
 // Go-Routine (bspw. dem Callback-Handler eines Buttons) aufgerufen werden.
 func (s *Screen) Quit() {
     s.touch.Close()
+    s.paintCloseQ <- true
+    <- s.quitQ
+}
+
+func (s *Screen) StopPaint() {
+    s.paintTicker.Stop()
+}
+
+func (s *Screen) ContPaint() {
+    s.paintTicker.Reset(RefreshCycle)
+}
+
+func (s *Screen) Repaint() {
+    //s.mutex.Lock()
+    //defer s.mutex.Unlock()
+    if s.window == nil {
+        return
+    }
+    s.window.Repaint(s.disp)
+}
+
+func (s *Screen) paintThread() {
+    for {
+        select {
+        case <- s.paintCloseQ:
+            s.quitQ <- true
+            return
+        case <- s.paintTicker.C:
+            if s.window == nil {
+                continue
+            }
+            if s.window.stage != StageVisible {
+                continue
+            }
+            if s.window.root != nil && !s.window.root.Wrappee().Marks.NeedsPaint() {
+                continue
+            }
+            s.window.Repaint(s.disp)
+        }
+    }
 }
 
 // In dieser Methode schliesslich spielt die Musik: vom Touch-Screen werden

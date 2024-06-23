@@ -22,6 +22,7 @@ const (
     StageAlive
     StageVisible
     StageFocused
+    RefreshCycle = 30 * time.Millisecond
 )
 
 type Window struct {
@@ -46,15 +47,15 @@ func newWindow(s *Screen) (*Window) {
     height := adatft.Height
     w.Rect = geom.NewRectangleWH(0.0, 0.0, float64(width), float64(height))
     w.gc = gg.NewContext(width, height)
-    w.paintCloseQ = make(chan bool)
-    w.paintTicker = time.NewTicker(30 * time.Millisecond)
+    //w.paintCloseQ = make(chan bool)
+    //w.paintTicker = time.NewTicker(RefreshCycle)
     w.eventQ = make(chan touch.Event)
     w.quitQ  = make(chan bool)
     w.stage  = StageAlive
     w.mutex  = &sync.Mutex{}
 
     go w.eventThread()
-    go w.paintThread()
+    //go w.paintThread()
 
     return w
 }
@@ -63,8 +64,8 @@ func newWindow(s *Screen) (*Window) {
 func (w *Window) Close() {
     close(w.eventQ)
     <- w.quitQ
-    w.paintCloseQ <- true
-    <- w.quitQ
+    //w.paintCloseQ <- true
+    //<- w.quitQ
 }
 
 // In jedem Fenster muss es ein GUI-Element geben, welches an der obersten
@@ -102,16 +103,22 @@ func (w *Window) Save(fileName string) {
 // gegeben. Diese Methode blockiert nie! Ist bereits ein Auftrag fuer den
 // Neuaufbau in der Queue, dann ist soweit alles i.O. und wir sind sicher,
 // dass auch unser Auftrag behandelt wird.
-func (w *Window) Repaint() {
-    //log.Printf("%T: Repaint()", w)
-    //select {
-    //    case w.paintQ <- true:
-    //    default:
+func (w *Window) Repaint(disp *adatft.Display) {
+    w.gc.SetFillColor(color.Black)
+    w.gc.Clear()
+    //w.gc.Identity()
+    //w.mutex.Lock()
+    //if w.root != nil {
+    //    Debugf(Painting, "redraw scene graph")
+        w.root.Wrappee().Paint(w.gc)
     //}
+    //w.mutex.Unlock()
+    disp.Draw(w.gc.Image())
 }
 
 // Paint wird aufgerufen, um das Fenster und alle Objekte, die damit verbunden
 // sind, auf dem Zeichen-Kontext des gg-Packages darzustellen.
+/*
 func (w *Window) paintThread() {
     for {
         select {
@@ -126,6 +133,9 @@ func (w *Window) paintThread() {
             if !w.root.Wrappee().Marks.NeedsPaint() {
                 continue
             }
+            w.Repaint()
+*/
+/*
             w.gc.SetFillColor(color.Black)
             w.gc.Clear()
             w.gc.Identity()
@@ -139,6 +149,7 @@ func (w *Window) paintThread() {
         }
     }
 }
+*/
 
 // Mit dieser Go-Routine werden die Events vom Screen-Objekt empfangen und
 // weiterverarbeitet.

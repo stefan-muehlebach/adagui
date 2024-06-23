@@ -6,6 +6,7 @@ const (
     Painting DebugDomain = 1 << iota
     Coordinates
     Events
+    Layout
 )
 
 var (

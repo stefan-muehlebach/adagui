@@ -6,7 +6,6 @@ import (
 //    "sync"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg"
-//    "github.com/stefan-muehlebach/gg/colornames"
     "github.com/stefan-muehlebach/gg/geom"
 )
 
@@ -55,15 +54,20 @@ func (c *Circle) Paint(gc *gg.Context) {
     mp := c.LocalBounds().Center()
     r  := 0.5 * c.Size().X
     gc.DrawCircle(mp.X, mp.Y, r)
+    if c.Pushed() {
+        gc.SetFillColor(c.PushedColor())
+    } else {
+        gc.SetFillColor(c.Color())
+    }
+    gc.FillPreserve()
     if c.Pushed() || c.Selected() {
-        gc.SetStrokeColor(c.PushedBorderColor())
         gc.SetStrokeWidth(c.PushedBorderWidth())
+        gc.SetStrokeColor(c.PushedBorderColor())
         gc.StrokePreserve()
     }
-    gc.SetFillColor(c.Color())
-    gc.SetStrokeColor(c.BorderColor())
     gc.SetStrokeWidth(c.BorderWidth())
-    gc.FillStroke()
+    gc.SetStrokeColor(c.BorderColor())
+    gc.Stroke()
 }
 
 func (c *Circle) Contains(pt geom.Point) (bool) {
@@ -162,7 +166,7 @@ func (p *Polygon) Paint(gc *gg.Context) {
     }
     gc.Stroke()
 /*
-    gc.SetFillColor(colornames.Black)
+    gc.SetFillColor(color.Black)
     for _, pt := range p.pts {
         gc.DrawPoint(pt.X, pt.Y, 2.0)
     }

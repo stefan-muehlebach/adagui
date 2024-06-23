@@ -6,7 +6,7 @@ import (
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
+	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/geom"
 	"image"
 	"image/draw"
@@ -18,13 +18,13 @@ import (
 const ()
 
 var (
-	pointColor  = colornames.WhiteSmoke.Alpha(0.5)
+	pointColor  = color.WhiteSmoke.Alpha(0.5)
 	pointRadius = 1.0
 
-	crossColor = colornames.White
+	crossColor = color.White
 	crossSize  = 40.0
 
-	gridColor     = colornames.DarkGreen
+	gridColor     = color.DarkGreen
 	gridMargin    = 20.0
 	gridSpace     = 40.0
 	gridPointSize = 5.0
@@ -85,7 +85,7 @@ func setupGrid(gc *gg.Context, actCol, actRow int) {
 		gc.Stroke()
 	}
 
-	gc.SetFillColor(colornames.SteelBlue)
+	gc.SetFillColor(color.SteelBlue)
 	gc.MoveTo(0, 0)
 	gc.LineTo(20, 0)
 	gc.LineTo(0, 20)
@@ -169,11 +169,11 @@ func main() {
 
 	done <- true
 
-	grid.SetFillColor(colornames.Black)
+	grid.SetFillColor(color.Black)
 	grid.Clear()
-	trace.SetFillColor(colornames.Black)
+	trace.SetFillColor(color.Black)
 	trace.Clear()
-	cross.SetFillColor(colornames.Black)
+	cross.SetFillColor(color.Black)
 	cross.Clear()
 	composeScreen(out, grid, trace, cross)
 	disp.Draw(out)

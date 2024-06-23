@@ -9,7 +9,7 @@ import (
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
 	_ "github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/colornames"
+	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/geom"
 	"github.com/stefan-muehlebach/mandel"
 	_ "image"
@@ -40,33 +40,33 @@ var (
 	// nehmung als 0xff fuer Gruen (was ziemlich hell erscheint). Daher koennen
 	// die Farben hier einzeln definiert werden.
 	BrightColors = []color.Color{
-		colornames.Red,
-		colornames.Lime,
-		colornames.Blue,
+		color.Red,
+		color.Lime,
+		color.Blue,
 		//color.RGBA{255, 0, 0, 255},
 		//color.RGBA{0, 255, 0, 255},
 		//color.RGBA{0, 0, 255, 255},
 	}
 	NormalColors = []color.Color{
-		colornames.Red.Dark(0.37),
-		colornames.Lime.Dark(0.37),
-		colornames.Blue.Dark(0.37),
+		color.Red.Dark(0.37),
+		color.Lime.Dark(0.37),
+		color.Blue.Dark(0.37),
 		//color.RGBA{159, 0, 0, 255},
 		//color.RGBA{0, 159, 0, 255},
 		//color.RGBA{0, 0, 159, 255},
 	}
 	DimmedColors = []color.Color{
-		colornames.Red.Dark(0.92),
-		colornames.Lime.Dark(0.92),
-		colornames.Blue.Dark(0.92),
+		color.Red.Dark(0.92),
+		color.Lime.Dark(0.92),
+		color.Blue.Dark(0.92),
 		//color.RGBA{20, 0, 0, 255},
 		//color.RGBA{0, 20, 0, 255},
 		//color.RGBA{0, 0, 20, 255},
 	}
 
-	BrightWhite = colornames.White
-	DimmedWhite = colornames.White.Dark(0.37)
-	Background  = colornames.Black
+	BrightWhite = color.White
+	DimmedWhite = color.White.Dark(0.37)
+	Background  = color.Black
 	//BrightWhite = color.RGBA{255, 255, 255, 255}
 	//DimmedWhite = color.RGBA{160, 160, 160, 255}
 	//Background  = color.RGBA{80, 80, 80, 255}
@@ -620,7 +620,7 @@ func main() {
 
 	//    lbl := adagui.NewLabel("Test")
 	//    lbl.SetPos(geom.Point{10.0, 300.0})
-	//    lbl.SetTextColor(colornames.Gold)
+	//    lbl.SetTextColor(color.Gold)
 	//    group.Add(lbl)
 
 	// Start der Applikation
