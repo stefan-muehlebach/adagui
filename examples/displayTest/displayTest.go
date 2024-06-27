@@ -14,6 +14,7 @@ import (
 	"runtime/pprof"
 	"runtime/trace"
 	"strings"
+    "syscall"
 	"time"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
@@ -56,7 +57,7 @@ func PolygonAnimation() {
 			p.Move(0.0, float64(adatft.Width-1), 0.0, float64(adatft.Height-1))
 		}
 		adatft.PaintWatch.Stop()
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 	}
 }
 
@@ -183,7 +184,7 @@ func Cube3DAnimation() {
 
 		adatft.PaintWatch.Stop()
 
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 	}
 }
 
@@ -516,7 +517,7 @@ func TextAnimation() {
 		}
 		adatft.PaintWatch.Stop()
 
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 	}
 }
 
@@ -641,7 +642,7 @@ MainLoop:
 				idx += 4
 			}
 		}
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 	}
 }
 
@@ -720,7 +721,7 @@ func PlasmaAnimation() {
 		}
 		t += dt
 		adatft.PaintWatch.Stop()
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 	}
 	for i := range numThreads {
 		close(orderQ[i])
@@ -863,7 +864,7 @@ func ScrollText(txt string, face font.Face, x, y, lineSpacing float64,
 		}
 		gc.DrawStringWrapped(txt, x, y, 0, 0, textWidth,
 			lineSpacing, gg.AlignLeft)
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 		if h -= 1.0; h < 0.0 {
 			break
 		}
@@ -971,7 +972,7 @@ func CircleAnimation() {
 			}
 		}
 		adatft.PaintWatch.Stop()
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 	}
 }
 
@@ -1076,7 +1077,7 @@ func BezierAnimation() {
 			}
 		}
 		adatft.PaintWatch.Stop()
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 	}
 }
 
@@ -1107,7 +1108,7 @@ func Animation05(gc *gg.Context, disp *adatft.Display, d time.Duration) {
 			}
 		}
 		adatft.PaintWatch.Stop()
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 	}
 }
 
@@ -1337,7 +1338,7 @@ func SBBAnimation() {
 
 	gc.SetFillColor(color.DeepSkyBlue)
 	gc.Clear()
-	disp.Draw(gc.Image())
+	Draw(gc, disp)
 
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
@@ -1364,7 +1365,7 @@ func SBBAnimation() {
 			gc.Pop()
 		}
 		adatft.PaintWatch.Stop()
-		disp.Draw(gc.Image())
+		Draw(gc, disp)
 	}
 }
 
@@ -1442,12 +1443,44 @@ func StopProfiling() {
 
 //-----------------------------------------------------------------------------
 
+func Draw(gc *gg.Context, disp *adatft.Display) {
+    if screenshotFlag {
+        gc.SavePNG("screenshot.png")
+        screenshotFlag = false
+    }
+    if movieFlag {
+        fileName := fmt.Sprintf("movie.%03d.png", movieCurrentFrame)
+        gc.SavePNG(fileName)
+        movieCurrentFrame++ 
+        if movieCurrentFrame >= movieTotalFrames {
+            movieFlag = false
+            movieTotalFrames = 0
+        }
+    }
+    disp.Draw(gc.Image())
+}
+
 func SignalHandler() {
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt)
 	<-sigChan
 	runFlag = false
 	quitFlag = true
+}
+
+func ScreenshotHandler() {
+    sigChan := make(chan os.Signal)
+    signal.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
+    for sig := range sigChan {
+        switch sig {
+        case syscall.SIGUSR1:
+            screenshotFlag = true
+        case syscall.SIGUSR2:
+            movieFlag = true
+            movieTotalFrames = 150
+            movieCurrentFrame = 0
+        }
+    }
 }
 
 func TouchHandler() {
@@ -1492,6 +1525,9 @@ var (
 	msg               string
 	rotation          adatft.RotationType = adatft.Rotate090
 	runFlag, quitFlag bool
+    screenshotFlag    bool
+    movieFlag         bool
+    movieTotalFrames, movieCurrentFrame int
 )
 
 func main() {
@@ -1509,6 +1545,7 @@ func main() {
 	gc = gg.NewContext(adatft.Width, adatft.Height)
 
 	go SignalHandler()
+	go ScreenshotHandler()
 	go TouchHandler()
 
 	quitFlag = false

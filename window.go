@@ -64,8 +64,6 @@ func newWindow(s *Screen) (*Window) {
 func (w *Window) Close() {
     close(w.eventQ)
     <- w.quitQ
-    //w.paintCloseQ <- true
-    //<- w.quitQ
 }
 
 // In jedem Fenster muss es ein GUI-Element geben, welches an der obersten
@@ -86,13 +84,15 @@ func (w *Window) SetRoot(root Node) {
     root.SetSize(w.Rect.Size())
 }
 
-func (w *Window) Save(fileName string) {
+func (w *Window) SaveScreenshot(fileName string) {
     fh, err := os.Create(fileName)
     if err != nil {
         log.Fatal(err)
     }
     defer fh.Close()
 
+    w.mutex.Lock()
+    defer w.mutex.Unlock()
     if err = png.Encode(fh, w.gc.Image()); err != nil {
         log.Fatal(err)
     }
@@ -106,50 +106,11 @@ func (w *Window) Save(fileName string) {
 func (w *Window) Repaint(disp *adatft.Display) {
     w.gc.SetFillColor(color.Black)
     w.gc.Clear()
-    //w.gc.Identity()
-    //w.mutex.Lock()
-    //if w.root != nil {
-    //    Debugf(Painting, "redraw scene graph")
-        w.root.Wrappee().Paint(w.gc)
-    //}
-    //w.mutex.Unlock()
+    w.mutex.Lock()
+    w.root.Wrappee().Paint(w.gc)
+    w.mutex.Unlock()
     disp.Draw(w.gc.Image())
 }
-
-// Paint wird aufgerufen, um das Fenster und alle Objekte, die damit verbunden
-// sind, auf dem Zeichen-Kontext des gg-Packages darzustellen.
-/*
-func (w *Window) paintThread() {
-    for {
-        select {
-        case <- w.paintCloseQ:
-            Debugf(Painting, "close message received")
-            w.quitQ <- true
-            return
-        case <- w.paintTicker.C:
-            if w.stage != StageVisible {
-                continue
-            }
-            if !w.root.Wrappee().Marks.NeedsPaint() {
-                continue
-            }
-            w.Repaint()
-*/
-/*
-            w.gc.SetFillColor(color.Black)
-            w.gc.Clear()
-            w.gc.Identity()
-            w.mutex.Lock()
-            if w.root != nil {
-                Debugf(Painting, "redraw scene graph")
-                w.root.Wrappee().Paint(w.gc)
-            }
-            w.mutex.Unlock()
-            w.s.disp.Draw(w.gc.Image())
-        }
-    }
-}
-*/
 
 // Mit dieser Go-Routine werden die Events vom Screen-Objekt empfangen und
 // weiterverarbeitet.

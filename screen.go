@@ -1,7 +1,7 @@
 package adagui
 
 import (
-//    "flag"
+    "fmt"
     "log"
     "time"
     "sync"
@@ -65,8 +65,13 @@ func CurrentScreen() (*Screen) {
     return screen
 }
 
-func (s *Screen) Save(fileName string) {
-    s.Window().Save(fileName)
+func (s *Screen) SaveScreenshot(name string) {
+    s.Window().SaveScreenshot(name)
+}
+
+func (s *Screen) SaveMovie(name string) {
+    fileName := fmt.Sprintf(name, 0)
+    s.Window().SaveScreenshot(fileName)
 }
 
 // Mit NewWindow wird ein neues Fenster erzeugt. Im Gegensatz zum Screen

@@ -8,14 +8,15 @@ import (
 	"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
-	_ "github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/geom"
 	"github.com/stefan-muehlebach/mandel"
 	_ "image"
-	"image/color"
 	"log"
 	"math"
+    "os"
+    "os/signal"
+    "syscall"
 	_ "math/rand"
 	_ "runtime/trace"
 	_ "sync"
@@ -538,6 +539,26 @@ func (n *FuncPoint) Value() (float64, float64) {
 
 //----------------------------------------------------------------------------
 
+const (
+    screenshotFile = "screenshot.png"
+    movieFile = "movie.%03d.png"
+)
+
+func SignalHandler() {
+    sigChan := make(chan os.Signal)
+    signal.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
+    for sig := range sigChan {
+        switch sig {
+        case syscall.SIGUSR1:
+            screen.SaveScreenshot(screenshotFile)
+        case syscall.SIGUSR2:
+            screen.SaveMovie(movieFile)
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
+
 var (
 	screen *adagui.Screen
 	win    *adagui.Window
@@ -577,10 +598,12 @@ func main() {
 	palPrev.SetOnDoubleTap(func(evt touch.Event) {
 		screen.Quit()
 	})
-	palPrev.SetOnTap(func(evt touch.Event) {
-		screen.Save("screenshot.png")
-	})
+	//palPrev.SetOnTap(func(evt touch.Event) {
+//		screen.Save("screenshot.png")
+//	})
 	group.Add(palPrev)
+
+    go SignalHandler()
 
 	switch palImpl := palette.(type) {
 
