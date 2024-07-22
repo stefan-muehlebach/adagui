@@ -106,11 +106,11 @@ var (
 	procEditGraphColors    = NormalColors
 )
 
-func UpdateVars(w *adagui.Window) {
-	palPrevWidth = w.Rect.Dx()
-	gradEditWidth = w.Rect.Dx()
-	procEditWidth = w.Rect.Dx()
-}
+//func UpdateVars(w *adagui.Window) {
+//	palPrevWidth = w.Rect.Dx()
+//	gradEditWidth = w.Rect.Dx()
+//	procEditWidth = w.Rect.Dx()
+//}
 
 //----------------------------------------------------------------------------
 
@@ -130,7 +130,7 @@ func NewPalettePreview(palette mandel.Palette) *PalettePreview {
 	n.Wrapper = n
 	n.Init()
 	n.PropertyEmbed.InitByName("Default")
-	n.SetSize(geom.Point{palPrevWidth, palPrevHeight})
+	n.SetMinSize(geom.Point{0.0, palPrevHeight})
 	n.Palette = palette
 	return n
 }
@@ -171,7 +171,7 @@ func NewGradientEditor(palette *mandel.GradientPalette,
 	n.Wrapper = n
 	n.Init()
 	n.PropertyEmbed.InitByName("Default")
-	n.SetSize(geom.Point{gradEditWidth, gradEditHeight})
+	n.SetMinSize(geom.Point{0.0, gradEditHeight})
 	n.palette = palette
 	n.color = color
 	n.CreateCtrlPoints()
@@ -181,6 +181,7 @@ func NewGradientEditor(palette *mandel.GradientPalette,
 func (n *GradientEditor) SetSize(s geom.Point) {
 	n.Embed.SetSize(s)
 	n.Inset = n.Bounds().Inset(gradEditInset, gradEditInset)
+    n.CreateCtrlPoints()
 }
 
 func (n *GradientEditor) Paint(gc *gg.Context) {
@@ -260,7 +261,7 @@ func NewCtrlPoint(ge *GradientEditor, gp *mandel.GradPoint) *CtrlPoint {
 	n.Wrapper = n
 	n.Init()
 	n.PropertyEmbed.InitByName("Default")
-	n.SetSize(geom.Point{2 * ctrlPtRadius, 2 * ctrlPtRadius})
+	n.SetMinSize(geom.Point{2 * ctrlPtRadius, 2 * ctrlPtRadius})
 	n.ge = ge
 	n.color = ge.color
 	n.active = false
@@ -586,18 +587,19 @@ func main() {
 
 	screen = adagui.NewScreen(rotation)
 	win = screen.NewWindow()
-	UpdateVars(win)
+	//UpdateVars(win)
 
 	group := adagui.NewPanel(0, 0)
-	group.SetColor(Background)
+    group.Layout = adagui.NewVBoxLayout()
+	//group.SetColor(Background)
 	win.SetRoot(group)
 
 	// Erstellt die Vorschau auf die Palette
 	palPrev := NewPalettePreview(palette)
-	palPrev.SetPos(geom.Point{0.0, 0.0})
-	palPrev.SetOnDoubleTap(func(evt touch.Event) {
-		screen.Quit()
-	})
+	//palPrev.SetPos(geom.Point{0.0, 0.0})
+	//palPrev.SetOnDoubleTap(func(evt touch.Event) {
+    //    screen.Quit()
+	//})
 	//palPrev.SetOnTap(func(evt touch.Event) {
 //		screen.Save("screenshot.png")
 //	})
@@ -611,17 +613,17 @@ func main() {
 	case *mandel.GradientPalette:
 		// Editor fuer Rot
 		geRed := NewGradientEditor(palImpl, mandel.Red)
-		geRed.SetPos(geom.Point{0.0, palPrevHeight})
+		//geRed.SetPos(geom.Point{0.0, palPrevHeight})
 		group.Add(geRed)
 
 		// Editor fuer Gruen
 		geGreen := NewGradientEditor(palImpl, mandel.Green)
-		geGreen.SetPos(geom.Point{0.0, palPrevHeight + gradEditHeight})
+		//geGreen.SetPos(geom.Point{0.0, palPrevHeight + gradEditHeight})
 		group.Add(geGreen)
 
 		// Editor fuer Blau
 		geBlue := NewGradientEditor(palImpl, mandel.Blue)
-		geBlue.SetPos(geom.Point{0.0, palPrevHeight + 2*gradEditHeight})
+		//geBlue.SetPos(geom.Point{0.0, palPrevHeight + 2*gradEditHeight})
 		group.Add(geBlue)
 
 	// Analoger Aufbau, jedoch fuer eine prozedurale Palette.
@@ -629,15 +631,15 @@ func main() {
 	case *mandel.ProcPalette:
 
 		peRed := NewProcEditor(palImpl, mandel.Red)
-		peRed.SetPos(geom.Point{0.0, palPrevHeight})
+		//peRed.SetPos(geom.Point{0.0, palPrevHeight})
 		group.Add(peRed)
 
 		peGreen := NewProcEditor(palImpl, mandel.Green)
-		peGreen.SetPos(geom.Point{0.0, palPrevHeight + procEditHeight})
+		//peGreen.SetPos(geom.Point{0.0, palPrevHeight + procEditHeight})
 		group.Add(peGreen)
 
 		peBlue := NewProcEditor(palImpl, mandel.Blue)
-		peBlue.SetPos(geom.Point{0.0, palPrevHeight + 2*procEditHeight})
+		//peBlue.SetPos(geom.Point{0.0, palPrevHeight + 2*procEditHeight})
 		group.Add(peBlue)
 	}
 

@@ -44,8 +44,7 @@ func NewScreen(rotation adatft.RotationType) (*Screen) {
     numScreen += 1
     s := &Screen{}
     s.disp  = adatft.OpenDisplay(rotation)
-    s.touch = adatft.OpenTouch()
-    s.touch.ReadConfig()
+    s.touch = adatft.OpenTouch(rotation)
     s.paintTicker = time.NewTicker(RefreshCycle)
     s.window = nil
     s.paintCloseQ = make(chan bool)

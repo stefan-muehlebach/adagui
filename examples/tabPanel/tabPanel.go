@@ -304,19 +304,19 @@ func ScrolledColorPanel(size geom.Point) adagui.Node {
 // NestedTransformations
 //
 func NestedTransformations(size geom.Point) adagui.Node {
-//	var root *adagui.Group
+	var root *adagui.Group
 	var panel01, panel02, panel03 *adagui.Panel
 	var color02, color03 color.Color
 	var rotPt1, rotPt2 geom.Point
     var colorFactor float64 = 0.5
 
-//	root = adagui.NewGroup()
-//	root.Layout = adagui.NewPaddedLayout(0)
-//	root.SetMinSize(size)
+	root = adagui.NewGroup()
+	root.Layout = adagui.NewPaddedLayout(0)
+	root.SetMinSize(size)
 
 	panel01 = NewPanel(0, 0)
 	panel01.SetColor(color.RandColor().Dark(0.8))
-//	root.Add(panel01)
+	root.Add(panel01)
 
 	grp0 := adagui.NewGroup()
 	grp1 := adagui.NewGroup()
@@ -465,7 +465,7 @@ func NestedTransformations(size geom.Point) adagui.Node {
 	chk.SetPos(geom.Point{5, 5})
 	panel03.Add(chk)
 
-	return panel01
+	return root
 }
 
 func NewPanel(w, h float64) *adagui.Panel {
@@ -938,7 +938,7 @@ func main() {
 
 	tabContent = adagui.NewPanel(0, 0)
     tabContent.SetColor(color.Teal.Dark(0.8))
-	tabContent.Layout = adagui.NewPaddedLayout()
+	tabContent.Layout = adagui.NewMaxLayout()
 	tabMenu = adagui.NewTabMenu(tabContent)
     tabPanel = adagui.NewPanel(0, 0)
  //   tabPanel.SetColor(color.DarkViolet.Alpha(0.5))

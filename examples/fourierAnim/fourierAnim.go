@@ -280,8 +280,9 @@ func (p *FourierPen) Paint(gc *gg.Context) {
 
 //-----------------------------------------------------------------------------
 
-// Erstellt ein neues Panel der angegebenen Groesse und legt alle wichtigen
-// Handler fuer das Touch-Event fest.
+// Erstellt ein neues Panel, in welchem der Benutzer mit den Stift einen
+// Umriss zeichnen kann, der dann als Ausgangsfunktion fuer die Fourier-
+// Transformation verwendet wird.
 func NewDrawPanel(w, h float64) *adagui.Panel {
     var err error
 
