@@ -50,6 +50,7 @@ var Pico6x10 = &basicfont.Face{
 	Ranges:  glyphRange,
 }
 
+// Original Pico-8 font, scaled by factor 3
 var Pico9x15 = &basicfont.Face{
 	Advance: 12,
 	Width:   9,
@@ -60,6 +61,7 @@ var Pico9x15 = &basicfont.Face{
 	Ranges:  glyphRange,
 }
 
+// Original Pico-8 font, scaled by factor 4
 var Pico12x20 = &basicfont.Face{
 	Advance: 16,
 	Width:   12,

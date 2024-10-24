@@ -6,7 +6,6 @@ import (
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/geom"
 	"image"
 	"image/draw"
@@ -35,8 +34,14 @@ var (
 	verbose, nogui bool
 
 	wallConfig = [][][]int{
-		{{0, 0}, {2, 0}, {2, 1}, {5, 1}},
-		{{0, 1}, {0, 3}, {2, 3}},
+		{{1, 0}, {6, 0}, {6, 1}, {7, 1}, {7, 10},
+             {2, 10}, {2,  9}, {1,  9},
+         {1, 2}, {4, 2}, {4, 3}, {5, 3},
+             {5, 8}, {4, 8}, {4, 7}, {3, 7}, {3, 5}},
+        {{6, 11}, {1, 11}, {1, 10}, {0, 10},
+             {0, 1}, {5, 1}, {5, 2}, {6, 2},
+         {6, 9}, {3, 9}, {3, 8}, {2, 8}, {2, 3},
+             {3, 3}, {3, 4}, {4, 4}, {4, 6}},
 	}
 )
 
@@ -44,15 +49,15 @@ func printEvent(event adatft.PenEvent) {
 	if !verbose {
 		return
 	}
-	fmt.Printf("[%d]: %10s: %v => %v (%d)\n",
+	fmt.Printf("[%d]: %10s: %v => %v\n",
 		event.Time.UnixMilli(), event.Type, event.TouchRawPos,
-		event.TouchPos, event.FifoSize)
+		event.TouchPos)
 }
 
 func drawPoint(gc *gg.Context, x, y float64) {
 	gc.DrawPoint(x, y, pointRadius)
-	gc.SetFillColor(pointColor)
-	gc.SetStrokeColor(pointColor)
+	//gc.SetFillColor(pointColor)
+	//gc.SetStrokeColor(pointColor)
 	gc.FillStroke()
 }
 
@@ -64,6 +69,7 @@ func drawCross(gc *gg.Context, x, y float64) {
 }
 
 func setupGrid(gc *gg.Context, actCol, actRow int) {
+    // Clear the context and draw the grid first
 	gc.SetFillColor(color.Transparent)
 	gc.Clear()
 	gc.SetFillColor(gridColor)
@@ -74,6 +80,7 @@ func setupGrid(gc *gg.Context, actCol, actRow int) {
 		}
 	}
 
+    // The draw the walls in order to get a fine Irrgarten.
 	gc.SetStrokeColor(gridColor)
 	gc.SetStrokeWidth(gridWallSize)
 	for _, wall := range wallConfig {
@@ -85,19 +92,26 @@ func setupGrid(gc *gg.Context, actCol, actRow int) {
 		gc.Stroke()
 	}
 
+    // The 'Buttons' for Clear and Quit are drawn as the last part.
 	gc.SetFillColor(color.SteelBlue)
-	gc.MoveTo(0, 0)
-	gc.LineTo(20, 0)
-	gc.LineTo(0, 20)
-	gc.LineTo(0, 0)
+	gc.DrawCircle(0, 0, 35)
+	gc.Fill()
+	gc.SetFillColor(color.GreenYellow)
+	gc.DrawCircle(float64(adatft.Width), 0, 35)
+	gc.Fill()
+	gc.SetFillColor(color.Gold)
+	gc.DrawCircle(float64(adatft.Width), float64(adatft.Height), 35)
+	gc.Fill()
+	gc.SetFillColor(color.OrangeRed)
+	gc.DrawCircle(0, float64(adatft.Height), 35)
 	gc.Fill()
 }
 
 func composeScreen(out *image.RGBA, grid, trace, cross *gg.Context) {
-	draw.Draw(out, out.Bounds(), image.Black, image.Point{0, 0}, draw.Src)
-	draw.Draw(out, out.Bounds(), trace.Image(), image.Point{0, 0}, draw.Over)
-	draw.Draw(out, out.Bounds(), cross.Image(), image.Point{0, 0}, draw.Over)
-	draw.Draw(out, out.Bounds(), grid.Image(), image.Point{0, 0}, draw.Over)
+	draw.Draw(out, out.Bounds(), image.Black, image.Point{}, draw.Src)
+	draw.Draw(out, out.Bounds(), grid.Image(), image.Point{}, draw.Over)
+	draw.Draw(out, out.Bounds(), trace.Image(), image.Point{}, draw.Over)
+	draw.Draw(out, out.Bounds(), cross.Image(), image.Point{}, draw.Over)
 }
 
 func main() {
@@ -111,11 +125,7 @@ func main() {
 
 	//adatft.Init()
 	disp = adatft.OpenDisplay(rotation)
-
-	touch = adatft.OpenTouch()
-	touch.ReadConfig()
-
-	fmt.Printf("Done opening TFT\n")
+	touch = adatft.OpenTouch(rotation)
 
 	grid = gg.NewContext(adatft.Width, adatft.Height)
 	setupGrid(grid, 0, 0)
@@ -123,7 +133,7 @@ func main() {
 	trace = gg.NewContext(adatft.Width, adatft.Height)
 	trace.SetFillColor(color.Transparent)
 	trace.Clear()
-	trace.SetStrokeWidth(1.0)
+	trace.SetStrokeWidth(pointRadius)
 	trace.SetStrokeColor(pointColor)
 	trace.SetFillColor(pointColor)
 
@@ -133,7 +143,7 @@ func main() {
 	cross.SetStrokeWidth(2.0)
 	cross.SetStrokeColor(crossColor)
 
-	out := image.NewRGBA(image.Rect(0, 0, adatft.Width, adatft.Height))
+	out := image.NewRGBA(disp.Bounds())
 
 	done := make(chan bool)
 	ticker := time.NewTicker(30 * time.Millisecond)
@@ -151,10 +161,18 @@ func main() {
 		}
 	}()
 
-	quitPt := geom.NewPoint(20.0, 20.0)
+	quitPt := geom.NewPoint(0.0, 0.0)
+    clearPt := geom.NewPoint(float64(adatft.Width), 0.0)
+
 	for event := range touch.EventQ {
-		if quitPt.Distance(geom.Point{event.X, event.Y}) <= 10.0 {
+		if quitPt.Distance(geom.Point{event.X, event.Y}) <= 35.0 {
 			break
+		}
+		if clearPt.Distance(geom.Point{event.X, event.Y}) <= 35.0 {
+			trace.SetFillColor(color.Transparent)
+            trace.Clear()
+            trace.SetFillColor(pointColor)
+            continue
 		}
 		printEvent(event)
 		if nogui {

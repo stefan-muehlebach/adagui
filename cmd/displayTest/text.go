@@ -92,7 +92,7 @@ func (o *TextObject) SetAnimParam(y, xVel float64) {
 
 func (o *TextObject) Draw(gc *gg.Context) {
 	gc.SetFontFace(o.face)
-	gc.SetStrokeColor(o.Color)
+	gc.SetTextColor(o.Color)
 	gc.DrawStringAnchored(o.txt, o.x, o.y, 0.5, 0.5)
 }
 

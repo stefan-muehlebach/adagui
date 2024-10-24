@@ -17,10 +17,6 @@ import (
     "github.com/cpmech/gosl/fun/fftw"
 )
 
-// Dieses Programm dient der Demonstration, wie mit dem Touchscreen umgegangen
-// werden kann. Auf einem Panel können je nach Werkzeug Kreise oder Rechtecke
-// erstellt und verschoben werden..
-
 func init() {
 	log.SetFlags(log.Lmicroseconds | log.Lmsgprefix)
 	log.SetPrefix(": ")

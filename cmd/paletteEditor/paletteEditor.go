@@ -85,12 +85,12 @@ var (
 	gradEditStrokeColor  = BrightWhite
 	gradEditFillColor    = Background
 	gradEditRectRound    = 5.0
-	gradEditSplineWidth  = 4.0
+	gradEditSplineWidth  = 5.0
 	gradEditSplineColors = NormalColors
 
-	ctrlPtRadius         = 8.0
-	ctrlPtLineWidth      = 2.0
-	ctrlPtActLineWidth   = 4.0
+	ctrlPtRadius         = 10.0
+	ctrlPtLineWidth      = 3.0
+	ctrlPtActLineWidth   = 5.0
 	ctrlPtStrokeColors   = BrightColors
 	ctrlPtFillColors     = NormalColors
 	ctrlPtSyncStrokeCols = BrightColors

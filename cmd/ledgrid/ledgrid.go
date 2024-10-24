@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-//    "path/filepath"
     "time"
 
 	"github.com/stefan-muehlebach/adagui"
@@ -20,7 +19,7 @@ import (
 	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/geom"
 	"github.com/stefan-muehlebach/ledgrid"
-	//"github.com/stefan-muehlebach/ledgrid/color"
+	ledcolor "github.com/stefan-muehlebach/ledgrid/color"
 )
 
 //-----------------------------------------------------------------------
@@ -39,7 +38,7 @@ func init() {
 type ColorPicker struct {
 	adagui.ContainerEmbed
 	orient           adagui.Orientation
-	colorList        [][]color.LedColor
+	colorList        [][]ledcolor.LedColor
 	fieldSize        float64
 	numCols, numRows int
 	selIdx0, selIdx1 int
@@ -53,7 +52,7 @@ func NewColorPicker(orient adagui.Orientation, numColsRows int) *ColorPicker {
 	c.Init()
 	c.PropertyEmbed.Init(PickerProps)
 	c.orient = orient
-	c.colorList = make([][]color.LedColor, numColsRows)
+	c.colorList = make([][]ledcolor.LedColor, numColsRows)
 	c.fieldSize = c.FieldSize()
 	switch orient {
 	case adagui.Horizontal:
@@ -87,8 +86,8 @@ func NewColorPickerWithData(orient adagui.Orientation,
 	return c
 }
 
-func (c *ColorPicker) SetColors(colRowIdx int, cl []color.LedColor) {
-	c.colorList[colRowIdx] = make([]color.LedColor, len(cl))
+func (c *ColorPicker) SetColors(colRowIdx int, cl []ledcolor.LedColor) {
+	c.colorList[colRowIdx] = make([]ledcolor.LedColor, len(cl))
 	copy(c.colorList[colRowIdx], cl)
 	switch c.orient {
 	case adagui.Horizontal:
@@ -100,11 +99,11 @@ func (c *ColorPicker) SetColors(colRowIdx int, cl []color.LedColor) {
 		c.fieldSize * float64(c.numRows)})
 }
 
-func (c *ColorPicker) Color() color.LedColor {
-	return c.value.Get().(color.LedColor)
+func (c *ColorPicker) Color() ledcolor.LedColor {
+	return c.value.Get().(ledcolor.LedColor)
 }
 
-func (c *ColorPicker) SetColor(col color.LedColor) {
+func (c *ColorPicker) SetColor(col ledcolor.LedColor) {
 	ledColor := col
 	for c.selIdx0 = range c.colorList {
 		for c.selIdx1 = range c.colorList[c.selIdx0] {
@@ -189,7 +188,7 @@ func (c *ColorPicker) Paint(gc *gg.Context) {
 			float64(c.selIdx1)*c.fieldSize, c.fieldSize, c.fieldSize)
 	}
 	r = r.Inset(-3, -3)
-	color := c.value.Get().(color.LedColor)
+	color := c.value.Get().(ledcolor.LedColor)
 	gc.SetFillColor(color)
 	gc.SetStrokeWidth(2.0)
 	gc.SetStrokeColor(c.BorderColor())
@@ -215,10 +214,9 @@ func init() {
 type LedGrid struct {
 	adagui.ContainerEmbed
 	fieldSize float64
-	DrawColor color.LedColor
+	DrawColor ledcolor.LedColor
 	quitQ     chan bool
 	grid      *ledgrid.LedGrid
-	ctrl      ledgrid.PixelClient
 }
 
 func NewLedGrid(size image.Point, host string, port uint) *LedGrid {
@@ -228,10 +226,10 @@ func NewLedGrid(size image.Point, host string, port uint) *LedGrid {
 	g.PropertyEmbed.Init(GridProps)
 	g.fieldSize = g.FieldSize()
 	g.SetMinSize(geom.Point{g.fieldSize, g.fieldSize})
-	g.DrawColor = color.LedColor{0x00, 0x00, 0x00, 0xFF}
+	g.DrawColor = ledcolor.LedColor{0x00, 0x00, 0x00, 0xFF}
 	g.quitQ = make(chan bool)
-	g.grid = ledgrid.NewLedGrid(size, nil)
-	g.ctrl = ledgrid.NewNetPixelClient(host, port)
+	g.grid = ledgrid.NewLedGridBySize(host, port, size)
+//	g.ctrl = ledgrid.NewNetPixelClient(host, port)
 	return g
 }
 
@@ -248,7 +246,7 @@ func (g *LedGrid) OnInputEvent(evt touch.Event) {
 		col := int(fx * float64(g.grid.Rect.Dx()))
         row := int(fy * float64(g.grid.Rect.Dy()))
 		oldColor := g.grid.LedColorAt(col, row)
-		newColor := g.DrawColor.Mix(oldColor, ledgrid.Blend)
+		newColor := g.DrawColor.Mix(oldColor, ledcolor.Blend)
 		g.grid.SetLedColor(col, row, newColor)
 		g.Mark(adagui.MarkNeedsPaint)
 	}
@@ -265,7 +263,7 @@ func (g *LedGrid) SetSize(size geom.Point) {
 	g.ContainerEmbed.SetMinSize(size)
 }
 
-func (g *LedGrid) Clear(c color.LedColor) {
+func (g *LedGrid) Clear(c ledcolor.LedColor) {
 	for idx := 0; idx < len(g.grid.Pix); idx += 3 {
 		g.grid.Pix[idx+0] = c.R
 		g.grid.Pix[idx+1] = c.G
@@ -286,8 +284,8 @@ func (g *LedGrid) Paint(gc *gg.Context) {
 		}
 	}
 
-	gc.SetStrokeWidth(g.LineWidth())
-	gc.SetStrokeColor(g.LineColor())
+	gc.SetStrokeWidth(g.LineWidth()/2.0)
+	gc.SetStrokeColor(g.BorderColor())
 	for t := g.fieldSize; t < g.Size().Y; t += g.fieldSize {
 		gc.DrawLine(0.0, t, g.Size().X, t)
 	}
@@ -301,7 +299,7 @@ func (g *LedGrid) Paint(gc *gg.Context) {
 	gc.DrawRectangle(g.Bounds().AsCoord())
 	gc.Stroke()
 
-	g.ctrl.Draw(g.grid)
+	g.grid.Show()
 }
 
 func (g *LedGrid) Save(fileName string) {
@@ -389,11 +387,11 @@ func main() {
     mainGrp.Layout = adagui.NewVBoxLayout(5)
     root.Add(mainGrp)
 
-	drawColor := color.LedColor{}
+	drawColor := ledcolor.LedColor{}
 	colorValue := binding.BindUntyped(&drawColor)
 	colorPicker := NewColorPickerWithData(adagui.Horizontal, 2, colorValue)
 
-	ledPanel := NewLedGrid(image.Point{30, 10}, host, port)
+	ledPanel := NewLedGrid(image.Point{40, 10}, host, port)
 
     picoPal := ledgrid.PaletteMap["Pico08"].(*ledgrid.SlicePalette)
 	colorPicker.SetColors(0, picoPal.Colors[:16])
@@ -402,7 +400,7 @@ func main() {
 		if data == nil {
 			return
 		}
-		ledPanel.DrawColor = data.(binding.Untyped).Get().(color.LedColor)
+		ledPanel.DrawColor = data.(binding.Untyped).Get().(ledcolor.LedColor)
 	})
 	colorPicker.SetColor(picoPal.Colors[0])
 
@@ -453,7 +451,7 @@ func main() {
 
 	btnQuit := adagui.NewTextButton("Quit")
 	btnQuit.SetOnTap(func(evt touch.Event) {
-		ledPanel.Clear(color.LedColor{0, 0, 0, 0xff})
+		ledPanel.Clear(ledcolor.LedColor{0, 0, 0, 0xff})
 		screen.Quit()
 	})
 	buttonGrp.Add(adagui.NewSpacer(), btnQuit)

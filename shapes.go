@@ -1,9 +1,8 @@
 package adagui
 
 import (
-//    "container/list"
-    "math"
-//    "sync"
+	"fmt"
+    //"math"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg"
     "github.com/stefan-muehlebach/gg/geom"
@@ -35,7 +34,165 @@ func (s *Shape) OnInputEvent(evt touch.Event) {
     s.CallTouchFunc(evt)
 }
 
-// Kreis
+// Punkte
+type Point struct {
+    Shape
+}
+
+func NewPoint() (*Point) {
+    p := &Point{}
+    p.Wrapper = p
+    p.Shape.Init()
+    p.PropertyEmbed.InitByName("Point")
+    p.SetMinSize(geom.Point{p.Width(), p.Height()})
+    return p
+}
+
+func (p *Point) Paint(gc *gg.Context) {
+    Debugf(Painting, "")
+    mp := p.LocalBounds().Center()
+    gc.DrawPoint(mp.X, mp.Y, p.Width()/2)
+    if p.Pushed() {
+        gc.SetFillColor(p.PushedColor())
+    } else {
+        gc.SetFillColor(p.Color())
+    }
+    gc.FillPreserve()
+    if p.Pushed() || p.Selected() {
+        gc.SetStrokeWidth(p.PushedBorderWidth())
+        gc.SetStrokeColor(p.PushedBorderColor())
+        gc.StrokePreserve()
+    }
+    gc.SetStrokeWidth(p.BorderWidth())
+    gc.SetStrokeColor(p.BorderColor())
+    gc.Stroke()
+}
+
+func (p *Point) Contains(pt geom.Point) (bool) {
+    outer := p.ParentBounds().Inset(-fangRadius, -fangRadius)
+    if !pt.In(outer) {
+        return false
+    }
+    return p.Pos().Distance(pt) <= 0.5*p.Width() + fangRadius
+}
+
+func (p *Point) Pos() (geom.Point) {
+    return p.ParentBounds().Center()
+}
+func (p *Point) SetPos(mp geom.Point) {
+    p.Wrappee().SetPos(mp.Sub(p.Size().Mul(0.5)))
+}
+
+// Geraden
+type Line struct {
+    Shape
+    p0, p1 geom.Point
+}
+
+func NewLine() (*Line) {
+    l := &Line{}
+    l.Wrapper = l
+    l.Shape.Init()
+    l.PropertyEmbed.InitByName("Shape")
+    //l.SetPos(p0.Min(p1))
+    l.p0 = geom.Point{}
+    l.p1 = geom.Point{}
+    //l.SetP0(p0)
+    //l.SetP1(p1)
+    return l
+}
+
+func (l *Line) P0() (geom.Point) {
+    return l.Pos().Add(l.p0)
+}
+func (l *Line) SetP0(pt geom.Point) {
+    if l.Pos().Eq(l.p0) {
+        l.Wrappee().SetPos(pt)
+        return
+    }
+    pos := pt.Min(l.Pos())
+    dPos := l.Pos().Sub(pos)
+    l.p1 = l.p1.Add(dPos)
+    l.p0 = pt.Sub(pos)
+    l.Wrappee().SetPos(pos)
+    l.SetMinSize(geom.Rect(l.p0.X, l.p0.Y, l.p1.X, l.p1.Y).Size())
+}
+
+func (l *Line) P1() (geom.Point) {
+    return l.Pos().Add(l.p1)
+}
+func (l *Line) SetP1(pt geom.Point) {
+    pos := pt.Min(l.Pos())
+    dPos := l.Pos().Sub(pos)
+    l.p0 = l.p0.Add(dPos)
+    l.p1 = pt.Sub(pos)
+    l.Wrappee().SetPos(pos)
+    l.SetMinSize(geom.Rect(l.p0.X, l.p0.Y, l.p1.X, l.p1.Y).Size())
+}    
+
+func (l *Line) Paint(gc *gg.Context) {
+    Debugf(Painting, "")
+    gc.DrawLine(l.p0.X, l.p0.Y, l.p1.X, l.p1.Y)
+    if l.Pushed() || l.Selected() {
+        gc.SetStrokeWidth(l.PushedBorderWidth())
+        gc.SetStrokeColor(l.PushedBorderColor())
+        gc.StrokePreserve()
+    }
+    gc.SetStrokeWidth(l.BorderWidth())
+    gc.SetStrokeColor(l.BorderColor())
+    gc.Stroke()
+}
+
+func (l *Line) Contains(pt geom.Point) (bool) {
+    if !pt.In(l.ParentBounds()) {
+        return false
+    }
+    fx, fy := l.ParentBounds().PosRel(pt)
+    fmt.Printf("fx, fy: %f, %f\n", fx, fy)
+    fmt.Printf("  p0, p1: %v, %v\n", l.p0, l.p1)
+    return true
+    //return math.Abs(fx-fy) <= 0.1
+}
+
+// Rechtecke
+type Rectangle struct {
+    Shape
+}
+
+func NewRectangle(w, h float64) (*Rectangle) {
+    r := &Rectangle{}
+    r.Wrapper = r
+    r.Shape.Init()
+    r.PropertyEmbed.InitByName("Shape")
+    r.SetMinSize(geom.Point{w, h})
+    return r
+}
+
+func (r *Rectangle) Paint(gc *gg.Context) {
+    Debugf(Painting, "")
+    gc.DrawRectangle(r.LocalBounds().AsCoord())
+    if r.Pushed() {
+        gc.SetFillColor(r.PushedColor())
+    } else {
+        gc.SetFillColor(r.Color())
+    }
+    gc.FillPreserve()
+    if r.Pushed() || r.Selected() {
+        gc.SetStrokeWidth(r.PushedBorderWidth())
+        gc.SetStrokeColor(r.PushedBorderColor())
+        gc.StrokePreserve()
+    }
+    gc.SetStrokeWidth(r.BorderWidth())
+    gc.SetStrokeColor(r.BorderColor())
+    gc.Stroke()
+}
+
+func (r *Rectangle) Contains(pt geom.Point) (bool) {
+    outer := r.ParentBounds().Inset(-fangRadius, -fangRadius)
+    return pt.In(outer)
+}
+
+// Kreise
 type Circle struct {
     Shape
 }
@@ -75,7 +232,7 @@ func (c *Circle) Contains(pt geom.Point) (bool) {
     if !pt.In(outer) {
         return false
     }
-    return c.Pos().Distance(pt) <= c.Radius()
+    return c.Pos().Distance(pt) <= c.Radius() + fangRadius
 }
 
 func (c *Circle) Pos() (geom.Point) {
@@ -94,47 +251,66 @@ func (c *Circle) SetRadius(r float64) {
     c.Wrappee().SetPos(mp.Sub(c.Size().Mul(0.5)))
 }
 
-// Punkte
-type Point struct {
+// Ein allgemeinerer Widget Typ ist die Ellipse.
+type Ellipse struct {
     Shape
 }
 
-func NewPoint() (*Point) {
-    p := &Point{}
-    p.Wrapper = p
-    p.Shape.Init()
-    p.PropertyEmbed.InitByName("Point")
-    p.SetMinSize(geom.Point{p.Width(), p.Height()})
-    return p
+func NewEllipse(rx, ry float64) (*Ellipse) {
+    e := &Ellipse{}
+    e.Wrapper = e
+    e.Shape.Init()
+    e.PropertyEmbed.InitByName("Shape")
+    e.SetMinSize(geom.Point{2*rx, 2*ry})
+    return e
 }
 
-func (p *Point) Paint(gc *gg.Context) {
+func (e *Ellipse) Paint(gc *gg.Context) {
     Debugf(Painting, "")
-    mp := p.LocalBounds().Center()
-    gc.DrawPoint(mp.X, mp.Y, p.Width()/2)
-    if p.Pushed() || p.Selected() {
-        gc.SetStrokeWidth(p.PushedBorderWidth())
-        gc.SetStrokeColor(p.PushedBorderColor())
+    mp := e.LocalBounds().Center()
+    w, h := e.Size().AsCoord()
+    gc.DrawEllipse(mp.X, mp.Y, 0.5*w, 0.5*h)
+    if e.Pushed() {
+        gc.SetFillColor(e.PushedColor())
+    } else {
+        gc.SetFillColor(e.Color())
+    }
+    gc.FillPreserve()
+    if e.Pushed() || e.Selected() {
+        gc.SetStrokeWidth(e.PushedBorderWidth())
+        gc.SetStrokeColor(e.PushedBorderColor())
         gc.StrokePreserve()
     }
-    gc.SetStrokeWidth(p.BorderWidth())
-    gc.SetStrokeColor(p.BorderColor())
+    gc.SetStrokeWidth(e.BorderWidth())
+    gc.SetStrokeColor(e.BorderColor())
     gc.Stroke()
 }
 
-func (p *Point) Contains(pt geom.Point) (bool) {
-    outer := p.ParentBounds().Inset(-fangRadius, -fangRadius)
+func (e *Ellipse) Contains(pt geom.Point) (bool) {
+    outer := e.ParentBounds().Inset(-fangRadius, -fangRadius)
     if !pt.In(outer) {
         return false
     }
-    return p.Pos().Distance(pt) <= 0.5*p.Width() + fangRadius
+    dx, dy := e.Pos().Sub(pt).AsCoord()
+    rx, ry := e.Radius()
+    
+    return (dx*dx)/(rx*rx) + (dy*dy)/(ry*ry) <= 1.0
 }
 
-func (p *Point) Pos() (geom.Point) {
-    return p.ParentBounds().Center()
+func (e *Ellipse) Pos() (geom.Point) {
+    return e.ParentBounds().Center()
 }
-func (p *Point) SetPos(mp geom.Point) {
-    p.Wrappee().SetPos(mp.Sub(p.Size().Mul(0.5)))
+func (e *Ellipse) SetPos(mp geom.Point) {
+    e.Wrappee().SetPos(mp.Sub(e.Size().Mul(0.5)))
+}
+
+func (e *Ellipse) Radius() (float64, float64) {
+    return e.Size().Mul(0.5).AsCoord()
+}
+func (e *Ellipse) SetRadius(rx, ry float64) {
+    mp := e.Pos()
+    e.SetMinSize(geom.Point{2*rx, 2*ry})
+    e.Wrappee().SetPos(mp.Sub(e.Size().Mul(0.5)))
 }
 
 // Polygone
@@ -206,174 +382,6 @@ func (p *Polygon) Points() []geom.Point {
         pts[i] = pt
     }
     return pts
-}
-
-// Geraden
-type Line struct {
-    Shape
-    p0, p1 geom.Point
-}
-
-func NewLine(p0, p1 geom.Point) (*Line) {
-    l := &Line{}
-    l.Wrapper = l
-    l.Shape.Init()
-    l.PropertyEmbed.InitByName("Shape")
-    l.SetPos(p0.Min(p1))
-    l.p0 = geom.Point{}
-    l.p1 = geom.Point{}
-    l.SetP0(p0)
-    l.SetP1(p1)
-    return l
-}
-
-func (l *Line) P0() (geom.Point) {
-    return l.Pos().Add(l.p0)
-}
-func (l *Line) SetP0(pt geom.Point) {
-    pos := l.Pos()
-    if pt.X < pos.X {
-        pos.X = pt.X
-    }
-    if pt.Y < pos.Y {
-        pos.Y = pt.Y
-    }
-    l.p1 = l.p1.Add(l.Pos().Sub(pos))
-    l.p0 = pt.Sub(pos)
-    l.SetPos(pos)
-    l.SetMinSize(geom.Rect(l.p0.X, l.p0.Y, l.p1.X, l.p1.Y).Size())
-}
-
-func (l *Line) P1() (geom.Point) {
-    return l.Pos().Add(l.p1)
-}
-func (l *Line) SetP1(pt geom.Point) {
-    pos := l.Pos()
-    if pt.X < pos.X {
-        pos.X = pt.X
-    }
-    if pt.Y < pos.Y {
-        pos.Y = pt.Y
-    }
-    l.p0 = l.p0.Add(l.Pos().Sub(pos))
-    l.p1 = pt.Sub(pos)
-    l.SetPos(pos)
-    l.SetMinSize(geom.Rect(l.p0.X, l.p0.Y, l.p1.X, l.p1.Y).Size())
-}    
-
-func (l *Line) Paint(gc *gg.Context) {
-    Debugf(Painting, "")
-    gc.MoveTo(l.p0.AsCoord())
-    gc.LineTo(l.p1.AsCoord())
-    if l.Pushed() || l.Selected() {
-        gc.SetStrokeWidth(l.PushedBorderWidth())
-        gc.SetStrokeColor(l.PushedBorderColor())
-        gc.StrokePreserve()
-    }
-    gc.SetStrokeWidth(l.BorderWidth())
-    gc.SetStrokeColor(l.BorderColor())
-    gc.Stroke()
-}
-
-func (l *Line) Contains(pt geom.Point) (bool) {
-    outer := l.ParentBounds().Inset(-fangRadius, -fangRadius)
-    if !pt.In(outer) {
-        return false
-    }
-    fx, fy := l.ParentBounds().PosRel(pt)
-    Debugf(Coordinates, "fx, fy: %f, %f", fx, fy)
-    return math.Abs(fx-fy) <= 0.1
-}
-
-// Ein allgemeinerer Widget Typ ist die Ellipse.
-type Ellipse struct {
-    Shape
-}
-
-func NewEllipse(rx, ry float64) (*Ellipse) {
-    e := &Ellipse{}
-    e.Wrapper = e
-    e.Shape.Init()
-    e.PropertyEmbed.InitByName("Shape")
-    e.SetMinSize(geom.Point{2*rx, 2*ry})
-    return e
-}
-
-func (e *Ellipse) Paint(gc *gg.Context) {
-    Debugf(Painting, "")
-    mp := e.LocalBounds().Center()
-    w, h := e.Size().AsCoord()
-    gc.DrawEllipse(mp.X, mp.Y, 0.5*w, 0.5*h)
-    if e.Pushed() || e.Selected() {
-        gc.SetStrokeWidth(e.PushedBorderWidth())
-        gc.SetStrokeColor(e.PushedBorderColor())
-        gc.StrokePreserve()
-    }
-    gc.SetFillColor(e.Color())
-    gc.SetStrokeWidth(e.BorderWidth())
-    gc.SetStrokeColor(e.BorderColor())
-    gc.FillStroke()
-}
-
-func (e *Ellipse) Contains(pt geom.Point) (bool) {
-    outer := e.ParentBounds().Inset(-fangRadius, -fangRadius)
-    if !pt.In(outer) {
-        return false
-    }
-    dx, dy := e.Pos().Sub(pt).AsCoord()
-    rx, ry := e.Radius()
-    
-    return (dx*dx)/(rx*rx) + (dy*dy)/(ry*ry) <= 1.0
-}
-
-func (e *Ellipse) Pos() (geom.Point) {
-    return e.ParentBounds().Center()
-}
-func (e *Ellipse) SetPos(mp geom.Point) {
-    e.Wrappee().SetPos(mp.Sub(e.Size().Mul(0.5)))
-}
-
-func (e *Ellipse) Radius() (float64, float64) {
-    return e.Size().Mul(0.5).AsCoord()
-}
-func (e *Ellipse) SetRadius(rx, ry float64) {
-    mp := e.Pos()
-    e.SetMinSize(geom.Point{2*rx, 2*ry})
-    e.Wrappee().SetPos(mp.Sub(e.Size().Mul(0.5)))
-}
-
-// Und wo es Kreise gibt, da sind auch die Rechtecke nicht weit.
-type Rectangle struct {
-    Shape
-}
-
-func NewRectangle(w, h float64) (*Rectangle) {
-    r := &Rectangle{}
-    r.Wrapper = r
-    r.Shape.Init()
-    r.PropertyEmbed.InitByName("Shape")
-    r.SetMinSize(geom.Point{w, h})
-    return r
-}
-
-func (r *Rectangle) Contains(pt geom.Point) (bool) {
-    outer := r.ParentBounds().Inset(-5.0, -5.0)
-    //inner := r.ParentBounds().Inset(+5.0, +5.0)
-    return pt.In(outer)
-}
-
-func (r *Rectangle) Paint(gc *gg.Context) {
-    Debugf(Painting, "")
-    gc.DrawRectangle(r.LocalBounds().AsCoord())
-    if r.Pushed() || r.Selected() {
-        gc.SetStrokeWidth(r.PushedBorderWidth())
-        gc.SetStrokeColor(r.PushedBorderColor())
-        gc.StrokePreserve()
-    }
-    gc.SetFillColor(r.Color())
-    gc.SetStrokeWidth(r.BorderWidth())
-    gc.SetStrokeColor(r.BorderColor())
-    gc.FillStroke()
 }
 
 //-----------------------------------------------------------------------------

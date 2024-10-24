@@ -210,7 +210,7 @@ func (l *Label) Paint(gc *gg.Context) {
     gc.SetFillColor(l.Color())
     gc.FillStroke()
     gc.SetFontFace(l.fontFace)
-    gc.SetStrokeColor(l.TextColor())
+    gc.SetTextColor(l.TextColor())
     gc.DrawStringAnchored(l.text.Get(), l.basePt.X, l.basePt.Y, l.ax, l.ay)
 
 /*
@@ -383,12 +383,12 @@ func (b *TextButton) Paint(gc *gg.Context) {
     b.Button.Paint(gc)
     gc.SetFontFace(b.fontFace)
     if b.Pushed() {
-        gc.SetStrokeColor(b.PushedTextColor())
+        gc.SetTextColor(b.PushedTextColor())
     } else {
         if b.checked {
-            gc.SetStrokeColor(b.SelectedTextColor())
+            gc.SetTextColor(b.SelectedTextColor())
         } else {
-            gc.SetStrokeColor(b.TextColor())
+            gc.SetTextColor(b.TextColor())
         }
     }
     gc.DrawStringAnchored(b.label, b.refPt.X, b.refPt.Y, b.ax, b.ay)
@@ -441,12 +441,12 @@ func (b *ListButton) Paint(gc *gg.Context) {
     b.Button.Paint(gc)
     gc.SetFontFace(b.fontFace)
     if b.Pushed() {
-        gc.SetStrokeColor(b.PushedTextColor())
+        gc.SetTextColor(b.PushedTextColor())
     } else {
         if b.checked {
-            gc.SetStrokeColor(b.SelectedTextColor())
+            gc.SetTextColor(b.SelectedTextColor())
         } else {
-            gc.SetStrokeColor(b.TextColor())
+            gc.SetTextColor(b.TextColor())
         }
     }
     pt := geom.Point{0.6*b.Size().Y+2*b.InnerPadding(), 0.5*b.Size().Y}
@@ -667,12 +667,12 @@ func (b *TabButton) Paint(gc *gg.Context) {
 
     mp := b.Bounds().Center()
     if b.Pushed() {
-        gc.SetStrokeColor(b.PushedTextColor())
+        gc.SetTextColor(b.PushedTextColor())
     } else {
         if b.checked {
-            gc.SetStrokeColor(b.SelectedTextColor())
+            gc.SetTextColor(b.SelectedTextColor())
         } else {
-            gc.SetStrokeColor(b.TextColor())
+            gc.SetTextColor(b.TextColor())
         }
     }
     gc.SetFontFace(b.fontFace)
@@ -777,7 +777,7 @@ func (c *Checkbox) Paint(gc *gg.Context) {
     }
     x := c.Width() + c.InnerPadding()
     y := 0.5*c.Height()
-    gc.SetStrokeColor(c.TextColor())
+    gc.SetTextColor(c.TextColor())
     gc.SetFontFace(c.fontFace)
     gc.DrawStringAnchored(c.label, x, y, 0.0, 0.5)
 }
@@ -850,7 +850,7 @@ func (b *RadioButton) Paint(gc *gg.Context) {
     }
     x := b.Width() + b.InnerPadding()
     y := 0.5*b.Height()
-    gc.SetStrokeColor(b.TextColor())
+    gc.SetTextColor(b.TextColor())
     gc.SetFontFace(b.fontFace)
     gc.DrawStringAnchored(b.label, x, y, 0.0, 0.5)
 }

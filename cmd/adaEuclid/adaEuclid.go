@@ -101,19 +101,21 @@ func NewPoint() *adagui.Point {
 	return p
 }
 
-func NewLine(p0, p1 geom.Point) *adagui.Line {
+func NewLine() *adagui.Line {
 	var dp geom.Point
 
-	l := adagui.NewLine(p0, p1)
+	l := adagui.NewLine()
 
 	l.SetOnPress(func(evt touch.Event) {
 		dp = evt.Pos.Sub(l.Pos())
 		adagui.Debugf(dbgDom, "dp: %v", dp)
+        l.SetP0(evt.Pos)
 		l.Mark(adagui.MarkNeedsPaint)
 	})
 	l.SetOnDrag(func(evt touch.Event) {
 		adagui.Debugf(dbgDom, "new pos: %v", evt.Pos)
-		l.SetPos(evt.Pos.Sub(dp))
+		//l.SetPos(evt.Pos.Sub(dp))
+        l.SetP0(evt.Pos)
 		l.Mark(adagui.MarkNeedsPaint)
 	})
 	l.SetOnRelease(func(evt touch.Event) {
@@ -195,7 +197,8 @@ func NewCanvas(w, h float64) *adagui.Panel {
 	p := adagui.NewPanel(w, h)
 
 	p.SetOnPress(func(evt touch.Event) {
-		l = NewLine(evt.Pos, evt.Pos)
+		l = NewLine()
+        l.SetP0(evt.Pos)
 		p.Add(l)
 		p.Mark(adagui.MarkNeedsPaint)
 	})
@@ -275,7 +278,10 @@ func main() {
 	c1 = NewCircle(30)
 	c1.SetPos(geom.Point{160, 40})
 
-	l1 = NewLine(geom.Point{20, 20}, geom.Point{40, 40})
+	l1 = NewLine()
+    l1.SetP0(geom.Point{20, 20})
+    l1.SetP1(geom.Point{40, 40})
+
 
 	//l2 = NewLine(geom.Point{10, 100}, geom.Point{130.0, 220.0})
 

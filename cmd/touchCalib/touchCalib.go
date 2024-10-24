@@ -6,12 +6,31 @@ import (
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/fonts"
 	"github.com/stefan-muehlebach/gg/geom"
 	"golang.org/x/image/font"
 	"math"
 	"time"
+)
+
+const (
+	outerSep        = 5.0
+	outerRadius     = 18.0
+	innerRadius     = 9.0
+	margin          = outerSep + outerRadius
+	defNumSamples   = 256
+	defDispRotation = adatft.Rotate000
+)
+
+var (
+	fillColorActive   = color.YellowGreen
+	fillColorDeactive = fillColorActive.Alpha(0.4)
+	lineColorActive   = color.White
+	lineColorDeactive = lineColorActive.Alpha(0.4)
+    lineWidth         = 1.0
+
+    backgroundColor   = color.DarkBlue.Alpha(0.5)
+	numSamples int
 )
 
 //-----------------------------------------------------------------------------
@@ -58,7 +77,7 @@ func (t *Text) IsVisible() bool {
 }
 
 func (t *Text) Draw(gc *gg.Context) {
-	gc.SetStrokeColor(t.color)
+	gc.SetTextColor(t.color)
 	gc.SetFontFace(t.face)
 	gc.DrawStringWrapped(t.txt, t.pos.X, t.pos.Y, 0.0, 0.0, t.width, 1.5,
 		t.align)
@@ -66,27 +85,13 @@ func (t *Text) Draw(gc *gg.Context) {
 
 //-----------------------------------------------------------------------------
 
-const (
-	outerRadius = 18.0
-	innerRadius = 9.0
-)
-
-var (
-	fillColorActive   = color.ForestGreen
-	fillColorDeactive = fillColorActive.Dark(0.6)
-	lineColorActive   = color.White
-	lineColorDeactive = lineColorActive.Dark(0.6)
-
-	numSamples int
-)
-
 type Target struct {
 	refPt     adatft.RefPointType
 	pos       geom.Point
 	samples   []adatft.TouchRawPos
 	curSample int
 	avg       adatft.TouchRawPos
-	vis       bool
+	vis, act  bool
 }
 
 func NewTarget(refPt adatft.RefPointType, pos geom.Point) *Target {
@@ -94,21 +99,32 @@ func NewTarget(refPt adatft.RefPointType, pos geom.Point) *Target {
 	t.refPt = refPt
 	t.pos = pos
 	t.samples = make([]adatft.TouchRawPos, numSamples)
-	t.curSample = numSamples
+	t.curSample = 0
 	t.vis = true
+    t.act = false
 	return t
 }
 
 func (t *Target) Reset() {
 	t.curSample = 0
+    t.vis = true
+    t.act = true
+}
+
+func (t *Target) IsActive() bool {
+    return t.act
+}
+
+func (t *Target) IsVisible() bool {
+	return t.vis
 }
 
 func (t *Target) AddSample(pos adatft.TouchRawPos) bool {
 	var sumX, sumY int
 
-	if t.curSample >= len(t.samples) {
-		return false
-	}
+    if ! t.IsActive() {
+        return false
+    }
 	t.samples[t.curSample] = pos
 	t.curSample++
 	if t.curSample == len(t.samples) {
@@ -119,23 +135,19 @@ func (t *Target) AddSample(pos adatft.TouchRawPos) bool {
 		}
 		t.avg.RawX = uint16(sumX / len(t.samples))
 		t.avg.RawY = uint16(sumY / len(t.samples))
+        t.act = false
 		return false
 	}
 	return true
 }
 
-func (t *Target) IsVisible() bool {
-	return t.vis
-}
-
 func (t *Target) Draw(gc *gg.Context) {
 	tmp := outerSep + outerRadius
-	active := t.curSample < len(t.samples)
 	pct := float64(t.curSample) / float64(len(t.samples))
 
 	gc.Push()
 	gc.Translate(t.pos.X+0.5, t.pos.Y+0.5)
-	if active {
+	if t.act {
 		gc.SetFillColor(fillColorActive)
 	} else {
 		gc.SetFillColor(fillColorDeactive)
@@ -145,16 +157,17 @@ func (t *Target) Draw(gc *gg.Context) {
 	gc.ClosePath()
 	gc.Fill()
 
-	gc.SetStrokeWidth(1.0)
 	gc.DrawCircle(0.0, 0.0, innerRadius)
-	if active {
+	gc.SetFillColor(backgroundColor)
+	gc.Fill()
+
+	gc.SetStrokeWidth(lineWidth)
+	if t.act {
 		gc.SetStrokeColor(lineColorActive)
 	} else {
 		gc.SetStrokeColor(lineColorDeactive)
 	}
-	gc.SetFillColor(color.Black)
-	gc.FillStroke()
-
+	gc.DrawCircle(0.0, 0.0, innerRadius)
 	gc.DrawCircle(0.0, 0.0, outerRadius)
 	gc.DrawLine(-tmp, 0.0, tmp, 0.0)
 	gc.DrawLine(0.0, -tmp, 0.0, tmp)
@@ -164,18 +177,12 @@ func (t *Target) Draw(gc *gg.Context) {
 
 //-----------------------------------------------------------------------------
 
-const (
-	outerSep        = 2.0
-	margin          = outerSep + outerRadius
-	defNumSamples   = 256
-	defDispRotation = adatft.Rotate000
-)
-
 var (
 	textList = []string{
-		"Mit diesem Programm wird die Verzerrung zwischen TouchScreen und Display gemessen und ein Parameterfile erstellt, mit welchem die Verzerrung ausgeglichen werden kann.",
-		"Dazu muss die Mitte der 4 Kontrollpunkte möglichst genau angetippt und während einer gewissen Zeit gehalten werden.",
-		"Im Anschluss werden die berechneten Parameter in die Datei 'RotateXXX.json' geschrieben. Um diese Parameter zu aktivieren, muss diese Datei unter '~/.config/adatft' abgelegt werden.",
+		`Mit diesem Programm kann die Verzerrung zwischen TouchScreen und Display gemessen und ein Parameterfile erstellt werden. Das Package AdaTFT verwendet dieses Parameterfile und beseitigt auf diese Weise die Verzerrungen.`,
+		`Damit dieses Wunder vollbracht werden kann, ist Deine Mithilfe notwendig! Im Folgenden werden dir vier Kontrollpunkte in den Ecken des Bildschirms gezeigt. Diese gilt es so präzis wie möglich mit einem Stift anzutippen und über eine bestimmte Zeit zu halten.`,
+		`Im Anschluss wird im aktuellen Verzeichnis eine Datei namens «TouchCalib.json» erstellt, welche die berechneten Werte enthält. Um diese Datei zu aktivieren, verschiebt man sie einfach in das Verzeichnis «~/.config/adatft».`,
+        `Die Werte wurden in die Datei «TouchCalib.json» geschrieben."`,
 	}
 )
 
@@ -195,8 +202,12 @@ var (
 )
 
 func UpdateDisplay() {
-	gc.SetFillColor(color.Black)
+	//gc.SetFillColor(color.Black)
+	gc.SetFillColor(backgroundColor)
 	gc.Clear()
+	//gc.SetFillColor(backgroundColor)
+	//gc.DrawRectangle(0, 0, width, height)
+	//gc.Fill()
 	for _, graphObj := range graphObjList {
 		if !graphObj.IsVisible() {
 			continue
@@ -248,20 +259,17 @@ func waitForEvent(tch *adatft.Touch, typ adatft.PenEventType) {
 	}
 }
 
-func DrawDisplay(gc, gcText *gg.Context) {
-	gc.DrawImage(gcText.Image(), 0, 0)
-}
-
 //-----------------------------------------------------------------------------
 
 func main() {
 	flag.IntVar(&numSamples, "samples", defNumSamples,
 		"number of samples to collect")
-	flag.Var(&dispRotation, "rotation", "display rotation")
+	//flag.Var(&dispRotation, "rotation", "display rotation")
+    dispRotation = defDispRotation
 	flag.Parse()
 
 	dsp = adatft.OpenDisplay(dispRotation)
-	tch = adatft.OpenTouch()
+	tch = adatft.OpenTouch(dispRotation)
 	gc = gg.NewContext(adatft.Width, adatft.Height)
 
 	width = float64(adatft.Width)
@@ -292,15 +300,15 @@ func main() {
 		graphObjList = append(graphObjList, target)
 	}
 
-	infoText := NewText("", geom.Point{margin, 2.5 * margin}, width-2*margin,
-		fonts.NewFace(fonts.GoRegular, 15.0))
+	infoText := NewText("", geom.Point{margin, 3.0 * margin}, width-2*margin,
+		fonts.NewFace(fonts.GoRegular, 18.0))
 	statusText := NewText("Tap für weiter...",
-		geom.Point{margin, height - 3.5*margin}, width-2*margin,
-		fonts.NewFace(fonts.GoRegular, 15.0))
+		geom.Point{margin, height - 4*margin}, width-2*margin,
+		fonts.NewFace(fonts.GoItalic, 18.0))
 	statusText.align = gg.AlignRight
 
 	graphObjList = append(graphObjList, infoText, statusText)
-	for _, txt := range textList {
+	for _, txt := range textList[:3] {
 		infoText.txt = txt
 		UpdateDisplay()
 		waitForEvent(tch, adatft.PenRelease)
@@ -314,26 +322,31 @@ func main() {
 
 	infoText.txt = "Los!"
 	statusText.vis = false
-	for _, target := range targetList {
-		target.Reset()
-	}
-	UpdateDisplay()
 
 	for refPt := adatft.RefTopLeft; refPt < adatft.NumRefPoints; refPt++ {
+        targetList[refPt].Reset()
+        UpdateDisplay()
 		CollectData(targetList[refPt])
+	    waitForEvent(tch, adatft.PenRelease)
 	}
 
 	infoText.txt = "Fertig!"
-	infoText.face = fonts.NewFace(fonts.GoBold, 63.0)
 	UpdateDisplay()
-	time.Sleep(5 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	distortedPlane := &adatft.DistortedPlane{}
 	for i, target := range targetList {
 		fmt.Printf("%d: %v, %v\n", i, target.pos, target.avg)
 		distortedPlane.SetRefPoint(target.refPt, target.avg, penPosList[i])
 	}
-	distortedPlane.WriteConfigFile("Calib.json")
+	distortedPlane.WriteConfigFile("TouchCalib.json")
+
+	infoText.txt = textList[3]
+	infoText.face = fonts.NewFace(fonts.GoRegular, 18.0)
+	infoText.align = gg.AlignLeft
+	statusText.vis = true
+	UpdateDisplay()
+	waitForEvent(tch, adatft.PenRelease)
 
 	tch.Close()
 	dsp.Close()

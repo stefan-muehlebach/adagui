@@ -32,13 +32,13 @@
     			"Name": "Gainsboro"
     		},
     		"TextColor": {
-    			"Name": "Gainsboro"
+    			"Name": "White"
     		},
     		"PushedTextColor": {
-    			"Name": "Gainsboro"
+    			"Name": "White"
     		},
     		"SelectedTextColor": {
-    			"Name": "Gainsboro"
+    			"Name": "White"
     		},
     		"BackgroundColor": {
     			"Name": "Black"

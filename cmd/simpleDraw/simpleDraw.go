@@ -10,7 +10,7 @@ import (
 	"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/adatft"
 	"log"
-	"math/rand"
+	//"math/rand"
 	_ "sync"
     "encoding/json"
 	//"github.com/stefan-muehlebach/gg/color"
@@ -26,8 +26,10 @@ import (
 type ToolType int
 
 const (
-	CircleTool ToolType = iota
+    PointTool ToolType = iota
+    LineTool
 	RectangleTool
+	CircleTool
 	EllipseTool
     PolygonTool
 )
@@ -64,17 +66,22 @@ func (c *Complex) AsComplex() complex128 {
 // Erstellt ein neues Panel der angegebenen Groesse und legt alle wichtigen
 // Handler fuer das Touch-Event fest.
 func NewPanel(w, h float64) *adagui.Panel {
+    var point *adagui.Point
+    var line *adagui.Line
 	var circ *adagui.Circle
 	var rect *adagui.Rectangle
 	var elli *adagui.Ellipse
 
 	p := adagui.NewPanel(w, h)
-    p.SetColor(color.DarkSlateGrey)
-//    fh, _ := os.Open("taube.png")
-//    p.Image, _ = png.Decode(fh)
+    p.SetColor(color.Gainsboro)
 
 	p.SetOnTap(func(evt touch.Event) {
 		switch tool {
+        case PointTool:
+            point = NewPoint()
+            point.SetPos(evt.Pos)
+            p.Add(point)
+/*
 		case CircleTool:
 			r := 30.0 + 10.0*rand.Float64()
 			circ = NewCircle(r)
@@ -90,20 +97,25 @@ func NewPanel(w, h float64) *adagui.Panel {
 			elli = NewEllipse(rx, ry)
 			elli.SetPos(evt.Pos)
 			p.Add(elli)
+*/
 		}
 		p.Mark(adagui.MarkNeedsPaint)
 	})
 
 	p.SetOnLongPress(func(evt touch.Event) {
 		switch tool {
-		case CircleTool:
-			circ = NewCircle(1.0)
-			circ.SetPos(evt.Pos)
-			p.Add(circ)
+        case LineTool:
+            line = NewLine()
+            line.SetP0(evt.Pos)
+            p.Add(line)
 		case RectangleTool:
 			rect = NewRectangle(1.0, 1.0)
 			rect.SetPos(evt.Pos)
 			p.Add(rect)
+		case CircleTool:
+			circ = NewCircle(1.0)
+			circ.SetPos(evt.Pos)
+			p.Add(circ)
 		case EllipseTool:
 			elli = NewEllipse(1.0, 1.0)
 			elli.SetPos(evt.Pos)
@@ -124,12 +136,14 @@ func NewPanel(w, h float64) *adagui.Panel {
 			return
 		}
 		switch tool {
-		case CircleTool:
-			r := evt.Pos.Distance(evt.InitPos)
-			circ.SetRadius(r)
+        case LineTool:
+            line.SetP1(evt.Pos)
 		case RectangleTool:
 			d := evt.Pos.Sub(evt.InitPos)
 			rect.SetSize(d)
+		case CircleTool:
+			r := evt.Pos.Distance(evt.InitPos)
+			circ.SetRadius(r)
 		case EllipseTool:
 			rx, ry := evt.Pos.Sub(evt.InitPos).AsCoord()
 			elli.SetRadius(rx, ry)
@@ -163,13 +177,57 @@ func NewPanel(w, h float64) *adagui.Panel {
 	return p
 }
 
+func NewPoint() *adagui.Point {
+	var dp geom.Point
+
+	p := adagui.NewPoint()
+
+	p.SetOnPress(func(evt touch.Event) {
+		dp = evt.Pos.Sub(p.Pos())
+		p.Mark(adagui.MarkNeedsPaint)
+	})
+
+	p.SetOnDrag(func(evt touch.Event) {
+		p.SetPos(evt.Pos.Sub(dp))
+		p.Mark(adagui.MarkNeedsPaint)
+	})
+
+	p.SetOnRelease(func(evt touch.Event) {
+		p.Mark(adagui.MarkNeedsPaint)
+	})
+
+    return p
+}
+
+func NewLine() *adagui.Line {
+	var dp geom.Point
+
+	l := adagui.NewLine()
+
+	l.SetOnPress(func(evt touch.Event) {
+		dp = evt.Pos.Sub(l.Pos())
+		l.Mark(adagui.MarkNeedsPaint)
+	})
+
+	l.SetOnDrag(func(evt touch.Event) {
+		l.SetPos(evt.Pos.Sub(dp))
+		l.Mark(adagui.MarkNeedsPaint)
+	})
+
+	l.SetOnRelease(func(evt touch.Event) {
+		l.Mark(adagui.MarkNeedsPaint)
+	})
+
+    return l
+}
+
 // Erstellt einen neuen Kreis und definiert alle Handler, welche fuer diese
 // Objekte spezifisch sind.
 func NewCircle(r float64) *adagui.Circle {
 	var dp geom.Point
 
 	c := adagui.NewCircle(r)
-	col := color.RandGroupColor(colornames.Blues)
+	col := color.RandGroupColor(color.Blues)
 	c.SetColor(col)
 	c.SetPushedColor(col.Alpha(0.5))
 
@@ -214,7 +272,7 @@ func NewEllipse(rx, ry float64) *adagui.Ellipse {
 	var dp geom.Point
 
 	e := adagui.NewEllipse(rx, ry)
-	col := color.RandGroupColor(colornames.Greens)
+	col := color.RandGroupColor(color.Greens)
 	e.SetColor(col)
 	e.SetPushedColor(col.Alpha(0.5))
 
@@ -260,7 +318,7 @@ func NewRectangle(w, h float64) *adagui.Rectangle {
 	var dp geom.Point
 
 	r := adagui.NewRectangle(w, h)
-	col := color.RandGroupColor(colornames.Reds)
+	col := color.RandGroupColor(color.Reds)
 	r.SetColor(col)
 	r.SetPushedColor(col.Alpha(0.5))
 
@@ -320,22 +378,27 @@ func main() {
 	btnData := binding.NewInt()
 	btnData.Set(-1)
 
-	btn5 := adagui.NewIconButtonWithData("icons/line.png", int(PolygonTool), btnData)
-	btn5.SetOnTap(func(evt touch.Event) {
-		tool = PolygonTool
+	btn0 := adagui.NewIconButtonWithData("icons/01.png", int(PointTool), btnData)
+	btn0.SetOnTap(func(evt touch.Event) {
+		tool = PointTool
 	})
 
-	btn2 := adagui.NewIconButtonWithData("icons/circle.png", int(CircleTool), btnData)
+	btn1 := adagui.NewIconButtonWithData("icons/02.png", int(LineTool), btnData)
+	btn1.SetOnTap(func(evt touch.Event) {
+		tool = LineTool
+	})
+
+	btn2 := adagui.NewIconButtonWithData("icons/35.png", int(RectangleTool), btnData)
 	btn2.SetOnTap(func(evt touch.Event) {
-		tool = CircleTool
-	})
-
-	btn3 := adagui.NewIconButtonWithData("icons/rectangle.png", int(RectangleTool), btnData)
-	btn3.SetOnTap(func(evt touch.Event) {
 		tool = RectangleTool
 	})
 
-	btn4 := adagui.NewIconButtonWithData("icons/ellipse.png", int(EllipseTool), btnData)
+	btn3 := adagui.NewIconButtonWithData("icons/05.png", int(CircleTool), btnData)
+	btn3.SetOnTap(func(evt touch.Event) {
+		tool = CircleTool
+	})
+
+	btn4 := adagui.NewIconButtonWithData("icons/05.png", int(EllipseTool), btnData)
 	btn4.SetOnTap(func(evt touch.Event) {
 		tool = EllipseTool
 	})
@@ -384,7 +447,7 @@ func main() {
         fftPlan.Free()
     })
 
-	btnGrp.Add(btn5, btn2, btn3, btn4, btnFFT, adagui.NewSpacer())
+	btnGrp.Add(btn0, btn1, btn2, btn3, btn4, btnFFT, adagui.NewSpacer())
 
 	btnQuit := adagui.NewTextButton("Quit")
 	btnGrp.Add(btnQuit)
