@@ -1,7 +1,7 @@
 package adagui
 
 import (
-	"fmt"
+	//"fmt"
     //"math"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg"
@@ -147,9 +147,9 @@ func (l *Line) Contains(pt geom.Point) (bool) {
     if !pt.In(l.ParentBounds()) {
         return false
     }
-    fx, fy := l.ParentBounds().PosRel(pt)
-    fmt.Printf("fx, fy: %f, %f\n", fx, fy)
-    fmt.Printf("  p0, p1: %v, %v\n", l.p0, l.p1)
+    //fx, fy := l.ParentBounds().PosRel(pt)
+    //fmt.Printf("fx, fy: %f, %f\n", fx, fy)
+    //fmt.Printf("  p0, p1: %v, %v\n", l.p0, l.p1)
     return true
     //return math.Abs(fx-fy) <= 0.1
 }

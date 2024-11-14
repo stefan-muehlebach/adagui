@@ -28,8 +28,8 @@ type Screen struct {
     touch  *adatft.Touch
     window *Window
     paintTicker *time.Ticker
-    paintCloseQ chan bool
-    quitQ chan bool
+    paintCloseQ, eventCloseQ chan bool
+    wg sync.WaitGroup
     mutex *sync.Mutex
 }
 
@@ -48,7 +48,8 @@ func NewScreen(rotation adatft.RotationType) (*Screen) {
     s.paintTicker = time.NewTicker(RefreshCycle)
     s.window = nil
     s.paintCloseQ = make(chan bool)
-    s.quitQ = make(chan bool)
+    s.eventCloseQ = make(chan bool)
+    s.wg.Add(2)
     s.mutex = &sync.Mutex{}
 
     screen = s
@@ -110,9 +111,6 @@ func (s *Screen) SetWindow(w *Window) {
 // die Applikation gar nie richtig läuft (siehe auch Methode Quit).
 func (s *Screen) Run() {
     s.eventThread()
-    if s.window != nil {
-        s.window.Close()
-    }
     s.disp.Close()
 }
 
@@ -121,9 +119,24 @@ func (s *Screen) Run() {
 // Applikation nicht zurückkehrt, muss diese Methode aus einer weiteren
 // Go-Routine (bspw. dem Callback-Handler eines Buttons) aufgerufen werden.
 func (s *Screen) Quit() {
-    s.touch.Close()
+    go s.quit()
+}
+
+func (s *Screen) quit() {
+    //fmt.Printf("Screen.Quit() has been called\n")
+    if s.window != nil {
+        //fmt.Printf("Screen.Quit()   closing an open window\n")
+        s.window.Close()
+        //fmt.Printf("Screen.Quit()   done!\n")
+        s.window = nil
+    }
+    //fmt.Printf("Screen.Quit()   send close to the event thread\n")
+    s.eventCloseQ <- true
+    //fmt.Printf("Screen.Quit()   send close to the paint thread\n")
     s.paintCloseQ <- true
-    <- s.quitQ
+    //fmt.Printf("Screen.Quit()   wait for the threads to complete\n")
+    s.wg.Wait()
+    //fmt.Printf("Screen.Quit()   done!\n")
 }
 
 func (s *Screen) StopPaint() {
@@ -135,8 +148,6 @@ func (s *Screen) ContPaint() {
 }
 
 func (s *Screen) Repaint() {
-    //s.mutex.Lock()
-    //defer s.mutex.Unlock()
     if s.window == nil {
         return
     }
@@ -147,7 +158,7 @@ func (s *Screen) paintThread() {
     for {
         select {
         case <- s.paintCloseQ:
-            s.quitQ <- true
+            s.wg.Done()
             return
         case <- s.paintTicker.C:
             if s.window == nil {
@@ -170,69 +181,78 @@ func (s *Screen) paintThread() {
 // Verarbeitung weitergeleitet. Die Positionsdaten aus den Touch-Events
 // beziehen sich auf den gesamten Bildschirm. Die Transformation von
 // Koordianten in Objekt-relative Daten erfolgt im Objekt Window!
+// Gestoppt wird dieser Thread durch das Schliessen der Event-Queue.
 func (s *Screen) eventThread() {
     var evt, tapEvt touch.Event
     var seqNumber int = 0
 
-    for tchEvt := range s.touch.EventQ {
-        //log.Printf("screen: receive new event from queue\n")
-        switch tchEvt.Type {
-        case adatft.PenPress:
-            seqNumber++
-            evt.Type        = touch.TypePress
-            evt.SeqNumber   = seqNumber
-            evt.LongPressed = false
-            evt.InitTime    = time.Now()
-            evt.InitPos     = geom.NewPoint(tchEvt.X, tchEvt.Y)
-            evt.Time        = evt.InitTime
-            evt.Pos         = evt.InitPos
+LOOP:
+    for {
+        select {
+        case <- s.eventCloseQ:
+            break LOOP
+        case tchEvt := <- s.touch.EventQ:
+			//log.Printf("screen: receive new event from queue\n")
+			switch tchEvt.Type {
+			case adatft.PenPress:
+				seqNumber++
+				evt.Type        = touch.TypePress
+				evt.SeqNumber   = seqNumber
+				evt.LongPressed = false
+				evt.InitTime    = time.Now()
+				evt.InitPos     = geom.NewPoint(tchEvt.X, tchEvt.Y)
+				evt.Time        = evt.InitTime
+				evt.Pos         = evt.InitPos
 
-            // Setze eine verzoegerte Go-Routine zur Erkennung des Events
-            // 'LongPress'.
-            //
-            go func(seqNr int) {
-                time.Sleep(touch.LongPressThreshold)
-                if seqNr == seqNumber &&
-                        evt.Type != touch.TypeRelease &&
-                        evt.InitPos.Distance(evt.Pos) <= touch.NearThreshold {
-                    evt.LongPressed = true
-                    newEvent := evt
-                    newEvent.Type = touch.TypeLongPress
-                    newEvent.Time = time.Now()
-                    s.window.eventQ <- newEvent
-                }
-            }(seqNumber)
-            s.window.eventQ <- evt
+				// Setze eine verzoegerte Go-Routine zur Erkennung des Events
+				// 'LongPress'.
+				//
+				go func(seqNr int) {
+					time.Sleep(touch.LongPressThreshold)
+					if seqNr == seqNumber &&
+							evt.Type != touch.TypeRelease &&
+							evt.InitPos.Distance(evt.Pos) <= touch.NearThreshold {
+						evt.LongPressed = true
+						newEvent := evt
+						newEvent.Type = touch.TypeLongPress
+						newEvent.Time = time.Now()
+						s.window.eventQ <- newEvent
+					}
+				}(seqNumber)
+				s.window.eventQ <- evt
 
-        case adatft.PenDrag:
-            evt.Type = touch.TypeDrag
-            evt.Time = time.Now()
-            evt.Pos  = geom.NewPoint(tchEvt.X, tchEvt.Y)
-            s.window.eventQ <- evt
+			case adatft.PenDrag:
+				evt.Type = touch.TypeDrag
+				evt.Time = time.Now()
+				evt.Pos  = geom.NewPoint(tchEvt.X, tchEvt.Y)
+				s.window.eventQ <- evt
 
-        case adatft.PenRelease:
-            evt.Type = touch.TypeRelease
-            evt.Time = time.Now()
-            evt.Pos  = geom.NewPoint(tchEvt.X, tchEvt.Y)
-            s.window.eventQ <- evt
+			case adatft.PenRelease:
+				evt.Type = touch.TypeRelease
+				evt.Time = time.Now()
+				evt.Pos  = geom.NewPoint(tchEvt.X, tchEvt.Y)
+				s.window.eventQ <- evt
 
-            if evt.InitPos.Distance(evt.Pos) <= touch.NearThreshold {
+				if evt.InitPos.Distance(evt.Pos) <= touch.NearThreshold {
 
-                // An dieser Stelle steht fest: es wurde ein korrekter Tap
-                // erkannt. Die Frage ist noch: war es ein DoubleTap?
-                if tapEvt.Type == touch.TypeTap &&
-                        evt.Time.Sub(tapEvt.Time) < touch.DoubleTapDuration &&
-                        evt.Pos.Distance(tapEvt.Pos) <= touch.NearThreshold {
-                    tapEvt = evt
-                    tapEvt.Type = touch.TypeDoubleTap
-                } else {
-                    tapEvt = evt
-                    tapEvt.Type = touch.TypeTap
-                }
-                s.window.eventQ <- tapEvt
-            }
+					// An dieser Stelle steht fest: es wurde ein korrekter Tap
+					// erkannt. Die Frage ist noch: war es ein DoubleTap?
+					if tapEvt.Type == touch.TypeTap &&
+							evt.Time.Sub(tapEvt.Time) < touch.DoubleTapDuration &&
+							evt.Pos.Distance(tapEvt.Pos) <= touch.NearThreshold {
+						tapEvt = evt
+						tapEvt.Type = touch.TypeDoubleTap
+					} else {
+						tapEvt = evt
+						tapEvt.Type = touch.TypeTap
+					}
+					s.window.eventQ <- tapEvt
+				}
+			}
         }
     }
+    s.wg.Done()
+    //fmt.Printf("Screen.eventThread()   exits\n")
 }
 
 func (s *Screen) StartAnimation(a *Animation) {

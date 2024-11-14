@@ -27,16 +27,16 @@ func (a *Cube3DAnim) RefreshTime() time.Duration {
 func (a *Cube3DAnim) Init(gc *gg.Context) {
     a.gc = gc
    
-	a.cube = NewCube(70.0)
+	a.cube = NewCube(100.0)
 	a.cubeT = &Cube{}
 
-	a.cloud = NewCloud(0, 0, 0, 70.0, 5*numObjs, 4.0)
+	a.cloud = NewCloud(0, 0, 0, 100.0, 10*numObjs, 4.0)
 	a.cloudT = &Cloud{}
 
 	a.zero = NewVector(0.0, 0.0, 0.0)
-	a.xAxis = NewVector(70.0, 0.0, 0.0)
-	a.yAxis = NewVector(0.0, 70.0, 0.0)
-	a.zAxis = NewVector(0.0, 0.0, 70.0)
+	a.xAxis = NewVector(100.0, 0.0, 0.0)
+	a.yAxis = NewVector(0.0, 100.0, 0.0)
+	a.zAxis = NewVector(0.0, 0.0, 100.0)
 
 	a.alpha = math.Pi / 12.0
 	a.dAlpha = math.Pi / 162.0

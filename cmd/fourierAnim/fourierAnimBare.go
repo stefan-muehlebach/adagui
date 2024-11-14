@@ -178,7 +178,7 @@ func paintThread(obj *FourierDisc, syncQ chan bool) {
 			break
 		}
 		t1 := time.Now()
-		gc.SetFillColor(color.Black)
+		gc.SetFillColor(color.DarkRed.Alpha(0.5))
 		gc.Clear()
 		obj.Draw(gc)
 		gc.DrawImageAnchored(img.Image(), 0.0, 0.0, 0.0, 0.0)

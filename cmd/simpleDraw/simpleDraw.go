@@ -26,7 +26,8 @@ import (
 type ToolType int
 
 const (
-    PointTool ToolType = iota
+    MoveTool ToolType = iota
+    PointTool
     LineTool
 	RectangleTool
 	CircleTool
@@ -378,6 +379,11 @@ func main() {
 	btnData := binding.NewInt()
 	btnData.Set(-1)
 
+	btnX := adagui.NewIconButtonWithData("icons/90.png", int(MoveTool), btnData)
+	btnX.SetOnTap(func(evt touch.Event) {
+		tool = MoveTool
+	})
+
 	btn0 := adagui.NewIconButtonWithData("icons/01.png", int(PointTool), btnData)
 	btn0.SetOnTap(func(evt touch.Event) {
 		tool = PointTool
@@ -447,7 +453,7 @@ func main() {
         fftPlan.Free()
     })
 
-	btnGrp.Add(btn0, btn1, btn2, btn3, btn4, btnFFT, adagui.NewSpacer())
+	btnGrp.Add(btnX, btn0, btn1, btn2, btn3, btn4, btnFFT, adagui.NewSpacer())
 
 	btnQuit := adagui.NewTextButton("Quit")
 	btnGrp.Add(btnQuit)

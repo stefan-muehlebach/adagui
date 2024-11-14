@@ -1,6 +1,7 @@
 package adagui
 
 import (
+//    "fmt"
     "image/png"
     "log"
     "os"
@@ -29,10 +30,9 @@ type Window struct {
     Rect geom.Rectangle
     s *Screen
     gc *gg.Context
-    paintCloseQ chan bool
-    paintTicker *time.Ticker
     eventQ chan touch.Event
-    quitQ  chan bool
+    eventCloseQ chan bool
+    wg sync.WaitGroup
     root Node
     stage WindowStage
     mutex *sync.Mutex
@@ -47,23 +47,25 @@ func newWindow(s *Screen) (*Window) {
     height := adatft.Height
     w.Rect = geom.NewRectangleWH(0.0, 0.0, float64(width), float64(height))
     w.gc = gg.NewContext(width, height)
-    //w.paintCloseQ = make(chan bool)
-    //w.paintTicker = time.NewTicker(RefreshCycle)
     w.eventQ = make(chan touch.Event)
-    w.quitQ  = make(chan bool)
+    w.eventCloseQ = make(chan bool)
+    w.wg.Add(1)
     w.stage  = StageAlive
     w.mutex  = &sync.Mutex{}
 
     go w.eventThread()
-    //go w.paintThread()
 
     return w
 }
 
 // Schliesst das Fenster.
 func (w *Window) Close() {
-    close(w.eventQ)
-    <- w.quitQ
+    //fmt.Printf("Window.Close() has been called\n")
+    //fmt.Printf("Window.Close()   send close to the event thread\n")
+    w.eventCloseQ <- true
+    //fmt.Printf("Window.Close()   wait for the threads to complete\n")
+    w.wg.Wait()
+    //fmt.Printf("Window.Close()   done!\n")
 }
 
 // In jedem Fenster muss es ein GUI-Element geben, welches an der obersten
@@ -118,51 +120,62 @@ func (w *Window) eventThread() {
     var target Node
     var onTarget bool
 
-    for evt := range w.eventQ {
+LOOP:
+    for {
+        //fmt.Printf("Window.eventThread() next iteration\n")
+        select {
+        case <- w.eventCloseQ:
+            //fmt.Printf("Window.eventThread() got called on eventCloseQ\n")
+            break LOOP
+        case evt := <- w.eventQ:
+            //fmt.Printf("Window.eventThread() new event received\n")
+			// Ist kein root-Element vorhanden, dann wird das Event nicht weiter
+			// verarbeitet und die Go-Routine wartet auf das naechste Event.
+			if w.root == nil {
+				continue
+			}
+			Debugf(Events, "event received: %v", evt)
+			if evt.Type == touch.TypePress {
+				target = w.root.SelectTarget(evt.Pos)
+				Debugf(Events, "new target    : %T", target)
+				onTarget = true
+			}
+			if target == nil {
+				continue
+			}
+			evt.InitPos = target.Screen2Local(evt.InitPos)
+			evt.Pos = target.Screen2Local(evt.Pos)
+			Debugf(Events, "relative pos  : %v", evt.Pos)
 
-        // Ist kein root-Element vorhanden, dann wird das Event nicht weiter
-        // verarbeitet und die Go-Routine wartet auf das naechste Event.
-        if w.root == nil {
-            continue
-        }
-        Debugf(Events, "event received: %v", evt)
-        if evt.Type == touch.TypePress {
-            target = w.root.SelectTarget(evt.Pos)
-            Debugf(Events, "new target    : %T", target)
-            onTarget = true
-        }
-        if target == nil {
-            continue
-        }
-        evt.InitPos = target.Screen2Local(evt.InitPos)
-        evt.Pos = target.Screen2Local(evt.Pos)
-        Debugf(Events, "relative pos  : %v", evt.Pos)
+			if evt.Type == touch.TypeDrag {
+				if !target.Contains(evt.Pos) {
+					if onTarget {
+						onTarget = false
+						newEvent := evt
+						newEvent.Type = touch.TypeLeave
+						w.mutex.Lock()
+						target.OnInputEvent(newEvent)
+						w.mutex.Unlock()
+					}
+				} else {
+					if !onTarget {
+						onTarget = true
+						newEvent := evt
+						newEvent.Type = touch.TypeEnter
+						w.mutex.Lock()
+						target.OnInputEvent(newEvent)
+						w.mutex.Unlock()
+					}
+				}
+			}
 
-        if evt.Type == touch.TypeDrag {
-            if !target.Contains(evt.Pos) {
-                if onTarget {
-                    onTarget = false
-                    newEvent := evt
-                    newEvent.Type = touch.TypeLeave
-                    w.mutex.Lock()
-                    target.OnInputEvent(newEvent)
-                    w.mutex.Unlock()
-                }
-            } else {
-                if !onTarget {
-                    onTarget = true
-                    newEvent := evt
-                    newEvent.Type = touch.TypeEnter
-                    w.mutex.Lock()
-                    target.OnInputEvent(newEvent)
-                    w.mutex.Unlock()
-                }
-            }
+            //fmt.Printf("Window.eventThread() about to enter crit. section\n")
+			w.mutex.Lock()
+			target.OnInputEvent(evt)
+			w.mutex.Unlock()
+            //fmt.Printf("Window.eventThread()   leave crit. section\n")
         }
-
-        w.mutex.Lock()
-        target.OnInputEvent(evt)
-        w.mutex.Unlock()
     }
-    w.quitQ <- true
+    w.wg.Done()
+    //fmt.Printf("Window.eventThread()   exits\n")
 }

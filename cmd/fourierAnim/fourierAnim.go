@@ -160,6 +160,7 @@ func NewFourierDisc(coeff FourierCoeff, parent *FourierDisc) *FourierDisc {
     d.freq = float64(coeff.freq)
     d.sign = math.Signbit(d.freq)
     d.radius = cmplx.Abs(coeff.factor)
+    //d.initAngle = cmplx.Phase(coeff.factor)
     d.initAngle = cmplx.Phase(coeff.factor) + math.Pi/2.0
     
     d.fillColor = color.LightSkyBlue.Alpha(0.1)
@@ -185,8 +186,8 @@ func (d *FourierDisc) SetAngle(angle float64) {
     d.angle = math.Mod(d.initAngle+angle, 2.0*math.Pi)
     w := math.Sin(d.angle) * d.radius
     h := math.Cos(d.angle) * d.radius
-    d.nextMp = d.mp.Add(geom.Point{w, -h})
-    //d.nextMp = geom.Point{w, -h}
+    //d.nextMp = d.mp.Add(geom.Point{w, -h})
+    d.nextMp = geom.Point{w, -h}
     if d.child != nil {
         d.child.SetPos(d.nextMp)
     }
@@ -202,27 +203,27 @@ func (d *FourierDisc) Animate(t float64) {
 }   
 
 func (d *FourierDisc) Paint(gc *gg.Context) {
-    //gc.Push()
-    //gc.Translate(d.mp.AsCoord())
+    gc.Push()
+    gc.Translate(d.mp.AsCoord())
 
     gc.SetStrokeWidth(d.borderWidth)
     gc.SetStrokeColor(d.borderColor)
     gc.SetFillColor(d.fillColor)
-    gc.DrawCircle(d.mp.X, d.mp.Y, d.radius)
-    //gc.DrawCircle(0.0, 0.0, d.radius)
+    //gc.DrawCircle(d.mp.X, d.mp.Y, d.radius)
+    gc.DrawCircle(0.0, 0.0, d.radius)
     gc.FillStroke()
 
     gc.SetStrokeWidth(d.pointerWidth)
     gc.SetStrokeColor(d.pointerColor)
     gc.SetFillColor(d.pointerColor)
-    gc.DrawLine(d.mp.X, d.mp.Y, d.nextMp.X, d.nextMp.Y)
-    //gc.DrawLine(0.0, 0.0, d.nextMp.X, d.nextMp.Y)
+    //gc.DrawLine(d.mp.X, d.mp.Y, d.nextMp.X, d.nextMp.Y)
+    gc.DrawLine(0.0, 0.0, d.nextMp.X, d.nextMp.Y)
     gc.Stroke()
 
     if d.child != nil {
         d.child.Paint(gc)
     }
-    //gc.Pop()
+    gc.Pop()
 }
 
 //-----------------------------------------------------------------------------
@@ -254,20 +255,21 @@ func (p *FourierPen) SetAngle(angle float64) {}
 func (p *FourierPen) Animate(t float64) {}
 
 func (p *FourierPen) Paint(gc *gg.Context) {
+    pt := gc.Matrix().Transform(p.mp)
     if !p.firstPoint {
-        p0, p1 := p.prevPt, p.mp
+        //p0, p1 := p.prevPt, p.mp
         //p0 := gc.Matrix().Transform(p.prevPt)
         //p1 := gc.Matrix().Transform(p.mp)
 
         p.img.SetFillColor(p.penColor)
         p.img.SetStrokeColor(p.penColor)
         p.img.SetStrokeWidth(p.penWidth)
-        p.img.DrawLine(p0.X, p0.Y, p1.X, p1.Y)
+        p.img.DrawLine(p.prevPt.X, p.prevPt.Y, pt.X, pt.Y)
         p.img.Stroke()
     } else {
         p.firstPoint = false
     }
-    p.prevPt = p.mp
+    p.prevPt = pt
 
 //    gc.SetFillColor(color.OrangeRed)
 //    gc.DrawPoint(p.mp.X, p.mp.Y, 3.0)
@@ -334,8 +336,8 @@ func NewDrawPanel(w, h float64) *adagui.Panel {
 
         label := adagui.NewLabel("Tap somewhre on the screen to start.")
         label.SetTextColor(color.DarkRed.Bright(0.7))
-        label.SetAlign(adagui.AlignCenter | adagui.AlignTop)
-        label.SetPos(panel.Bounds().N())
+        label.SetAlign(adagui.AlignCenter | adagui.AlignBottom)
+        label.SetPos(panel.Bounds().S())
         panel.Add(label)
 
         screen.SetWindow(animWin)
@@ -354,9 +356,6 @@ func NewAnimPanel(w, h float64) *adagui.Panel {
 	p := adagui.NewPanel(w, h)
 
 	p.SetOnTap(func(evt touch.Event) {
-        if fourObj != nil {
-            return
-        }
         fourObj = NewFourierThingy(cfList, maxFreq)
         fourObj.SetPos(p.Bounds().C())
         p.Add(fourObj)
@@ -407,8 +406,8 @@ func main() {
 
     label := adagui.NewLabel("Draw something, but use only one stroke!")
     label.SetTextColor(color.DarkGreen.Bright(0.7))
-    label.SetAlign(adagui.AlignCenter | adagui.AlignTop)
-    label.SetPos(panel.Bounds().N())
+    label.SetAlign(adagui.AlignCenter | adagui.AlignBottom)
+    label.SetPos(panel.Bounds().S())
     panel.Add(label)
 
     // Create the window for the calculation
