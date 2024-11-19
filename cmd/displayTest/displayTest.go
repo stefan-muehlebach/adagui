@@ -15,11 +15,6 @@ import (
 	"syscall"
 	"time"
     "image"
-    "image/color"
-    "golang.org/x/image/font"
-    "golang.org/x/image/math/fixed"
-    "golang.org/x/image/font/basicfont"
-    "golang.org/x/image/draw"
 )
 
 //-----------------------------------------------------------------------------
@@ -199,56 +194,9 @@ var (
 		{"SBB (are you Swiss?)", &SBBAnim{}},
         {"Scrolling Text", &ScrollAnim{}},
         {"Using Pico-8 font",
-            NewFixedFontAnim(image.Point{20, 20}, Pico12x20,
-                "Hello Pico-8 | HELLO PICO-8")},
+            NewFixedFontAnim(image.Point{20, 100}, "Hello Pico-8 | HELLO PICO-8")},
 	}
 )
-
-//-----------------------------------------------------------------------------
-
-type FixedFontAnim struct {
-    gc *gg.Context
-    drawer *font.Drawer
-    face *basicfont.Face
-    text string
-    col color.Color
-    pt fixed.Point26_6
-    lh fixed.Int26_6
-}
-
-func NewFixedFontAnim(pt image.Point, face *basicfont.Face, text string) *FixedFontAnim {
-    a := &FixedFontAnim{}
-    a.drawer = &font.Drawer{}
-    a.face = face
-    a.text = text
-    a.col = color.White
-    a.pt = fixed.P(pt.X, pt.Y)
-    return a
-}
-
-func (a *FixedFontAnim) RefreshTime() time.Duration {
-    return time.Second
-}
-
-func (a *FixedFontAnim) Init(gc *gg.Context) {
-    a.gc = gc
-    a.drawer.Dst = gc.Image().(draw.Image)
-    a.drawer.Src = image.NewUniform(a.col)
-    a.drawer.Face = a.face
-    a.drawer.Dot = a.pt
-    a.lh = fixed.I(a.face.Height)
-    a.gc.SetFillColor(color.Black)
-    a.gc.Clear()
-}
-
-func (a *FixedFontAnim) Paint() {
-    a.drawer.DrawString(a.text)
-    a.drawer.Dot.X = a.pt.X
-    a.drawer.Dot.Y += a.lh
-}
-
-func (a *FixedFontAnim) Clean() {
-}
 
 //-----------------------------------------------------------------------------
 

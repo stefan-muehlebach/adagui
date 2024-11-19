@@ -39,7 +39,6 @@ var (
 
 func main() {
 	var rotation adatft.RotationType = adatft.Rotate090
-	var iconList []*adagui.IconButton
 
 	flag.Var(&rotation, "rotation", "display rotation")
 	flag.Parse()
@@ -47,12 +46,21 @@ func main() {
 	screen = adagui.NewScreen(rotation)
 	win = screen.NewWindow()
 
+	widgetFlex := widgetFlex()
+
+	win.SetRoot(widgetFlex)
+	screen.SetWindow(win)
+	screen.Run()
+}
 	/*
 	   p01 := props.ReadJSON("DefProps.json")
 	   p02 := props.ReadJSON("ButtonProps.json")
 	   fmt.Printf("%v\n", p01)
 	   fmt.Printf("%v\n", p02)
 	*/
+
+func widgetFlex() adagui.Node {
+	var iconList []*adagui.IconButton
 
 	root := adagui.NewGroup()
 	root.Layout = adagui.NewPaddedLayout()
@@ -124,7 +132,5 @@ func main() {
 	})
 	grpBtn.Add(adagui.NewSpacer(), btnQuit)
 
-	win.SetRoot(root)
-	screen.SetWindow(win)
-	screen.Run()
+	return root
 }

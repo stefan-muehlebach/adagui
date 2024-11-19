@@ -18,8 +18,6 @@ const (
 
 var (
 	fontList = []*fonts.Font{
-		fonts.GoRegular,
-		fonts.Seaford,
 		fonts.LucidaBright,
 		fonts.LucidaSans,
         fonts.LucidaHandwritingItalic,
@@ -27,7 +25,7 @@ var (
 		fonts.Garamond,
 	}
     fontIdx = 0
-    blindText string = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum."
+    blindText string = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua."
 )
 
 type ScrollAnim struct {
@@ -48,7 +46,7 @@ func (a *ScrollAnim) Init(gc *gg.Context) {
     a.gc = gc
     a.Setup()
     a.gc.SetFillColor(color.Black)
-    a.gc.SetStrokeColor(color.White)
+    a.gc.SetTextColor(color.White)
 }
 
 func (a *ScrollAnim) Paint() {
@@ -81,60 +79,3 @@ func (a *ScrollAnim) Setup() {
     fontIdx = (fontIdx + 1) % len(fontList)
 }
 
-
-/*
-func ScrollingText() {
-	var face font.Face
-
-	for _, font := range fontList {
-		if quitFlag {
-			break
-		}
-		face = fonts.NewFace(font, fontSize)
-		ScrollText(BlindText, face, textMargin, 0.0, lineSpacing, true)
-		runFlag = true
-	}
-}
-
-func FadeText(gc *gg.Context, dsp *adatft.Display,
-	txt string, face font.Face, x, y, lineSpacing float64, fadeIn bool) {
-}
-
-func ScrollText(txt string, face font.Face, x, y, lineSpacing float64,
-	scrollUp bool) {
-	var textList []string
-	var textWidth float64
-	var h1, h2, h float64
-	var ticker *time.Ticker
-
-	gc.SetFontFace(face)
-	textWidth = float64(gc.Width()) - 2*x
-	textList = gc.WordWrap(txt, textWidth)
-	txt = strings.Join(textList, "\n")
-
-	h1 = float64(gc.Height())
-	_, h2 = gc.MeasureMultilineString(txt, lineSpacing)
-	h = h1 + h2
-
-	ticker = time.NewTicker(30 * time.Millisecond)
-	for range ticker.C {
-		if !runFlag {
-			break
-		}
-		gc.SetFillColor(color.Black)
-		gc.Clear()
-		gc.SetStrokeColor(color.White)
-		if scrollUp {
-			y = h - h2
-		} else {
-			y = -(h - h1)
-		}
-		gc.DrawStringWrapped(txt, x, y, 0, 0, textWidth,
-			lineSpacing, gg.AlignLeft)
-		Draw(gc, disp)
-		if h -= 1.0; h < 0.0 {
-			break
-		}
-	}
-}
-*/
