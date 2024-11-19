@@ -1,0 +1,14 @@
+cmd/adaEuclid/adaEuclid
+cmd/displayTest/displayTest
+cmd/gallery/gallery
+cmd/paletteEditor/paletteEditor
+cmd/simpleDraw/simpleDraw
+cmd/tabPanel/tabPanel
+cmd/touchCalib/touchCalib
+cmd/touchTest/touchTest
+
+*.swp
+*.cpuprof
+*.memprof
+*.trace
+
