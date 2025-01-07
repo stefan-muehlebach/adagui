@@ -2,6 +2,7 @@ cmd/adaEuclid/adaEuclid
 cmd/displayTest/displayTest
 cmd/gallery/gallery
 cmd/paletteEditor/paletteEditor
+cmd/paletteEditor/paletteDump
 cmd/simpleDraw/simpleDraw
 cmd/tabPanel/tabPanel
 cmd/touchCalib/touchCalib

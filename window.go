@@ -28,6 +28,7 @@ const (
 
 type Window struct {
     Rect geom.Rectangle
+	Color color.Color
     s *Screen
     gc *gg.Context
     eventQ chan touch.Event
@@ -46,6 +47,7 @@ func newWindow(s *Screen) (*Window) {
     width  := adatft.Width
     height := adatft.Height
     w.Rect = geom.NewRectangleWH(0.0, 0.0, float64(width), float64(height))
+	w.Color = color.Black
     w.gc = gg.NewContext(width, height)
     w.eventQ = make(chan touch.Event)
     w.eventCloseQ = make(chan bool)
@@ -106,7 +108,7 @@ func (w *Window) SaveScreenshot(fileName string) {
 // Neuaufbau in der Queue, dann ist soweit alles i.O. und wir sind sicher,
 // dass auch unser Auftrag behandelt wird.
 func (w *Window) Repaint(disp *adatft.Display) {
-    w.gc.SetFillColor(color.Black)
+    w.gc.SetFillColor(w.Color)
     w.gc.Clear()
     w.mutex.Lock()
     w.root.Wrappee().Paint(w.gc)

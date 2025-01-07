@@ -216,6 +216,7 @@ type LedGrid struct {
 	fieldSize float64
 	DrawColor ledcolor.LedColor
 	quitQ     chan bool
+	client    ledgrid.GridClient
 	grid      *ledgrid.LedGrid
 }
 
@@ -228,7 +229,11 @@ func NewLedGrid(size image.Point, host string, port uint) *LedGrid {
 	g.SetMinSize(geom.Point{g.fieldSize, g.fieldSize})
 	g.DrawColor = ledcolor.LedColor{0x00, 0x00, 0x00, 0xFF}
 	g.quitQ = make(chan bool)
-	g.grid = ledgrid.NewLedGridBySize(host, port, size)
+	g.client = ledgrid.NewNetGridClient("raspi-3", "udp", ledgrid.DefDataPort,
+	    ledgrid.DefRPCPort)
+    modConf := g.client.ModuleConfig()
+	g.grid = ledgrid.NewLedGrid(g.client, modConf)
+//	g.grid = ledgrid.NewLedGridBySize(host, port, size)
 //	g.ctrl = ledgrid.NewNetPixelClient(host, port)
 	return g
 }
@@ -335,7 +340,6 @@ func (g *LedGrid) Load(fileName string) {
 const (
 	host           = "raspi-3"
 	port           = 5333
-	//colorFieldSize = 25.0
     iconDir = "icons"
 )
 
@@ -452,6 +456,7 @@ func main() {
 	btnQuit := adagui.NewTextButton("Quit")
 	btnQuit.SetOnTap(func(evt touch.Event) {
 		ledPanel.Clear(ledcolor.LedColor{0, 0, 0, 0xff})
+		time.Sleep(100 * time.Millisecond)
 		screen.Quit()
 	})
 	buttonGrp.Add(adagui.NewSpacer(), btnQuit)

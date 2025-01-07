@@ -44,33 +44,21 @@ var (
 		color.Red,
 		color.Lime,
 		color.Blue,
-		//color.RGBA{255, 0, 0, 255},
-		//color.RGBA{0, 255, 0, 255},
-		//color.RGBA{0, 0, 255, 255},
 	}
 	NormalColors = []color.Color{
 		color.Red.Dark(0.37),
 		color.Lime.Dark(0.37),
 		color.Blue.Dark(0.37),
-		//color.RGBA{159, 0, 0, 255},
-		//color.RGBA{0, 159, 0, 255},
-		//color.RGBA{0, 0, 159, 255},
 	}
 	DimmedColors = []color.Color{
 		color.Red.Dark(0.92),
 		color.Lime.Dark(0.92),
 		color.Blue.Dark(0.92),
-		//color.RGBA{20, 0, 0, 255},
-		//color.RGBA{0, 20, 0, 255},
-		//color.RGBA{0, 0, 20, 255},
 	}
 
 	BrightWhite = color.White
 	DimmedWhite = color.White.Dark(0.37)
 	Background  = color.Black
-	//BrightWhite = color.RGBA{255, 255, 255, 255}
-	//DimmedWhite = color.RGBA{160, 160, 160, 255}
-	//Background  = color.RGBA{80, 80, 80, 255}
 
 	palPrevWidth       = 480.0
 	palPrevHeight      = 80.0

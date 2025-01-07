@@ -62,8 +62,14 @@ func main() {
 func widgetFlex() adagui.Node {
 	var iconList []*adagui.IconButton
 
+	tabMenu := adagui.NewTabMenu(nil)
+	tabMenu.AddTab("File", nil)
+	tabMenu.AddTab("Edit", nil)
+
 	root := adagui.NewGroup()
-	root.Layout = adagui.NewPaddedLayout()
+	root.Layout = adagui.NewBorderLayout(tabMenu, nil, nil, nil)
+	//root.Layout = adagui.NewPaddedLayout()
+
 
 	grpMain := adagui.NewGroupPL(root, adagui.NewVBoxLayout())
 

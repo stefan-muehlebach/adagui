@@ -18,7 +18,7 @@ const (
 	outerRadius     = 18.0
 	innerRadius     = 9.0
 	margin          = outerSep + outerRadius
-	defNumSamples   = 256
+	defNumSamples   = 128
 	defDispRotation = adatft.Rotate000
 )
 
@@ -46,6 +46,47 @@ var (
 
 func init() {
 	graphObjList = make([]GraphicObject, 0)
+}
+
+//-----------------------------------------------------------------------------
+
+type Arrow struct {
+    p1, c, p2 geom.Point
+	vis bool
+}
+
+func NewArrow(p1, c, p2 geom.Point) *Arrow {
+	a := &Arrow{}
+	a.p1 = p1
+	a.c = c
+	a.p2 = p2
+	a.vis = true
+	return a
+}
+
+func (a *Arrow) IsVisible() bool {
+	return a.vis
+}
+
+func (a *Arrow) Draw(gc *gg.Context) {
+    gc.MoveTo(a.p1.AsCoord())
+	gc.QuadraticTo(a.c.X, a.c.Y, a.p2.X, a.p2.Y)
+	gc.SetStrokeWidth(5.0)
+	gc.SetStrokeColor(color.WhiteSmoke)
+	gc.Stroke()
+
+	v := a.p2.Sub(a.c)
+	fmt.Printf("v: %+v\n", v)
+	angle := v.Angle()
+	fmt.Printf("Angle: %f\n", angle)
+	rotMat := geom.Rotate(angle)
+	v1 := rotMat.Transform(geom.Point{-4, 9}).Add(a.p2)
+	v2 := rotMat.Transform(geom.Point{ 4, 9}).Add(a.p2)
+
+	gc.MoveTo(v1.AsCoord())
+	gc.LineTo(a.p2.AsCoord())
+	gc.LineTo(v2.AsCoord())
+	gc.Stroke()
 }
 
 //-----------------------------------------------------------------------------
@@ -177,13 +218,60 @@ func (t *Target) Draw(gc *gg.Context) {
 
 //-----------------------------------------------------------------------------
 
+type Iterator[T any] struct {
+	lst []T
+	idx int
+	cycle bool
+}
+
+func NewIterator[T any](lst []T, cycle bool) *Iterator[T] {
+	i := &Iterator[T]{}
+	i.lst = lst
+	i.idx = 0
+	i.cycle = cycle
+	return i
+}
+
+func (i *Iterator[T]) Has() bool {
+	if i.cycle {
+		return true
+	} else {
+		return i.idx < len(i.lst)
+	}
+}
+
+func (i *Iterator[T]) Next() T {
+	j := i.idx
+	if i.cycle {
+		i.idx = (i.idx + 1) % len(i.lst)
+	} else {
+		if i.idx < len(i.lst)-1 {
+			i.idx += 1
+		}
+	}
+	return i.lst[j]
+}
+
 var (
 	textList = []string{
-		`Mit diesem Programm kann die Verzerrung zwischen TouchScreen und Display gemessen und ein Parameterfile erstellt werden. Das Package AdaTFT verwendet dieses Parameterfile und beseitigt auf diese Weise die Verzerrungen.`,
+		`Mit diesem Programm wird der Versatz zwischen TouchScreens und Displays gemessen. Das daraus resultierende Parameterfile wird von AdaTFT verwendet, um den Versatz zu begleichen.`,
 		`Damit dieses Wunder vollbracht werden kann, ist Deine Mithilfe notwendig! Im Folgenden werden dir vier Kontrollpunkte in den Ecken des Bildschirms gezeigt. Diese gilt es so präzis wie möglich mit einem Stift anzutippen und über eine bestimmte Zeit zu halten.`,
 		`Im Anschluss wird im aktuellen Verzeichnis eine Datei namens «TouchCalib.json» erstellt, welche die berechneten Werte enthält. Um diese Datei zu aktivieren, verschiebt man sie einfach in das Verzeichnis «~/.config/adatft».`,
-        `Die Werte wurden in die Datei «TouchCalib.json» geschrieben."`,
+        `Die Werte wurden in die Datei «TouchCalib.json» geschrieben.`,
+		`Drück mit dem Stift in das Zentrum der Markierung und halte die Position...`,
+		`Heb den Stift kurz hoch, damit das nächste Ziel aktiv wird.`,
 	}
+	textIter *Iterator[string] = NewIterator(textList, false)
+
+	backColorList = []color.Color{
+		color.DarkMagenta.Alpha(0.3),
+        color.DarkBlue.Alpha(0.3),
+		color.DarkCyan.Alpha(0.3),
+		color.DarkGreen.Alpha(0.3),
+		color.Gold.Alpha(0.3),
+		color.DarkRed.Alpha(0.3),
+    }
+	colorIter *Iterator[color.Color] = NewIterator(backColorList, true)
 )
 
 var (
@@ -202,7 +290,6 @@ var (
 )
 
 func UpdateDisplay() {
-	//gc.SetFillColor(color.Black)
 	gc.SetFillColor(backgroundColor)
 	gc.Clear()
 	//gc.SetFillColor(backgroundColor)
@@ -264,7 +351,6 @@ func waitForEvent(tch *adatft.Touch, typ adatft.PenEventType) {
 func main() {
 	flag.IntVar(&numSamples, "samples", defNumSamples,
 		"number of samples to collect")
-	//flag.Var(&dispRotation, "rotation", "display rotation")
     dispRotation = defDispRotation
 	flag.Parse()
 
@@ -306,27 +392,41 @@ func main() {
 		geom.Point{margin, height - 4*margin}, width-2*margin,
 		fonts.NewFace(fonts.GoItalic, 18.0))
 	statusText.align = gg.AlignRight
+	noteText := NewText(textList[4], geom.Point{2.1*margin, 2.1*margin}, width-4.2*margin,
+	    fonts.NewFace(fonts.LucidaHandwritingItalic, 14.0))
+	noteText.vis = false
 
-	graphObjList = append(graphObjList, infoText, statusText)
-	for _, txt := range textList[:3] {
-		infoText.txt = txt
+	graphObjList = append(graphObjList, infoText, statusText, noteText)
+	for i := 0; i < 3; i++ {
+		infoText.txt = textIter.Next()
+		backgroundColor = colorIter.Next()
 		UpdateDisplay()
 		waitForEvent(tch, adatft.PenRelease)
 	}
 
+	infoText.pos = infoText.pos.AddXY(0, 100)
 	infoText.txt = "Bereit?"
 	infoText.face = fonts.NewFace(fonts.GoBold, 48.0)
 	infoText.align = gg.AlignCenter
+		backgroundColor = colorIter.Next()
 	UpdateDisplay()
 	waitForEvent(tch, adatft.PenRelease)
 
 	infoText.txt = "Los!"
 	statusText.vis = false
+	backgroundColor = colorIter.Next()
+
+	noteText.vis = true
 
 	for refPt := adatft.RefTopLeft; refPt < adatft.NumRefPoints; refPt++ {
         targetList[refPt].Reset()
         UpdateDisplay()
 		CollectData(targetList[refPt])
+		if refPt == adatft.RefTopLeft {
+			noteText.txt = textList[5]
+			UpdateDisplay()
+			noteText.vis = false
+		}
 	    waitForEvent(tch, adatft.PenRelease)
 	}
 
@@ -345,6 +445,7 @@ func main() {
 	infoText.face = fonts.NewFace(fonts.GoRegular, 18.0)
 	infoText.align = gg.AlignLeft
 	statusText.vis = true
+	backgroundColor = colorIter.Next()
 	UpdateDisplay()
 	waitForEvent(tch, adatft.PenRelease)
 
