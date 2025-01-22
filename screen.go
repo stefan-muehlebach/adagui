@@ -11,14 +11,8 @@ import (
 )
 
 var (
-    numScreen int = 0
-    screen *Screen
-//    rotation adatft.RotationType = adatft.Rotate000
+    screen *Screen = nil
 )
-
-//func init() {
-//    flag.Var(&rotation, "rotation", "display rotation")
-//}
 
 // Dies ist die Datenstruktur, welche das TFT-Display aus einer hoeheren
 // Abstraktion beschreibt. Diese Struktur darf es nur einmal (1) in einer
@@ -38,10 +32,9 @@ type Screen struct {
 // Screens erzeugt. Aktuell darf es nur ein (1) solches Objekt geben - ein
 // mehrfaches Aufrufen von NewScreen führt zu einem Abbruch der Applikation.
 func NewScreen(rotation adatft.RotationType) (*Screen) {
-    if numScreen > 0 {
+    if screen != nil {
         log.Fatal("there is already a 'Screen' object in this application")
     }
-    numScreen += 1
     s := &Screen{}
     s.disp  = adatft.OpenDisplay(rotation)
     s.touch = adatft.OpenTouch(rotation)
@@ -155,11 +148,11 @@ func (s *Screen) Repaint() {
 }
 
 func (s *Screen) paintThread() {
+PAINT_LOOP:
     for {
         select {
         case <- s.paintCloseQ:
-            s.wg.Done()
-            return
+            break PAINT_LOOP
         case <- s.paintTicker.C:
             if s.window == nil {
                 continue
@@ -173,6 +166,7 @@ func (s *Screen) paintThread() {
             s.window.Repaint(s.disp)
         }
     }
+    s.wg.Done()
 }
 
 // In dieser Methode schliesslich spielt die Musik: vom Touch-Screen werden
@@ -186,11 +180,11 @@ func (s *Screen) eventThread() {
     var evt, tapEvt touch.Event
     var seqNumber int = 0
 
-LOOP:
+EVENT_LOOP:
     for {
         select {
         case <- s.eventCloseQ:
-            break LOOP
+            break EVENT_LOOP
         case tchEvt := <- s.touch.EventQ:
 			//log.Printf("screen: receive new event from queue\n")
 			switch tchEvt.Type {

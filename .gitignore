@@ -1,6 +1,7 @@
 cmd/adaEuclid/adaEuclid
 cmd/displayTest/displayTest
 cmd/gallery/gallery
+cmd/ledgrid/ledgrid
 cmd/paletteEditor/paletteEditor
 cmd/paletteEditor/paletteDump
 cmd/simpleDraw/simpleDraw
@@ -12,4 +13,5 @@ cmd/touchTest/touchTest
 *.cpuprof
 *.memprof
 *.trace
+*.save
 

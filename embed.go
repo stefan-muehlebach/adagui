@@ -329,7 +329,7 @@ const (
 
 func (m Marks)  NeedsMeasure() (bool) { return m & MarkNeedsMeasure != 0 }
 func (m Marks)  NeedsLayout() (bool)  { return m & MarkNeedsLayout  != 0 }
-func (m Marks)  NeedsPaint() (bool)   { return m & MarkNeedsPaint   != 0  }
+func (m Marks)  NeedsPaint() (bool)   { return m & MarkNeedsPaint   != 0 }
 func (m Marks)  NeedsRecalc() (bool)  { return m & MarkNeedsRecalc  != 0 }
 
 func (m *Marks) UnmarkNeedsMeasure()  { *m &^= MarkNeedsMeasure }
