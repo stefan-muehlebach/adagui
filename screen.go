@@ -141,10 +141,12 @@ func (s *Screen) ContPaint() {
 }
 
 func (s *Screen) Repaint() {
-    if s.window == nil {
+    if s.window == nil || s.window.stage != StageVisible {
         return
     }
-    s.window.Repaint(s.disp)
+    if s.window.Repaint() {
+		s.disp.Draw(s.window.gc.Image())
+	}
 }
 
 func (s *Screen) paintThread() {
@@ -154,16 +156,7 @@ PAINT_LOOP:
         case <- s.paintCloseQ:
             break PAINT_LOOP
         case <- s.paintTicker.C:
-            if s.window == nil {
-                continue
-            }
-            if s.window.stage != StageVisible {
-                continue
-            }
-            if s.window.root != nil && !s.window.root.Wrappee().Marks.NeedsPaint() {
-                continue
-            }
-            s.window.Repaint(s.disp)
+			s.Repaint()
         }
     }
     s.wg.Done()
@@ -186,7 +179,6 @@ EVENT_LOOP:
         case <- s.eventCloseQ:
             break EVENT_LOOP
         case tchEvt := <- s.touch.EventQ:
-			//log.Printf("screen: receive new event from queue\n")
 			switch tchEvt.Type {
 			case adatft.PenPress:
 				seqNumber++

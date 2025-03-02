@@ -238,24 +238,6 @@ func main() {
 	flag.Parse()
 
     adagui.StartProfiling()
-/*
-    in := make([]Complex, 0)
-    b, err := os.ReadFile(coeffFile)
-    if err != nil {
-        log.Fatal(err)
-    }
-    err = json.Unmarshal(b, &in)
-    if err != nil {
-        log.Fatal(err)
-    }
-    CoeffList = make([]FourierCoeff, 2*maxFreq+1)
-    CoeffList[0] = FourierCoeff{0, in[0].AsComplex()}
-    for i := range maxFreq {
-        freq := float64(i+1)
-        CoeffList[2*i+1] = FourierCoeff{ freq, in[i+1].AsComplex()}
-        CoeffList[2*i+2] = FourierCoeff{-freq, in[len(in)-(i+1)].AsComplex()}
-    }
-*/
 
     coeffList = ReadCoeffList(coeffFile)
 

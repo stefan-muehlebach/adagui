@@ -152,12 +152,12 @@
 		"Name": "TabButton",
 		"ParentName": "Button",
 	    "Colors": {
-		    "Color": { "R": 0, "G": 0, "B": 0, "A": 0 },
+		    "Color": { "Name": "Teal" },
     		"PushedColor": {
 			    "Name": "Teal", "Bright": 0.6
     		},
     		"SelectedColor": {
-			    "Name": "Teal"
+			    "Name": "Teal", "Bright": 0.4
     		}
         },
     	"Sizes": {
@@ -174,7 +174,16 @@
 		"Name": "IconButton",
 		"ParentName": "Button",
 		"Sizes": {
-			"InnerPadding": 3
+			"InnerPadding": 5
+		}
+	},
+
+	{
+		"Name": "ListButton",
+		"ParentName": "Button",
+		"Sizes": {
+			"Width":        45,
+			"InnerPadding":  8
 		}
 	},
 
@@ -233,13 +242,13 @@
         	"PushedColor"        : {"R": 0, "G": 0, "B": 0, "A": 0},
         	"SelectedColor"      : {"R": 0, "G": 0, "B": 0, "A": 0},
         	"BorderColor"        : {"Name": "Black"},
-        	"PushedBorderColor"  : {"Name": "Black", "Alpha": 0.1},
-        	"SelectedBorderColor": {"Name": "Black", "Alpha": 0.1}
+        	"_PushedBorderColor"  : {"Name": "Black", "Alpha": 0.1},
+        	"_SelectedBorderColor": {"Name": "Black", "Alpha": 0.1}
     	},
     	"Sizes": {
         	"BorderWidth":          2.0,
-        	"PushedBorderWidth":   10.0,
-        	"SelectedBorderWidth": 10.0
+        	"_PushedBorderWidth":   10.0,
+        	"_SelectedBorderWidth": 10.0
     	}
 	},
 

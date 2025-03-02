@@ -17,8 +17,8 @@ import (
 const ()
 
 var (
-	pointColor  = color.WhiteSmoke.Alpha(0.5)
-	pointRadius = 1.0
+	pointColor  = color.WhiteSmoke.Alpha(0.3)
+	pointRadius = 10.0
 
 	crossColor = color.White
 	crossSize  = 40.0
@@ -55,10 +55,9 @@ func printEvent(event adatft.PenEvent) {
 }
 
 func drawPoint(gc *gg.Context, x, y float64) {
+	gc.SetFillColor(pointColor)
 	gc.DrawPoint(x, y, pointRadius)
-	//gc.SetFillColor(pointColor)
-	//gc.SetStrokeColor(pointColor)
-	gc.FillStroke()
+	gc.Fill()
 }
 
 func drawCross(gc *gg.Context, x, y float64) {
@@ -163,23 +162,37 @@ func main() {
 
 	quitPt := geom.NewPoint(0.0, 0.0)
     clearPt := geom.NewPoint(float64(adatft.Width), 0.0)
+	color1Pt := geom.NewPoint(0.0, float64(adatft.Height))
+	color2Pt := geom.NewPoint(float64(adatft.Width), float64(adatft.Height))
 
 	for event := range touch.EventQ {
-		if quitPt.Distance(geom.Point{event.X, event.Y}) <= 35.0 {
+		pt := geom.Point{event.X, event.Y}
+		if quitPt.Distance(pt) <= 35.0 {
 			break
 		}
-		if clearPt.Distance(geom.Point{event.X, event.Y}) <= 35.0 {
+		if clearPt.Distance(pt) <= 35.0 {
 			trace.SetFillColor(color.Transparent)
             trace.Clear()
             trace.SetFillColor(pointColor)
             continue
 		}
+		if color1Pt.Distance(pt) <= 35.0 {
+			pointColor = color.OrangeRed.Alpha(0.2)
+			pointRadius = 20
+			continue
+		}
+		if color2Pt.Distance(pt) <= 35.0 {
+			pointColor = color.Gold.Alpha(0.7)
+			pointRadius = 5
+			continue
+		}
+
 		printEvent(event)
 		if nogui {
 			continue
 		}
 		switch event.Type {
-		case adatft.PenPress, adatft.PenDrag:
+		case adatft.PenPress, adatft.PenDrag, adatft.PenRelease:
 			drawPoint(trace, event.X, event.Y)
 			drawCross(cross, event.X, event.Y)
 		}

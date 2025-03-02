@@ -184,6 +184,7 @@ func (g *Group) Paint(gc *gg.Context) {
 type Panel struct {
 	ContainerEmbed
 	Image image.Image
+	IsClipping bool
 }
 
 func NewPanel(w, h float64) *Panel {
@@ -210,10 +211,14 @@ func (p *Panel) Paint(gc *gg.Context) {
 			p.Image, p.LocalBounds().Int(), draw.Over, nil)
 	}
 
-	gc.DrawRectangle(p.LocalBounds().AsCoord())
-	gc.Clip()
-	p.ContainerEmbed.Paint(gc)
-	gc.ResetClip()
+	if p.IsClipping {
+		gc.DrawRectangle(p.LocalBounds().AsCoord())
+		gc.Clip()
+		p.ContainerEmbed.Paint(gc)
+		gc.ResetClip()
+	} else {
+		p.ContainerEmbed.Paint(gc)
+	}
 }
 
 // Komplexeres Panel mit Scrollmoeglichkeit.

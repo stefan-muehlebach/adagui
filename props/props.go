@@ -71,6 +71,9 @@ func (p ColorPropertyName) MarshalText() ([]byte, error) {
 
 func (p *ColorPropertyName) UnmarshalText(text []byte) error {
 	txt := string(text)
+	if txt[0] == '_' {
+		return nil
+	}
 	for i, t := range ColorPropertyList {
 		if t == txt {
 			*p = ColorPropertyName(i)
@@ -136,6 +139,9 @@ func (p FontPropertyName) MarshalText() ([]byte, error) {
 
 func (p *FontPropertyName) UnmarshalText(text []byte) error {
 	txt := string(text)
+	if txt[0] == '_' {
+		return nil
+	}
 	for i, t := range FontPropertyList {
 		if t == txt {
 			*p = FontPropertyName(i)
@@ -198,6 +204,9 @@ func (p SizePropertyName) MarshalText() ([]byte, error) {
 
 func (p *SizePropertyName) UnmarshalText(text []byte) error {
 	txt := string(text)
+	if txt[0] == '_' {
+		return nil
+	}
 	for i, t := range SizePropertyList {
 		if t == txt {
 			*p = SizePropertyName(i)
@@ -336,7 +345,7 @@ func initPropsMapFromData(data []byte) {
 	PropsMap = make(map[string]*Properties)
 	err := json.Unmarshal(data, &propList)
 	if err != nil {
-		log.Fatalf("failed unmarshalling data: %v", err)
+		log.Fatalf("[1]: failed unmarshaling data: %v", err)
 	}
 	for _, val := range propList {
 		if val.ParentName == "" {
@@ -353,7 +362,7 @@ func initPropsMapFromData(data []byte) {
 
             err = json.Unmarshal(jsonData, &namedCol)
 	        if err != nil {
-		        log.Fatalf("failed unmarshalling data: %v", err)
+				log.Fatalf("[2]: failed unmarshaling data: %v", err)
 	        }
             if namedCol.Name != "" {
                 if col, ok := color.Map[namedCol.Name]; ok {
@@ -365,7 +374,7 @@ func initPropsMapFromData(data []byte) {
 			}
             err = json.Unmarshal(jsonData, &rgbafCol)
 	        if err != nil {
-		        log.Fatalf("failed unmarshalling data: %v", err)
+				log.Fatalf("[3]: failed unmarshaling data: %v", err)
 	        }
 			p.ColorMap[colorName] = rgbafCol
 		}

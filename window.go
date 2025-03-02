@@ -107,13 +107,16 @@ func (w *Window) SaveScreenshot(fileName string) {
 // gegeben. Diese Methode blockiert nie! Ist bereits ein Auftrag fuer den
 // Neuaufbau in der Queue, dann ist soweit alles i.O. und wir sind sicher,
 // dass auch unser Auftrag behandelt wird.
-func (w *Window) Repaint(disp *adatft.Display) {
+func (w *Window) Repaint() bool {
+	if w.root == nil || !w.root.Wrappee().Marks.NeedsPaint() {
+		return false
+	}
     w.gc.SetFillColor(w.Color)
     w.gc.Clear()
     w.mutex.Lock()
     w.root.Wrappee().Paint(w.gc)
     w.mutex.Unlock()
-    disp.Draw(w.gc.Image())
+	return true
 }
 
 // Mit dieser Go-Routine werden die Events vom Screen-Objekt empfangen und

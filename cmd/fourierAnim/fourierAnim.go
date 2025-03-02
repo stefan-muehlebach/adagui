@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
     "time"
     "math"
@@ -31,7 +32,9 @@ func SignalHandler() {
 }
 
 const (
+	F float64 = 1.0
     DefMaxFreq = 20
+	Dt float64 = 0.05 / float64(DefMaxFreq)
 )
 
 var (
@@ -83,14 +86,16 @@ func NewFourierThingy(cfList *CoeffList, maxFreq int) *FourierThingy {
     return f
 }
 
-func (f *FourierThingy) Paint(gc *gg.Context) {
-    f.firstDisc.Paint(gc)
+func (f *FourierThingy) Draw(gc *gg.Context) {
+	fmt.Printf("Draw of FourierThingy\n")
+    f.firstDisc.Draw(gc)
     gc.DrawImageAnchored(f.layer.Image(), 0.0, 0.0, 0.5, 0.5)
+	fmt.Printf("   done\n")
 }
 
 func (f *FourierThingy) StartAnim() {
-    go fourObj.paintFunc()
-    go fourObj.animateFunc()
+    // go fourObj.paintFunc()
+    go f.animateFunc()
 }
 
 func (f *FourierThingy) StopAnim() {
@@ -99,7 +104,7 @@ func (f *FourierThingy) StopAnim() {
 }
 
 func (f *FourierThingy) animateFunc() {
-    var dt float64 = 0.0025
+    var dt float64 = 0.05 / float64(DefMaxFreq)
     var t float64 = 0.0
     var step time.Duration = 30 * time.Millisecond
 
@@ -110,26 +115,18 @@ MainLoop:
         select {
         case <-f.ticker.C:
             f.firstDisc.Animate(t)
+    		f.Mark(adagui.MarkNeedsPaint)
             t += dt
             if t > 1.0 {
                 t = 0.0
             }
-            f.syncQ <- true
+			screen.Repaint()
         case <-f.quitQ:
             break MainLoop
         }
     }
+	fmt.Printf("Quitting main loop\n")
     close(f.syncQ)
-}
-
-func (f *FourierThingy) paintFunc() {
-    for {
-        if _, ok := <-f.syncQ; !ok {
-            break
-        }
-        screen.Repaint()
-    }
-    f.quitQ <- true
 }
 
 //-----------------------------------------------------------------------------
@@ -138,7 +135,7 @@ type FourierObject interface {
     SetPos(mp geom.Point)
     SetAngle(angle float64)
     Animate(t float64)
-    Paint(gc *gg.Context)
+    Draw(gc *gg.Context)
 }   
     
 //-----------------------------------------------------------------------------
@@ -202,28 +199,28 @@ func (d *FourierDisc) Animate(t float64) {
     }
 }   
 
-func (d *FourierDisc) Paint(gc *gg.Context) {
+func (d *FourierDisc) Draw(gc *gg.Context) {
+	fmt.Printf("Draw of FourierDisc\n")
     gc.Push()
     gc.Translate(d.mp.AsCoord())
 
     gc.SetStrokeWidth(d.borderWidth)
     gc.SetStrokeColor(d.borderColor)
     gc.SetFillColor(d.fillColor)
-    //gc.DrawCircle(d.mp.X, d.mp.Y, d.radius)
     gc.DrawCircle(0.0, 0.0, d.radius)
     gc.FillStroke()
 
     gc.SetStrokeWidth(d.pointerWidth)
     gc.SetStrokeColor(d.pointerColor)
     gc.SetFillColor(d.pointerColor)
-    //gc.DrawLine(d.mp.X, d.mp.Y, d.nextMp.X, d.nextMp.Y)
     gc.DrawLine(0.0, 0.0, d.nextMp.X, d.nextMp.Y)
     gc.Stroke()
 
     if d.child != nil {
-        d.child.Paint(gc)
+        d.child.Draw(gc)
     }
     gc.Pop()
+	fmt.Printf("   done\n")
 }
 
 //-----------------------------------------------------------------------------
@@ -254,13 +251,10 @@ func (p *FourierPen) SetAngle(angle float64) {}
 
 func (p *FourierPen) Animate(t float64) {}
 
-func (p *FourierPen) Paint(gc *gg.Context) {
+func (p *FourierPen) Draw(gc *gg.Context) {
+	fmt.Printf("Draw of FourierPen\n")
     pt := gc.Matrix().Transform(p.mp)
     if !p.firstPoint {
-        //p0, p1 := p.prevPt, p.mp
-        //p0 := gc.Matrix().Transform(p.prevPt)
-        //p1 := gc.Matrix().Transform(p.mp)
-
         p.img.SetFillColor(p.penColor)
         p.img.SetStrokeColor(p.penColor)
         p.img.SetStrokeWidth(p.penWidth)
@@ -270,10 +264,7 @@ func (p *FourierPen) Paint(gc *gg.Context) {
         p.firstPoint = false
     }
     p.prevPt = pt
-
-//    gc.SetFillColor(color.OrangeRed)
-//    gc.DrawPoint(p.mp.X, p.mp.Y, 3.0)
-//    gc.FillStroke()
+	fmt.Printf("   done\n")
 }
 
 //-----------------------------------------------------------------------------
@@ -337,7 +328,7 @@ func NewDrawPanel(w, h float64) *adagui.Panel {
         label := adagui.NewLabel("Tap somewhre on the screen to start.")
         label.SetTextColor(color.DarkRed.Bright(0.7))
         label.SetAlign(adagui.AlignCenter | adagui.AlignBottom)
-        label.SetPos(panel.Bounds().S())
+        label.SetPos(panel.Bounds().S().AddXY(0, -10))
         panel.Add(label)
 
         screen.SetWindow(animWin)
@@ -349,19 +340,21 @@ func NewDrawPanel(w, h float64) *adagui.Panel {
 func NewAnimPanel(w, h float64) *adagui.Panel {
     var cfList *CoeffList
 
-    if fourObj != nil {
-        return nil
-    }
 
 	p := adagui.NewPanel(w, h)
 
 	p.SetOnTap(func(evt touch.Event) {
+    	if fourObj != nil {
+        	return
+    	}
+        // screen.StopPaint()
+		fmt.Printf("len(cfList): %d\n", len(cfList.data))
         fourObj = NewFourierThingy(cfList, maxFreq)
         fourObj.SetPos(p.Bounds().C())
         p.Add(fourObj)
-	    p.Mark(adagui.MarkNeedsPaint)
-        screen.StopPaint()
+	    fourObj.Mark(adagui.MarkNeedsPaint)
         fourObj.StartAnim()
+		fmt.Printf("custom animation started\n")
     })
 
     pts := poly.Points()
@@ -383,7 +376,7 @@ func NewAnimPanel(w, h float64) *adagui.Panel {
 
 // Hauptprogramm.
 func main() {
-    flag.StringVar(&overlayFile, "overlay", "", "File with overlay graphic")
+    flag.StringVar(&overlayFile, "overlay", "", "Optional overlay graphic file")
     flag.IntVar(&maxFreq, "freq", DefMaxFreq, "Maximal frequency")
     flag.Parse()
     adagui.StartProfiling()
@@ -394,11 +387,10 @@ func main() {
 
     // Create the windows for the sketching part
 	drawWin = screen.NewWindow()
-
 	root := adagui.NewGroupPL(nil, adagui.NewPaddedLayout())
 	drawWin.SetRoot(root)
 
-	panel := NewDrawPanel(10.0, 10.0)
+	panel := NewDrawPanel(10, 10)
     panel.SetColor(color.DarkGreen.Alpha(0.5))
     panel.SetBorderWidth(1.0)
     panel.SetBorderColor(color.DarkGreen.Bright(0.5))
@@ -406,8 +398,8 @@ func main() {
 
     label := adagui.NewLabel("Draw something, but use only one stroke!")
     label.SetTextColor(color.DarkGreen.Bright(0.7))
+    label.SetPos(panel.Bounds().S().AddXY(0, -10))
     label.SetAlign(adagui.AlignCenter | adagui.AlignBottom)
-    label.SetPos(panel.Bounds().S())
     panel.Add(label)
 
     // Create the window for the calculation
@@ -422,10 +414,10 @@ func main() {
     root.Add(panel)
 
     label = adagui.NewLabel("Calculating... Please wait!")
-    label.SetTextColor(color.DarkBlue.Bright(0.7))
     label.SetFontSize(32.0)
-    label.SetAlign(adagui.AlignCenter | adagui.AlignMiddle)
+    label.SetTextColor(color.DarkBlue.Bright(0.7))
     label.SetPos(panel.Bounds().C())
+    label.SetAlign(adagui.AlignCenter | adagui.AlignMiddle)
     panel.Add(label)
 
 	screen.SetWindow(drawWin)

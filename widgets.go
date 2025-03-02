@@ -17,13 +17,14 @@
 package adagui
 
 import (
+//	"fmt"
     "image"
     "log"
     "math"
     "github.com/stefan-muehlebach/adagui/binding"
     "github.com/stefan-muehlebach/adagui/touch"
     "github.com/stefan-muehlebach/gg"
-    // "github.com/stefan-muehlebach/gg/color"
+//    "github.com/stefan-muehlebach/gg/color"
     "github.com/stefan-muehlebach/gg/fonts"
     "github.com/stefan-muehlebach/gg/geom"
     "golang.org/x/image/font"
@@ -111,8 +112,7 @@ func newLabel() (*Label) {
     l.Wrapper = l
     l.Init()
     l.PropertyEmbed.InitByName("Label")
-    l.align = AlignLeft | AlignTop
-    l.ax, l.ay = 0.0, 1.0
+    l.SetAlign(AlignLeft | AlignTop)
     return l
 }
 
@@ -132,16 +132,13 @@ func NewLabelWithData(data binding.String) (*Label) {
 }
 
 func (l *Label) Pos() geom.Point {
-    return l.LeafEmbed.Pos().Add(l.basePt)
+	return l.basePt
 }
 
-func (l *Label) SetPos(p geom.Point) {
-    l.LeafEmbed.SetPos(p.Sub(l.basePt))
-}
-
-func (l *Label) SetSize(size geom.Point) {
-    l.LeafEmbed.SetSize(size)
-    l.updateBasePt()
+func (l *Label) SetPos(pt geom.Point) {
+	l.basePt = pt
+	dp := geom.Point{l.ax*l.Size().X, (1-l.ay)*l.Size().Y}
+	l.LeafEmbed.SetPos(l.basePt.Sub(dp))
 }
 
 func (l *Label) Align() (AlignType) {
@@ -165,7 +162,7 @@ func (l *Label) SetAlign(a AlignType) {
     case AlignTop:
         l.ay = 1.0
     }
-    l.updateBasePt()
+	l.SetPos(l.basePt)
 }
 
 func (l *Label) Text() (string) {
@@ -191,15 +188,8 @@ func (l *Label) updateSize() {
     l.fontFace = fonts.NewFace(l.Font(), l.FontSize())
     w := float64(font.MeasureString(l.fontFace, l.Text())) / 64.0
     h := l.FontSize()
-    //h := float64(l.fontFace.Metrics().Ascent +
-    //        l.fontFace.Metrics().Descent) / 64.0
     l.desc = float64(l.fontFace.Metrics().Descent) / 64.0
     l.SetMinSize(geom.Point{w, h})
-    l.updateBasePt()
-}
-
-func (l *Label) updateBasePt() {
-    l.basePt = geom.Point{l.ax*l.Size().X, (1-l.ay)*l.Size().Y}
 }
 
 func (l *Label) Paint(gc *gg.Context) {
@@ -211,9 +201,10 @@ func (l *Label) Paint(gc *gg.Context) {
     gc.FillStroke()
     gc.SetFontFace(l.fontFace)
     gc.SetTextColor(l.TextColor())
-    gc.DrawStringAnchored(l.text.Get(), l.basePt.X, l.basePt.Y, l.ax, l.ay)
+    gc.DrawStringAnchored(l.text.Get(), l.ax*l.Size().X, (1-l.ay)*l.Size().Y,
+    	l.ax, l.ay)
 
-/*
+	/*
     // Only for debugging!
     // Markierungen um den Bereich fuer den Text
     gc.SetStrokeColor(color.Crimson)
@@ -239,9 +230,9 @@ func (l *Label) Paint(gc *gg.Context) {
     gc.Stroke()
     // Referenzpunkt fuer den Text
     gc.SetFillColor(color.Crimson)
-    gc.DrawPoint(l.basePt.X, l.basePt.Y, 5.0)
+    gc.DrawPoint(l.ax*l.Size().X, (1-l.ay)*l.Size().Y, 5.0)
     gc.Fill()
-*/
+	*/
 }
 
 // Buttons sind neutrale Knoepfe, ohne spezifischen Inhalt, d.h. ohne Text
@@ -408,7 +399,7 @@ func NewListButton(options []string) (*ListButton) {
     b.Wrapper     = b
     b.LeafEmbed.Init()
     b.PushEmbed.Init(b, nil)
-    b.PropertyEmbed.InitByName("Button")
+    b.PropertyEmbed.InitByName("ListButton")
     b.fontFace  = fonts.NewFace(b.Font(), b.FontSize())
     b.Options   = options
     b.selIdx    = 0
@@ -449,16 +440,23 @@ func (b *ListButton) Paint(gc *gg.Context) {
             gc.SetTextColor(b.TextColor())
         }
     }
-    pt := geom.Point{0.6*b.Size().Y+2*b.InnerPadding(), 0.5*b.Size().Y}
+    pt := geom.Point{0.6*b.Size().Y+b.InnerPadding(), 0.5*b.Size().Y}
     gc.DrawStringAnchored(b.Selected, pt.X, pt.Y, 0.0, 0.5)
 
-    gc.SetStrokeWidth(b.BorderWidth())
     if b.Pushed() {
         gc.SetStrokeColor(b.PushedBorderColor())
     } else {
         gc.SetStrokeColor(b.BorderColor())
     }
+    if b.Pushed() {
+        gc.SetFillColor(b.PushedLineColor())
+        gc.SetStrokeColor(b.PushedLineColor())
+    } else {
+        gc.SetFillColor(b.LineColor())
+        gc.SetStrokeColor(b.LineColor())
+    }
     gc.SetLineCapButt()
+    //gc.SetStrokeWidth(1.0)
     // Trennlinie zwischen Text und Pfeil (links)
     p1l := geom.Point{0.6*b.Size().Y, 0.0}
     gc.DrawLine(p1l.X, p1l.Y, p1l.X, p1l.Y+b.Size().Y)
@@ -469,13 +467,6 @@ func (b *ListButton) Paint(gc *gg.Context) {
     gc.Stroke()
 
     gc.SetLineCapRound()
-    if b.Pushed() {
-        gc.SetFillColor(b.PushedLineColor())
-        gc.SetStrokeColor(b.PushedLineColor())
-    } else {
-        gc.SetFillColor(b.LineColor())
-        gc.SetStrokeColor(b.LineColor())
-    }
     // Pfeil nach links
     pa := p1l.Add(geom.Point{-0.2*b.Size().Y, 0.25*b.Size().Y})
     pb := p1l.Add(geom.Point{-0.4*b.Size().Y, 0.5*b.Size().Y})
