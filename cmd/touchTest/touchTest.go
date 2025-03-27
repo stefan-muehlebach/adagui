@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"image"
+	"image/draw"
+	"log"
+	"time"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/color"
 	"github.com/stefan-muehlebach/gg/geom"
-	"image"
-	"image/draw"
-	"time"
 )
 
 //----------------------------------------------------------------------------
@@ -123,9 +124,12 @@ func main() {
 	flag.Parse()
 
 	//adatft.Init()
+	log.Printf("> OpenDisplay()\n")
 	disp = adatft.OpenDisplay(rotation)
+	log.Printf("> OpenTouch()\n")
 	touch = adatft.OpenTouch(rotation)
 
+	log.Printf("> NewContext()\n")
 	grid = gg.NewContext(adatft.Width, adatft.Height)
 	setupGrid(grid, 0, 0)
 

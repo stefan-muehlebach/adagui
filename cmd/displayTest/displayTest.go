@@ -210,7 +210,7 @@ var (
 	numObjs, numEdges                   int
 	blurFactor                          float64
 	msg                                 string
-	rotation                            adatft.RotationType = adatft.Rotate090
+	rotation                            adatft.RotationType = adatft.Rotate000
 	runFlag, quitFlag                   bool
 	movieTotalFrames, movieCurrentFrame int
 )
@@ -226,9 +226,15 @@ func main() {
 
 	StartProfiling()
 
+	log.Printf("> OpenDisplay()\n")
 	disp = adatft.OpenDisplay(rotation)
+	log.Printf(" > done\n")
+	log.Printf("> OpenTouch()\n")
 	touch = adatft.OpenTouch(rotation)
+	log.Printf(" > done\n")
+	log.Printf("> NewContext()\n")
 	gc = gg.NewContext(adatft.Width, adatft.Height)
+	log.Printf(" > done\n")
 
 	go SignalHandler()
 	go TouchHandler()
