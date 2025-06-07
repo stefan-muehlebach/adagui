@@ -1,10 +1,11 @@
 package main
 
 import (
-    "math/rand"
-    "time"
-    "github.com/stefan-muehlebach/gg"
-    "github.com/stefan-muehlebach/gg/color"
+	"math/rand"
+	"time"
+
+	"github.com/stefan-muehlebach/gg"
+	"github.com/stefan-muehlebach/gg/colors"
 )
 
 // PolygonAnimation --
@@ -19,7 +20,7 @@ type PolygonAnim struct {
 }
 
 func (a *PolygonAnim) RefreshTime() time.Duration {
-    return 30 * time.Millisecond
+	return 30 * time.Millisecond
 }
 
 func (a *PolygonAnim) Init(gc *gg.Context) {
@@ -33,12 +34,14 @@ func (a *PolygonAnim) Init(gc *gg.Context) {
 	a.gc.SetStrokeWidth(3)
 	a.gc.SetLineCapRound()
 	a.gc.SetLineJoinRound()
-	a.gc.SetFillColor(color.Black)
+	a.gc.SetFillColor(colors.Black)
 	a.gc.Clear()
 }
 
+func (a *PolygonAnim) Animate(dt time.Duration) {}
+
 func (a *PolygonAnim) Paint() {
-	a.gc.SetFillColor(color.RGBAF{0, 0, 0, blurFactor})
+	a.gc.SetFillColor(colors.RGBAF{0, 0, 0, blurFactor})
 	a.gc.DrawRectangle(a.gc.Bounds().AsCoord())
 	a.gc.Fill()
 
@@ -52,7 +55,7 @@ func (a *PolygonAnim) Clean() {}
 
 type Polygon struct {
 	p                      []*Point
-	strokeColor, fillColor color.Color
+	strokeColor, fillColor colors.Color
 }
 
 func NewPolygon(dispWidth, dispHeight, edges int) *Polygon {
@@ -66,8 +69,8 @@ func NewPolygon(dispWidth, dispHeight, edges int) *Polygon {
 		pt.dy = rand.Float64()*5.0 - 2.0
 		p.p[i] = pt
 	}
-	p.strokeColor = color.White
-	p.fillColor = color.RandColor().Alpha(0.5)
+	p.strokeColor = colors.White
+	p.fillColor = colors.RandColor().Alpha(0.5)
 	return p
 }
 

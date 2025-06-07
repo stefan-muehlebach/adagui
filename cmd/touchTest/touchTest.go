@@ -7,9 +7,10 @@ import (
 	"image/draw"
 	"log"
 	"time"
+
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
-	"github.com/stefan-muehlebach/gg/color"
+	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/geom"
 )
 
@@ -18,36 +19,36 @@ import (
 const ()
 
 var (
-	pointColor  = color.WhiteSmoke.Alpha(0.3)
+	pointColor  = colors.WhiteSmoke.Alpha(0.3)
 	pointRadius = 10.0
 
-	crossColor = color.White
+	crossColor = colors.White
 	crossSize  = 40.0
 
-	gridColor     = color.DarkGreen
+	gridColor     = colors.DarkGreen
 	gridMargin    = 20.0
 	gridSpace     = 40.0
 	gridPointSize = 5.0
 	gridWallSize  = 3.0
 
-	touch          *adatft.Touch
-	disp           *adatft.Display
-	verbose, nogui bool
+	touch        *adatft.Touch
+	disp         *adatft.Display
+	debug, nogui bool
 
 	wallConfig = [][][]int{
 		{{1, 0}, {6, 0}, {6, 1}, {7, 1}, {7, 10},
-             {2, 10}, {2,  9}, {1,  9},
-         {1, 2}, {4, 2}, {4, 3}, {5, 3},
-             {5, 8}, {4, 8}, {4, 7}, {3, 7}, {3, 5}},
-        {{6, 11}, {1, 11}, {1, 10}, {0, 10},
-             {0, 1}, {5, 1}, {5, 2}, {6, 2},
-         {6, 9}, {3, 9}, {3, 8}, {2, 8}, {2, 3},
-             {3, 3}, {3, 4}, {4, 4}, {4, 6}},
+			{2, 10}, {2, 9}, {1, 9},
+			{1, 2}, {4, 2}, {4, 3}, {5, 3},
+			{5, 8}, {4, 8}, {4, 7}, {3, 7}, {3, 5}},
+		{{6, 11}, {1, 11}, {1, 10}, {0, 10},
+			{0, 1}, {5, 1}, {5, 2}, {6, 2},
+			{6, 9}, {3, 9}, {3, 8}, {2, 8}, {2, 3},
+			{3, 3}, {3, 4}, {4, 4}, {4, 6}},
 	}
 )
 
 func printEvent(event adatft.PenEvent) {
-	if !verbose {
+	if !debug {
 		return
 	}
 	fmt.Printf("[%d]: %10s: %v => %v\n",
@@ -69,8 +70,8 @@ func drawCross(gc *gg.Context, x, y float64) {
 }
 
 func setupGrid(gc *gg.Context, actCol, actRow int) {
-    // Clear the context and draw the grid first
-	gc.SetFillColor(color.Transparent)
+	// Clear the context and draw the grid first
+	gc.SetFillColor(colors.Transparent)
 	gc.Clear()
 	gc.SetFillColor(gridColor)
 	for y := gridMargin; y < float64(adatft.Height); y += gridSpace {
@@ -80,7 +81,7 @@ func setupGrid(gc *gg.Context, actCol, actRow int) {
 		}
 	}
 
-    // The draw the walls in order to get a fine Irrgarten.
+	// The draw the walls in order to get a fine Irrgarten.
 	gc.SetStrokeColor(gridColor)
 	gc.SetStrokeWidth(gridWallSize)
 	for _, wall := range wallConfig {
@@ -92,17 +93,17 @@ func setupGrid(gc *gg.Context, actCol, actRow int) {
 		gc.Stroke()
 	}
 
-    // The 'Buttons' for Clear and Quit are drawn as the last part.
-	gc.SetFillColor(color.SteelBlue)
+	// The 'Buttons' for Clear and Quit are drawn as the last part.
+	gc.SetFillColor(colors.SteelBlue)
 	gc.DrawCircle(0, 0, 35)
 	gc.Fill()
-	gc.SetFillColor(color.GreenYellow)
+	gc.SetFillColor(colors.GreenYellow)
 	gc.DrawCircle(float64(adatft.Width), 0, 35)
 	gc.Fill()
-	gc.SetFillColor(color.Gold)
+	gc.SetFillColor(colors.Gold)
 	gc.DrawCircle(float64(adatft.Width), float64(adatft.Height), 35)
 	gc.Fill()
-	gc.SetFillColor(color.OrangeRed)
+	gc.SetFillColor(colors.OrangeRed)
 	gc.DrawCircle(0, float64(adatft.Height), 35)
 	gc.Fill()
 }
@@ -115,10 +116,10 @@ func composeScreen(out *image.RGBA, grid, trace, cross *gg.Context) {
 }
 
 func main() {
-	var rotation adatft.RotationType = adatft.Rotate000
+	var rotation adatft.RotationType = adatft.Rotate090
 	var grid, trace, cross *gg.Context
 
-	flag.BoolVar(&verbose, "verbose", false, "write events to stdout")
+	flag.BoolVar(&debug, "debug", false, "write events to stdout")
 	flag.BoolVar(&nogui, "nogui", false, "dont paint on the screen")
 	flag.Var(&rotation, "rotation", "display rotation")
 	flag.Parse()
@@ -134,14 +135,14 @@ func main() {
 	setupGrid(grid, 0, 0)
 
 	trace = gg.NewContext(adatft.Width, adatft.Height)
-	trace.SetFillColor(color.Transparent)
+	trace.SetFillColor(colors.Transparent)
 	trace.Clear()
 	trace.SetStrokeWidth(pointRadius)
 	trace.SetStrokeColor(pointColor)
 	trace.SetFillColor(pointColor)
 
 	cross = gg.NewContext(adatft.Width, adatft.Height)
-	cross.SetFillColor(color.Transparent)
+	cross.SetFillColor(colors.Transparent)
 	cross.Clear()
 	cross.SetStrokeWidth(2.0)
 	cross.SetStrokeColor(crossColor)
@@ -165,33 +166,34 @@ func main() {
 	}()
 
 	quitPt := geom.NewPoint(0.0, 0.0)
-    clearPt := geom.NewPoint(float64(adatft.Width), 0.0)
+	clearPt := geom.NewPoint(float64(adatft.Width), 0.0)
 	color1Pt := geom.NewPoint(0.0, float64(adatft.Height))
 	color2Pt := geom.NewPoint(float64(adatft.Width), float64(adatft.Height))
 
 	for event := range touch.EventQ {
+		printEvent(event)
+
 		pt := geom.Point{event.X, event.Y}
 		if quitPt.Distance(pt) <= 35.0 {
 			break
 		}
 		if clearPt.Distance(pt) <= 35.0 {
-			trace.SetFillColor(color.Transparent)
-            trace.Clear()
-            trace.SetFillColor(pointColor)
-            continue
+			trace.SetFillColor(colors.Transparent)
+			trace.Clear()
+			trace.SetFillColor(pointColor)
+			continue
 		}
 		if color1Pt.Distance(pt) <= 35.0 {
-			pointColor = color.OrangeRed.Alpha(0.2)
+			pointColor = colors.OrangeRed.Alpha(0.2)
 			pointRadius = 20
 			continue
 		}
 		if color2Pt.Distance(pt) <= 35.0 {
-			pointColor = color.Gold.Alpha(0.7)
+			pointColor = colors.Gold.Alpha(0.7)
 			pointRadius = 5
 			continue
 		}
 
-		printEvent(event)
 		if nogui {
 			continue
 		}
@@ -204,11 +206,11 @@ func main() {
 
 	done <- true
 
-	grid.SetFillColor(color.Black)
+	grid.SetFillColor(colors.Black)
 	grid.Clear()
-	trace.SetFillColor(color.Black)
+	trace.SetFillColor(colors.Black)
 	trace.Clear()
-	cross.SetFillColor(color.Black)
+	cross.SetFillColor(colors.Black)
 	cross.Clear()
 	composeScreen(out, grid, trace, cross)
 	disp.Draw(out)

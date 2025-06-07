@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
-    "time"
+	"time"
 
 	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/adagui/binding"
@@ -16,10 +16,10 @@ import (
 	"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
-	"github.com/stefan-muehlebach/gg/color"
+	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/geom"
 	"github.com/stefan-muehlebach/ledgrid"
-	ledcolor "github.com/stefan-muehlebach/ledgrid/color"
+	ledcolor "github.com/stefan-muehlebach/ledgrid/colors"
 )
 
 //-----------------------------------------------------------------------
@@ -29,10 +29,10 @@ var (
 )
 
 func init() {
-	PickerProps.SetColor(props.Color, color.Black)
-	PickerProps.SetColor(props.BorderColor, color.WhiteSmoke)
+	PickerProps.SetColor(props.Color, colors.Black)
+	PickerProps.SetColor(props.BorderColor, colors.WhiteSmoke)
 	PickerProps.SetSize(props.BorderWidth, 2.0)
-    PickerProps.SetSize(props.FieldSize, 20.0)
+	PickerProps.SetSize(props.FieldSize, 20.0)
 }
 
 type ColorPicker struct {
@@ -43,7 +43,7 @@ type ColorPicker struct {
 	numCols, numRows int
 	selIdx0, selIdx1 int
 	value            binding.Untyped
-    alpha            float64
+	alpha            float64
 }
 
 func NewColorPicker(orient adagui.Orientation, numColsRows int) *ColorPicker {
@@ -66,15 +66,15 @@ func NewColorPicker(orient adagui.Orientation, numColsRows int) *ColorPicker {
 		c.fieldSize * float64(c.numRows)})
 	c.selIdx0, c.selIdx1 = 0, 0
 	c.value = binding.NewUntyped()
-    c.alpha = 0.5
+	c.alpha = 0.5
 	return c
 }
 
 func NewColorPickerWithCallback(orient adagui.Orientation,
-	numColsRows int, callback func(color.Color)) *ColorPicker {
+	numColsRows int, callback func(colors.Color)) *ColorPicker {
 	c := NewColorPicker(orient, numColsRows)
 	c.value.AddCallback(func(data binding.DataItem) {
-		callback(data.(binding.Untyped).Get().(color.Color))
+		callback(data.(binding.Untyped).Get().(colors.Color))
 	})
 	return c
 }
@@ -132,7 +132,7 @@ func (c *ColorPicker) OnInputEvent(evt touch.Event) {
 			c.selIdx1 = row
 		}
 		if c.selIdx0 >= len(c.colorList) ||
-				c.selIdx1 >= len(c.colorList[c.selIdx0]) {
+			c.selIdx1 >= len(c.colorList[c.selIdx0]) {
 			return
 		}
 		c.value.Set(c.colorList[c.selIdx0][c.selIdx1].Alpha(c.alpha))
@@ -141,14 +141,14 @@ func (c *ColorPicker) OnInputEvent(evt touch.Event) {
 }
 
 func (c *ColorPicker) SetSize(size geom.Point) {
-    switch c.orient {
-    case adagui.Horizontal:
-	    c.fieldSize = min(c.fieldSize, size.X / float64(c.numCols))
-        size.Y = c.fieldSize * float64(c.numRows)
-    case adagui.Vertical:
-	    c.fieldSize = min(c.fieldSize, size.Y / float64(c.numRows))
-        size.X = c.fieldSize * float64(c.numCols)
-    }
+	switch c.orient {
+	case adagui.Horizontal:
+		c.fieldSize = min(c.fieldSize, size.X/float64(c.numCols))
+		size.Y = c.fieldSize * float64(c.numRows)
+	case adagui.Vertical:
+		c.fieldSize = min(c.fieldSize, size.Y/float64(c.numRows))
+		size.X = c.fieldSize * float64(c.numCols)
+	}
 	c.ContainerEmbed.SetMinSize(size)
 }
 
@@ -203,12 +203,12 @@ var (
 )
 
 func init() {
-	GridProps.SetColor(props.Color, color.Black)
-	GridProps.SetColor(props.BorderColor, color.WhiteSmoke)
-	GridProps.SetColor(props.LineColor, color.WhiteSmoke)
+	GridProps.SetColor(props.Color, colors.Black)
+	GridProps.SetColor(props.BorderColor, colors.WhiteSmoke)
+	GridProps.SetColor(props.LineColor, colors.WhiteSmoke)
 	GridProps.SetSize(props.BorderWidth, 2.0)
 	GridProps.SetSize(props.LineWidth, 1.0)
-    GridProps.SetSize(props.FieldSize, 30.0)
+	GridProps.SetSize(props.FieldSize, 30.0)
 }
 
 type LedGrid struct {
@@ -230,11 +230,11 @@ func NewLedGrid(size image.Point, host string, port uint) *LedGrid {
 	g.DrawColor = ledcolor.LedColor{0x00, 0x00, 0x00, 0xFF}
 	g.quitQ = make(chan bool)
 	g.client = ledgrid.NewNetGridClient("raspi-3", "udp", ledgrid.DefDataPort,
-	    ledgrid.DefRPCPort)
-    modConf := g.client.ModuleConfig()
+		ledgrid.DefRPCPort)
+	modConf := g.client.ModuleConfig()
 	g.grid = ledgrid.NewLedGrid(g.client, modConf)
-//	g.grid = ledgrid.NewLedGridBySize(host, port, size)
-//	g.ctrl = ledgrid.NewNetPixelClient(host, port)
+	//	g.grid = ledgrid.NewLedGridBySize(host, port, size)
+	//	g.ctrl = ledgrid.NewNetPixelClient(host, port)
 	return g
 }
 
@@ -249,7 +249,7 @@ func (g *LedGrid) OnInputEvent(evt touch.Event) {
 		//}
 		fx, fy := g.Bounds().PosRel(evt.Pos)
 		col := int(fx * float64(g.grid.Rect.Dx()))
-        row := int(fy * float64(g.grid.Rect.Dy()))
+		row := int(fy * float64(g.grid.Rect.Dy()))
 		oldColor := g.grid.LedColorAt(col, row)
 		newColor := g.DrawColor.Mix(oldColor, ledcolor.Blend)
 		g.grid.SetLedColor(col, row, newColor)
@@ -258,13 +258,13 @@ func (g *LedGrid) OnInputEvent(evt touch.Event) {
 }
 
 func (g *LedGrid) SetSize(size geom.Point) {
-    if size.X > size.Y {
-        g.fieldSize = size.X / float64(g.grid.Rect.Dx())
-        size.Y = float64(g.grid.Rect.Dy()) * g.fieldSize
-    } else {
-        g.fieldSize = size.Y / float64(g.grid.Rect.Dy())
-        size.X = float64(g.grid.Rect.Dx()) * g.fieldSize
-    }
+	if size.X > size.Y {
+		g.fieldSize = size.X / float64(g.grid.Rect.Dx())
+		size.Y = float64(g.grid.Rect.Dy()) * g.fieldSize
+	} else {
+		g.fieldSize = size.Y / float64(g.grid.Rect.Dy())
+		size.X = float64(g.grid.Rect.Dx()) * g.fieldSize
+	}
 	g.ContainerEmbed.SetMinSize(size)
 }
 
@@ -289,7 +289,7 @@ func (g *LedGrid) Paint(gc *gg.Context) {
 		}
 	}
 
-	gc.SetStrokeWidth(g.LineWidth()/2.0)
+	gc.SetStrokeWidth(g.LineWidth() / 2.0)
 	gc.SetStrokeColor(g.BorderColor())
 	for t := g.fieldSize; t < g.Size().Y; t += g.fieldSize {
 		gc.DrawLine(0.0, t, g.Size().X, t)
@@ -338,9 +338,9 @@ func (g *LedGrid) Load(fileName string) {
 //-----------------------------------------------------------------------
 
 const (
-	host           = "raspi-3"
-	port           = 5333
-    iconDir = "icons"
+	host    = "raspi-3"
+	port    = 5333
+	iconDir = "icons"
 )
 
 func f1(t float64) float64 {
@@ -365,31 +365,31 @@ var (
 )
 
 func main() {
-    var iconFiles []string
-    //var iconIdx int
+	var iconFiles []string
+	//var iconIdx int
 
 	flag.Parse()
 	adagui.StartProfiling()
 
-    files, err := os.ReadDir(iconDir)
-    if err != nil {
-        log.Fatal(err)
-    }
-    iconFiles = make([]string, 0)
-    for _, file := range files {
-        iconFiles = append(iconFiles, file.Name())
-    }
+	files, err := os.ReadDir(iconDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	iconFiles = make([]string, 0)
+	for _, file := range files {
+		iconFiles = append(iconFiles, file.Name())
+	}
 
 	screen = adagui.NewScreen(adatft.Rotate090)
 	win = screen.NewWindow()
 
 	root := adagui.NewGroup()
-    root.Layout = adagui.NewPaddedLayout()
+	root.Layout = adagui.NewPaddedLayout()
 	win.SetRoot(root)
 
 	mainGrp := adagui.NewGroup()
-    mainGrp.Layout = adagui.NewVBoxLayout(5)
-    root.Add(mainGrp)
+	mainGrp.Layout = adagui.NewVBoxLayout(5)
+	root.Add(mainGrp)
 
 	drawColor := ledcolor.LedColor{}
 	colorValue := binding.BindUntyped(&drawColor)
@@ -397,7 +397,7 @@ func main() {
 
 	ledPanel := NewLedGrid(image.Point{40, 10}, host, port)
 
-    picoPal := ledgrid.PaletteMap["Pico08"].(*ledgrid.SlicePalette)
+	picoPal := ledgrid.PaletteMap["Pico08"].(*ledgrid.SlicePalette)
 	colorPicker.SetColors(0, picoPal.Colors[:16])
 	colorPicker.SetColors(1, picoPal.Colors[16:32])
 	colorValue.AddCallback(func(data binding.DataItem) {
@@ -408,50 +408,50 @@ func main() {
 	})
 	colorPicker.SetColor(picoPal.Colors[0])
 
-//    alphaGroup := adagui.NewGroup()
-//    alphaGroup.Layout = adagui.NewHBoxLayout()
+	//    alphaGroup := adagui.NewGroup()
+	//    alphaGroup.Layout = adagui.NewHBoxLayout()
 
-//    alphaLabel := adagui.NewLabel("Alpha:")
-    alphaSlider := adagui.NewSliderWithCallback(10.0, adagui.Horizontal,
-        func(v float64) {
-            colorPicker.alpha = v
-            color := colorPicker.Color()
-		    colorPicker.value.Set(color.Alpha(colorPicker.alpha))
-        })
-    alphaSlider.SetInitValue(1.0)
-    alphaSlider.SetRange(0.0, 1.0, 0.1)
-//    alphaGroup.Add(alphaLabel, alphaSlider)
+	//    alphaLabel := adagui.NewLabel("Alpha:")
+	alphaSlider := adagui.NewSliderWithCallback(10.0, adagui.Horizontal,
+		func(v float64) {
+			colorPicker.alpha = v
+			color := colorPicker.Color()
+			colorPicker.value.Set(color.Alpha(colorPicker.alpha))
+		})
+	alphaSlider.SetInitValue(1.0)
+	alphaSlider.SetRange(0.0, 1.0, 0.1)
+	//    alphaGroup.Add(alphaLabel, alphaSlider)
 
 	mainGrp.Add(ledPanel, colorPicker, alphaSlider)
 
-/*
-	toolGrp := adagui.NewGroupPL(mainGrp, adagui.NewHBoxLayout())
-	btnPrev := adagui.NewTextButton("Prev")
-	btnPrev.SetOnTap(func(evt touch.Event) {
-        if iconIdx <= 0 {
-            return
-        }
-        iconIdx -= 1
-        fileName := filepath.Join(iconDir, iconFiles[iconIdx])
-        ledPanel.Load(fileName)
-	})
-	btnNext := adagui.NewTextButton("Next")
-	btnNext.SetOnTap(func(evt touch.Event) {
-        if iconIdx >= len(iconFiles)-1 {
-            return
-        }
-        iconIdx += 1
-        fileName := filepath.Join(iconDir, iconFiles[iconIdx])
-        ledPanel.Load(fileName)
-	})
-	toolGrp.Add(btnPrev, adagui.NewSpacer(), btnNext)
-*/
+	/*
+	   	toolGrp := adagui.NewGroupPL(mainGrp, adagui.NewHBoxLayout())
+	   	btnPrev := adagui.NewTextButton("Prev")
+	   	btnPrev.SetOnTap(func(evt touch.Event) {
+	           if iconIdx <= 0 {
+	               return
+	           }
+	           iconIdx -= 1
+	           fileName := filepath.Join(iconDir, iconFiles[iconIdx])
+	           ledPanel.Load(fileName)
+	   	})
+	   	btnNext := adagui.NewTextButton("Next")
+	   	btnNext.SetOnTap(func(evt touch.Event) {
+	           if iconIdx >= len(iconFiles)-1 {
+	               return
+	           }
+	           iconIdx += 1
+	           fileName := filepath.Join(iconDir, iconFiles[iconIdx])
+	           ledPanel.Load(fileName)
+	   	})
+	   	toolGrp.Add(btnPrev, adagui.NewSpacer(), btnNext)
+	*/
 
 	//mainGrp.Add(adagui.NewSpacer())
 
 	buttonGrp := adagui.NewGroup()
-    buttonGrp.Layout = adagui.NewHBoxLayout()
-    mainGrp.Add(buttonGrp)
+	buttonGrp.Layout = adagui.NewHBoxLayout()
+	mainGrp.Add(buttonGrp)
 
 	btnQuit := adagui.NewTextButton("Quit")
 	btnQuit.SetOnTap(func(evt touch.Event) {
@@ -465,5 +465,5 @@ func main() {
 	screen.Run()
 
 	adagui.StopProfiling()
-    time.Sleep(100 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 }

@@ -1,33 +1,34 @@
 package main
 
 import (
-    "fmt"
-    "math"
-    "math/rand"
-    "time"
-    "github.com/stefan-muehlebach/gg"
-    "github.com/stefan-muehlebach/gg/color"
+	"fmt"
+	"math"
+	"math/rand"
+	"time"
+
+	"github.com/stefan-muehlebach/gg"
+	"github.com/stefan-muehlebach/gg/colors"
 )
 
 type Cube3DAnim struct {
-    gc *gg.Context
-	mBase, m Matrix
-	cube, cubeT *Cube
-	cloud, cloudT *Cloud
-	zero, xAxis, yAxis, zAxis Vector
+	gc                            *gg.Context
+	mBase, m                      Matrix
+	cube, cubeT                   *Cube
+	cloud, cloudT                 *Cloud
+	zero, xAxis, yAxis, zAxis     Vector
 	zeroT, xAxisT, yAxisT, zAxisT Vector
-	alpha, dAlpha float64
-	beta, dBeta float64
+	alpha, dAlpha                 float64
+	beta, dBeta                   float64
 }
 
 func (a *Cube3DAnim) RefreshTime() time.Duration {
-    return 30 * time.Millisecond
+	return 30 * time.Millisecond
 }
 
 func (a *Cube3DAnim) Init(gc *gg.Context) {
-    a.gc = gc
-   
-	a.cube = NewCube(100.0)
+	a.gc = gc
+
+	a.cube = NewCube(100.0, 5.0)
 	a.cubeT = &Cube{}
 
 	a.cloud = NewCloud(0, 0, 0, 100.0, 10*numObjs, 4.0)
@@ -46,8 +47,10 @@ func (a *Cube3DAnim) Init(gc *gg.Context) {
 	a.mBase = Identity().Multiply(Scale(NewVector(1.0, -1.0, 1.0))).Multiply(Translate(NewVector(240.0, -160.0, 0.0)))
 }
 
+func (a *Cube3DAnim) Animate(dt time.Duration) {}
+
 func (a *Cube3DAnim) Paint() {
-	a.gc.SetFillColor(color.Black)
+	a.gc.SetFillColor(colors.Black)
 	a.gc.Clear()
 
 	a.m = a.mBase.Multiply(RotateX(a.alpha)).Multiply(RotateY(a.beta))
@@ -63,15 +66,15 @@ func (a *Cube3DAnim) Paint() {
 	a.zAxisT = a.m.Transform(a.zAxis)
 
 	a.gc.SetStrokeWidth(4.0)
-	a.gc.SetStrokeColor(color.DarkRed)
+	a.gc.SetStrokeColor(colors.Red)
 	a.gc.DrawLine(a.zeroT.X, a.zeroT.Y, a.xAxisT.X, a.xAxisT.Y)
 	a.gc.Stroke()
 
-	a.gc.SetStrokeColor(color.DarkGreen)
+	a.gc.SetStrokeColor(colors.Green)
 	a.gc.DrawLine(a.zeroT.X, a.zeroT.Y, a.yAxisT.X, a.yAxisT.Y)
 	a.gc.Stroke()
 
-	a.gc.SetStrokeColor(color.DarkBlue)
+	a.gc.SetStrokeColor(colors.Blue)
 	a.gc.DrawLine(a.zeroT.X, a.zeroT.Y, a.zAxisT.X, a.zAxisT.Y)
 	a.gc.Stroke()
 
@@ -117,7 +120,7 @@ func Cube3DAnimation() {
 		}
 		adatft.PaintWatch.Start()
 
-		gc.SetFillColor(color.Black)
+		gc.SetFillColor(colors.Black)
 		gc.Clear()
 
 		m = mBase.Multiply(RotateX(alpha)).Multiply(RotateY(beta))
@@ -133,15 +136,15 @@ func Cube3DAnimation() {
 		zAxisT = m.Transform(zAxis)
 
 		gc.SetStrokeWidth(4.0)
-		gc.SetStrokeColor(color.DarkRed)
+		gc.SetStrokeColor(colors.DarkRed)
 		gc.DrawLine(zeroT.X, zeroT.Y, xAxisT.X, xAxisT.Y)
 		gc.Stroke()
 
-		gc.SetStrokeColor(color.DarkGreen)
+		gc.SetStrokeColor(colors.DarkGreen)
 		gc.DrawLine(zeroT.X, zeroT.Y, yAxisT.X, yAxisT.Y)
 		gc.Stroke()
 
-		gc.SetStrokeColor(color.DarkBlue)
+		gc.SetStrokeColor(colors.DarkBlue)
 		gc.DrawLine(zeroT.X, zeroT.Y, zAxisT.X, zAxisT.Y)
 		gc.Stroke()
 
@@ -158,11 +161,13 @@ func Cube3DAnimation() {
 type Cube struct {
 	Pts         []Vector
 	LineWidth   float64
-	StrokeColor color.Color
+	StrokeColor colors.Color
 }
 
-func NewCube(s float64) *Cube {
-	c := &Cube{LineWidth: 3.0, StrokeColor: color.Silver}
+func NewCube(s float64, lineWidth float64) *Cube {
+	c := &Cube{}
+	c.LineWidth = lineWidth
+	c.StrokeColor = colors.Silver
 	c.Pts = []Vector{
 		NewVector(-s, -s, -s),
 		NewVector(-s, s, -s),
@@ -207,7 +212,7 @@ func (c *Cube) Draw(gc *gg.Context) {
 
 type Cloud struct {
 	Pts   []Vector
-	Color color.Color
+	Color colors.Color
 	Size  float64
 }
 
@@ -220,7 +225,7 @@ func NewCloud(x, y, z, w float64, numObjs int, size float64) *Cloud {
 		pz := rand.NormFloat64()*w + z
 		c.Pts[i] = NewVector(px, py, pz)
 	}
-	c.Color = color.YellowGreen
+	c.Color = colors.YellowGreen
 	c.Size = size
 	return c
 }
@@ -437,4 +442,3 @@ func ProjectionMatrix(xRot, yRot, dist float64) Matrix {
 		0, 0, (near + far) / near, -far})
 	return ndcMat.Multiply(camMat.Inv())
 }
-

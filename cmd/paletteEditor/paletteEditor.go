@@ -4,23 +4,24 @@ import (
 	"context"
 	"flag"
 	_ "fmt"
+	_ "image"
+	"log"
+	"math"
+	_ "math/rand"
+	"os"
+	"os/signal"
+	_ "runtime/trace"
+	_ "sync"
+	"syscall"
+	_ "time"
+
 	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
-	"github.com/stefan-muehlebach/gg/color"
+	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/geom"
 	"github.com/stefan-muehlebach/mandel"
-	_ "image"
-	"log"
-	"math"
-    "os"
-    "os/signal"
-    "syscall"
-	_ "math/rand"
-	_ "runtime/trace"
-	_ "sync"
-	_ "time"
 )
 
 //----------------------------------------------------------------------------
@@ -40,35 +41,35 @@ var (
 	// nicht homogen ist, d.h. 0xff fuer Rot ist leicht dunkler in der Wahr-
 	// nehmung als 0xff fuer Gruen (was ziemlich hell erscheint). Daher koennen
 	// die Farben hier einzeln definiert werden.
-	BrightColors = []color.Color{
-		color.Red,
-		color.Lime,
-		color.Blue,
+	BrightColors = []colors.Color{
+		colors.Red,
+		colors.Lime,
+		colors.Blue,
 	}
-	NormalColors = []color.Color{
-		color.Red.Dark(0.37),
-		color.Lime.Dark(0.37),
-		color.Blue.Dark(0.37),
+	NormalColors = []colors.Color{
+		colors.Red.Dark(0.37),
+		colors.Lime.Dark(0.37),
+		colors.Blue.Dark(0.37),
 	}
-	DimmedColors = []color.Color{
-		color.Red.Dark(0.92),
-		color.Lime.Dark(0.92),
-		color.Blue.Dark(0.92),
+	DimmedColors = []colors.Color{
+		colors.Red.Dark(0.92),
+		colors.Lime.Dark(0.92),
+		colors.Blue.Dark(0.92),
 	}
 
-	BrightWhite = color.White
-	DimmedWhite = color.White.Dark(0.37)
-	Background  = color.Black
+	BrightWhite = colors.White
+	DimmedWhite = colors.White.Dark(0.37)
+	Background  = colors.Black
 
 	palPrevWidth       = 480.0
-	palPrevHeight      = 80.0
-	palPrevInset       = 8.5
+	palPrevHeight      = 60.0
+	palPrevInset       = 9.5
 	palPrevLineWidth   = 2.0
 	palPrevStrokeColor = BrightWhite
 
 	gradEditWidth        = 480.0
-	gradEditHeight       = 65.0
-	gradEditInset        = 8.5
+	gradEditHeight       = 60.0
+	gradEditInset        = 9.5
 	gradEditLineWidth    = 2.0
 	gradEditStrokeColor  = BrightWhite
 	gradEditFillColor    = Background
@@ -85,8 +86,8 @@ var (
 	ctrlPtSyncFillCols   = DimmedColors
 
 	procEditWidth          = 480.0
-	procEditHeight         = 65.0
-	procEditInset          = 8.5
+	procEditHeight         = 60.0
+	procEditInset          = 9.5
 	procEditLineWidth      = 2.0
 	procEditStrokeColor    = BrightWhite
 	procEditRectRound      = 5.0
@@ -169,7 +170,7 @@ func NewGradientEditor(palette *mandel.GradientPalette,
 func (n *GradientEditor) SetSize(s geom.Point) {
 	n.Embed.SetSize(s)
 	n.Inset = n.Bounds().Inset(gradEditInset, gradEditInset)
-    n.CreateCtrlPoints()
+	n.CreateCtrlPoints()
 }
 
 func (n *GradientEditor) Paint(gc *gg.Context) {
@@ -529,21 +530,21 @@ func (n *FuncPoint) Value() (float64, float64) {
 //----------------------------------------------------------------------------
 
 const (
-    screenshotFile = "screenshot.png"
-    movieFile = "movie.%03d.png"
+	screenshotFile = "screenshot.png"
+	movieFile      = "movie.%03d.png"
 )
 
 func SignalHandler() {
-    sigChan := make(chan os.Signal)
-    signal.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
-    for sig := range sigChan {
-        switch sig {
-        case syscall.SIGUSR1:
-            screen.SaveScreenshot(screenshotFile)
-        case syscall.SIGUSR2:
-            screen.SaveMovie(movieFile)
-        }
-    }
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
+	for sig := range sigChan {
+		switch sig {
+		case syscall.SIGUSR1:
+			screen.SaveScreenshot(screenshotFile)
+		case syscall.SIGUSR2:
+			screen.SaveMovie(movieFile)
+		}
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -578,7 +579,7 @@ func main() {
 	//UpdateVars(win)
 
 	group := adagui.NewPanel(0, 0)
-    group.Layout = adagui.NewVBoxLayout()
+	group.Layout = adagui.NewVBoxLayout()
 	//group.SetColor(Background)
 	win.SetRoot(group)
 
@@ -586,14 +587,14 @@ func main() {
 	palPrev := NewPalettePreview(palette)
 	//palPrev.SetPos(geom.Point{0.0, 0.0})
 	//palPrev.SetOnDoubleTap(func(evt touch.Event) {
-    //    screen.Quit()
+	//    screen.Quit()
 	//})
 	//palPrev.SetOnTap(func(evt touch.Event) {
-//		screen.Save("screenshot.png")
-//	})
+	//		screen.Save("screenshot.png")
+	//	})
 	group.Add(palPrev)
 
-    go SignalHandler()
+	go SignalHandler()
 
 	switch palImpl := palette.(type) {
 
@@ -631,9 +632,21 @@ func main() {
 		group.Add(peBlue)
 	}
 
+	btnBox := adagui.NewGroupPL(group, adagui.NewHBoxLayout(9.5))
+
+	palList, _ := mandel.PaletteNames()
+	btnPalList := adagui.NewListButton(palList)
+	btnBox.Add(btnPalList)
+	btnBox.Add(adagui.NewSpacer())
+	btnQuit := adagui.NewTextButton("Quit")
+	btnQuit.SetOnTap(func(evt touch.Event) {
+		screen.Quit()
+	})
+	btnBox.Add(btnQuit)
+
 	//    lbl := adagui.NewLabel("Test")
 	//    lbl.SetPos(geom.Point{10.0, 300.0})
-	//    lbl.SetTextColor(color.Gold)
+	//    lbl.SetTextColor(colors.Gold)
 	//    group.Add(lbl)
 
 	// Start der Applikation

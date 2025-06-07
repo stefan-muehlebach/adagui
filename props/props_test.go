@@ -1,31 +1,32 @@
 package props
 
 import (
-	"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/fonts"
 	"testing"
+
+	"github.com/stefan-muehlebach/gg/colors"
+	"github.com/stefan-muehlebach/gg/fonts"
 )
 
 var (
 	defProps      *Properties
 	typeProps     *Properties
 	objProps      *Properties
-	c1, c2, c3    color.Color
+	c1, c2, c3    colors.Color
 	f             *fonts.Font
 	s1            float64
 	colorPropName = Color
 )
 
 func init() {
-	defProps  = PropsMap["Default"]
+	defProps = PropsMap["Default"]
 	typeProps = PropsMap["Button"]
-    
-	objProps  = NewProperties(typeProps)
+
+	objProps = NewProperties(typeProps)
 
 }
 
 func TestPropertyTree(t *testing.T) {
-    t.Logf("Object color: %+v", objProps.Color(colorPropName))
+	t.Logf("Object color: %+v", objProps.Color(colorPropName))
 }
 
 // Prüft, ob in den Default-Properties zu allen Property-Namen ein Eintrag
@@ -70,8 +71,8 @@ func TestColorHierarchy(t *testing.T) {
 		t.Errorf("Default and object prop differ (got '%v', want '%v'", c3, c1)
 	}
 
-	typeProps.SetColor(colorPropName, color.FireBrick)
-	objProps.SetColor(colorPropName, color.Yellow)
+	typeProps.SetColor(colorPropName, colors.FireBrick)
+	objProps.SetColor(colorPropName, colors.Yellow)
 
 	c1 = defProps.Color(colorPropName)
 	c2 = typeProps.Color(colorPropName)
@@ -153,7 +154,6 @@ func BenchmarkGetObjSize(b *testing.B) {
 }
 
 func TestPropFileRead(t *testing.T) {
-    initPropsMapFromFile("TestProps.json")
-    t.Logf("Default.Color: %+v", PropsMap["Default"].Color(Color))
+	initPropsMapFromFile("TestProps.json")
+	t.Logf("Default.Color: %+v", PropsMap["Default"].Color(Color))
 }
-

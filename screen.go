@@ -1,100 +1,102 @@
 package adagui
 
 import (
-    "fmt"
-    "log"
-    "time"
-    "sync"
-    "github.com/stefan-muehlebach/adatft"
-    "github.com/stefan-muehlebach/adagui/touch"
-    "github.com/stefan-muehlebach/gg/geom"
+	"fmt"
+	"log"
+	"sync"
+	"time"
+
+	"github.com/stefan-muehlebach/adagui/touch"
+	"github.com/stefan-muehlebach/adatft"
+	"github.com/stefan-muehlebach/gg/geom"
 )
 
 var (
-    screen *Screen = nil
+	screen      *Screen = nil
+	refreshRate         = 30 * time.Millisecond
 )
 
 // Dies ist die Datenstruktur, welche das TFT-Display aus einer hoeheren
 // Abstraktion beschreibt. Diese Struktur darf es nur einmal (1) in einer
 // Applikation geben.
 type Screen struct {
-    disp   *adatft.Display
-    touch  *adatft.Touch
-    window *Window
-    paintTicker *time.Ticker
-    paintCloseQ, eventCloseQ chan bool
-    wg sync.WaitGroup
-    mutex *sync.Mutex
+	disp                     *adatft.Display
+	touch                    *adatft.Touch
+	window                   *Window
+	paintTicker              *time.Ticker
+	paintCloseQ, eventCloseQ chan bool
+	wg                       sync.WaitGroup
+	mutex                    *sync.Mutex
 }
 
 // Mit NewScreen wird ein neues Screen-Objekt erzeugt und alle technischen
 // Objekte in Zusammenhang mit der Ansteuerung des Bildschirm und Touch-
 // Screens erzeugt. Aktuell darf es nur ein (1) solches Objekt geben - ein
 // mehrfaches Aufrufen von NewScreen führt zu einem Abbruch der Applikation.
-func NewScreen(rotation adatft.RotationType) (*Screen) {
-    if screen != nil {
-        log.Fatal("there is already a 'Screen' object in this application")
-    }
-    s := &Screen{}
-    s.disp  = adatft.OpenDisplay(rotation)
-    s.touch = adatft.OpenTouch(rotation)
-    s.paintTicker = time.NewTicker(RefreshCycle)
-    s.window = nil
-    s.paintCloseQ = make(chan bool)
-    s.eventCloseQ = make(chan bool)
-    s.wg.Add(2)
-    s.mutex = &sync.Mutex{}
+func NewScreen(rotation adatft.RotationType) *Screen {
+	if screen != nil {
+		log.Fatal("there is already a 'Screen' object in this application")
+	}
+	s := &Screen{}
+	s.disp = adatft.OpenDisplay(rotation)
+	s.touch = adatft.OpenTouch(rotation)
+	s.paintTicker = time.NewTicker(refreshRate)
+	s.window = nil
+	s.paintCloseQ = make(chan bool)
+	s.eventCloseQ = make(chan bool)
+	s.wg.Add(2)
+	s.mutex = &sync.Mutex{}
 
-    screen = s
+	screen = s
 
-    go s.paintThread()
+	go s.paintThread()
 
-    return s
+	return s
 }
 
 // Mit CurrentScreen wird die Referenz auf den aktuellen (einzigen) Bildschirm
 // retourniert. Man könnte dies auch über eine globale Variable lösen.
-func CurrentScreen() (*Screen) {
-    return screen
+func CurrentScreen() *Screen {
+	return screen
 }
 
 func (s *Screen) SaveScreenshot(name string) {
-    s.Window().SaveScreenshot(name)
+	s.Window().SaveScreenshot(name)
 }
 
 func (s *Screen) SaveMovie(name string) {
-    fileName := fmt.Sprintf(name, 0)
-    s.Window().SaveScreenshot(fileName)
+	fileName := fmt.Sprintf(name, 0)
+	s.Window().SaveScreenshot(fileName)
 }
 
 // Mit NewWindow wird ein neues Fenster erzeugt. Im Gegensatz zum Screen
 // darf es in einer Applikation beliebig viele Fenster geben, von denen jedoch
 // nur eines sichtbar, resp. aktiv ist.
-func (s *Screen) NewWindow() (*Window) {
-    w := newWindow(s)
-    return w
+func (s *Screen) NewWindow() *Window {
+	w := newWindow(s)
+	return w
 }
 
 // Liefert das aktuell angezeigte Window zurueck.
-func (s *Screen) Window() (*Window) {
-    return s.window
+func (s *Screen) Window() *Window {
+	return s.window
 }
 
 // Mit SetWindow wird das übergebene Fenster zum sichtbaren und aktiven
 // Fenster. Nur aktive Fenster erhalten die Touch-Events vom Touchscreen und
 // nur aktive Fenster werden dargestellt.
 func (s *Screen) SetWindow(w *Window) {
-    if s.window == w {
-        return
-    }
-    s.mutex.Lock()
-    if s.window != nil {
-        s.window.stage = StageAlive
-    }
-    s.window = w
-    s.window.stage = StageVisible
-    s.mutex.Unlock()
-    s.Repaint()
+	if s.window == w {
+		return
+	}
+	s.mutex.Lock()
+	if s.window != nil {
+		s.window.stage = StageAlive
+	}
+	s.window = w
+	s.window.stage = StageVisible
+	s.mutex.Unlock()
+	s.Repaint()
 }
 
 // Mit Run schliesslich wird der MainEvent-Loop der Applikation gestartet,
@@ -103,8 +105,8 @@ func (s *Screen) SetWindow(w *Window) {
 // Ein Aufruf dieser Methode via Go-Routine ist nicht sinnvoll, da sonst
 // die Applikation gar nie richtig läuft (siehe auch Methode Quit).
 func (s *Screen) Run() {
-    s.eventThread()
-    s.disp.Close()
+	s.eventThread()
+	s.disp.Close()
 }
 
 // Mit Quit wird die Applikation (d.h. der MainEvent-Loop) terminiert.
@@ -112,54 +114,54 @@ func (s *Screen) Run() {
 // Applikation nicht zurückkehrt, muss diese Methode aus einer weiteren
 // Go-Routine (bspw. dem Callback-Handler eines Buttons) aufgerufen werden.
 func (s *Screen) Quit() {
-    go s.quit()
+	go s.quit()
 }
 
 func (s *Screen) quit() {
-    //fmt.Printf("Screen.Quit() has been called\n")
-    if s.window != nil {
-        //fmt.Printf("Screen.Quit()   closing an open window\n")
-        s.window.Close()
-        //fmt.Printf("Screen.Quit()   done!\n")
-        s.window = nil
-    }
-    //fmt.Printf("Screen.Quit()   send close to the event thread\n")
-    s.eventCloseQ <- true
-    //fmt.Printf("Screen.Quit()   send close to the paint thread\n")
-    s.paintCloseQ <- true
-    //fmt.Printf("Screen.Quit()   wait for the threads to complete\n")
-    s.wg.Wait()
-    //fmt.Printf("Screen.Quit()   done!\n")
+	//fmt.Printf("Screen.Quit() has been called\n")
+	if s.window != nil {
+		//fmt.Printf("Screen.Quit()   closing an open window\n")
+		s.window.Close()
+		//fmt.Printf("Screen.Quit()   done!\n")
+		s.window = nil
+	}
+	//fmt.Printf("Screen.Quit()   send close to the event thread\n")
+	s.eventCloseQ <- true
+	//fmt.Printf("Screen.Quit()   send close to the paint thread\n")
+	s.paintCloseQ <- true
+	//fmt.Printf("Screen.Quit()   wait for the threads to complete\n")
+	s.wg.Wait()
+	//fmt.Printf("Screen.Quit()   done!\n")
 }
 
 func (s *Screen) StopPaint() {
-    s.paintTicker.Stop()
+	s.paintTicker.Stop()
 }
 
 func (s *Screen) ContPaint() {
-    s.paintTicker.Reset(RefreshCycle)
+	s.paintTicker.Reset(refreshRate)
 }
 
 func (s *Screen) Repaint() {
-    if s.window == nil || s.window.stage != StageVisible {
-        return
-    }
-    if s.window.Repaint() {
+	if s.window == nil || s.window.stage != StageVisible {
+		return
+	}
+	if s.window.Repaint() {
 		s.disp.Draw(s.window.gc.Image())
 	}
 }
 
 func (s *Screen) paintThread() {
 PAINT_LOOP:
-    for {
-        select {
-        case <- s.paintCloseQ:
-            break PAINT_LOOP
-        case <- s.paintTicker.C:
+	for {
+		select {
+		case <-s.paintCloseQ:
+			break PAINT_LOOP
+		case <-s.paintTicker.C:
 			s.Repaint()
-        }
-    }
-    s.wg.Done()
+		}
+	}
+	s.wg.Done()
 }
 
 // In dieser Methode schliesslich spielt die Musik: vom Touch-Screen werden
@@ -170,25 +172,27 @@ PAINT_LOOP:
 // Koordianten in Objekt-relative Daten erfolgt im Objekt Window!
 // Gestoppt wird dieser Thread durch das Schliessen der Event-Queue.
 func (s *Screen) eventThread() {
-    var evt, tapEvt touch.Event
-    var seqNumber int = 0
+	var evt, tapEvt touch.Event
+	var seqNumber int = 0
 
 EVENT_LOOP:
-    for {
-        select {
-        case <- s.eventCloseQ:
-            break EVENT_LOOP
-        case tchEvt := <- s.touch.EventQ:
+	for {
+		select {
+		case <-s.eventCloseQ:
+			break EVENT_LOOP
+		case tchEvt := <-s.touch.EventQ:
+			//fmt.Printf("[%d]: %10s: %v -> %v\n", tchEvt.Time.UnixMilli(),
+			//	tchEvt.Type, tchEvt.TouchRawPos, tchEvt.TouchPos)
 			switch tchEvt.Type {
 			case adatft.PenPress:
 				seqNumber++
-				evt.Type        = touch.TypePress
-				evt.SeqNumber   = seqNumber
+				evt.Type = touch.TypePress
+				evt.SeqNumber = seqNumber
 				evt.LongPressed = false
-				evt.InitTime    = time.Now()
-				evt.InitPos     = geom.NewPoint(tchEvt.X, tchEvt.Y)
-				evt.Time        = evt.InitTime
-				evt.Pos         = evt.InitPos
+				evt.InitTime = time.Now()
+				evt.InitPos = geom.NewPoint(tchEvt.X, tchEvt.Y)
+				evt.Time = evt.InitTime
+				evt.Pos = evt.InitPos
 
 				// Setze eine verzoegerte Go-Routine zur Erkennung des Events
 				// 'LongPress'.
@@ -196,8 +200,8 @@ EVENT_LOOP:
 				go func(seqNr int) {
 					time.Sleep(touch.LongPressThreshold)
 					if seqNr == seqNumber &&
-							evt.Type != touch.TypeRelease &&
-							evt.InitPos.Distance(evt.Pos) <= touch.NearThreshold {
+						evt.Type != touch.TypeRelease &&
+						evt.InitPos.Distance(evt.Pos) <= touch.NearThreshold {
 						evt.LongPressed = true
 						newEvent := evt
 						newEvent.Type = touch.TypeLongPress
@@ -210,13 +214,13 @@ EVENT_LOOP:
 			case adatft.PenDrag:
 				evt.Type = touch.TypeDrag
 				evt.Time = time.Now()
-				evt.Pos  = geom.NewPoint(tchEvt.X, tchEvt.Y)
+				evt.Pos = geom.NewPoint(tchEvt.X, tchEvt.Y)
 				s.window.eventQ <- evt
 
 			case adatft.PenRelease:
 				evt.Type = touch.TypeRelease
 				evt.Time = time.Now()
-				evt.Pos  = geom.NewPoint(tchEvt.X, tchEvt.Y)
+				evt.Pos = geom.NewPoint(tchEvt.X, tchEvt.Y)
 				s.window.eventQ <- evt
 
 				if evt.InitPos.Distance(evt.Pos) <= touch.NearThreshold {
@@ -224,8 +228,8 @@ EVENT_LOOP:
 					// An dieser Stelle steht fest: es wurde ein korrekter Tap
 					// erkannt. Die Frage ist noch: war es ein DoubleTap?
 					if tapEvt.Type == touch.TypeTap &&
-							evt.Time.Sub(tapEvt.Time) < touch.DoubleTapDuration &&
-							evt.Pos.Distance(tapEvt.Pos) <= touch.NearThreshold {
+						evt.Time.Sub(tapEvt.Time) < touch.DoubleTapDuration &&
+						evt.Pos.Distance(tapEvt.Pos) <= touch.NearThreshold {
 						tapEvt = evt
 						tapEvt.Type = touch.TypeDoubleTap
 					} else {
@@ -235,10 +239,10 @@ EVENT_LOOP:
 					s.window.eventQ <- tapEvt
 				}
 			}
-        }
-    }
-    s.wg.Done()
-    //fmt.Printf("Screen.eventThread()   exits\n")
+		}
+	}
+	s.wg.Done()
+	//fmt.Printf("Screen.eventThread()   exits\n")
 }
 
 func (s *Screen) StartAnimation(a *Animation) {
@@ -248,5 +252,3 @@ func (s *Screen) StartAnimation(a *Animation) {
 func (s *Screen) StopAnimation(a *Animation) {
 
 }
-
-

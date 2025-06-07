@@ -3,14 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math"
+	"time"
+
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
-	"github.com/stefan-muehlebach/gg/color"
+	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/fonts"
 	"github.com/stefan-muehlebach/gg/geom"
 	"golang.org/x/image/font"
-	"math"
-	"time"
 )
 
 const (
@@ -23,14 +24,14 @@ const (
 )
 
 var (
-	fillColorActive   = color.YellowGreen
+	fillColorActive   = colors.YellowGreen
 	fillColorDeactive = fillColorActive.Alpha(0.4)
-	lineColorActive   = color.White
+	lineColorActive   = colors.White
 	lineColorDeactive = lineColorActive.Alpha(0.4)
-    lineWidth         = 1.0
+	lineWidth         = 1.0
 
-    backgroundColor   = color.DarkBlue.Alpha(0.5)
-	numSamples int
+	backgroundColor = colors.DarkBlue.Alpha(0.5)
+	numSamples      int
 )
 
 //-----------------------------------------------------------------------------
@@ -51,8 +52,8 @@ func init() {
 //-----------------------------------------------------------------------------
 
 type Arrow struct {
-    p1, c, p2 geom.Point
-	vis bool
+	p1, c, p2 geom.Point
+	vis       bool
 }
 
 func NewArrow(p1, c, p2 geom.Point) *Arrow {
@@ -69,10 +70,10 @@ func (a *Arrow) IsVisible() bool {
 }
 
 func (a *Arrow) Draw(gc *gg.Context) {
-    gc.MoveTo(a.p1.AsCoord())
+	gc.MoveTo(a.p1.AsCoord())
 	gc.QuadraticTo(a.c.X, a.c.Y, a.p2.X, a.p2.Y)
 	gc.SetStrokeWidth(5.0)
-	gc.SetStrokeColor(color.WhiteSmoke)
+	gc.SetStrokeColor(colors.WhiteSmoke)
 	gc.Stroke()
 
 	v := a.p2.Sub(a.c)
@@ -81,7 +82,7 @@ func (a *Arrow) Draw(gc *gg.Context) {
 	fmt.Printf("Angle: %f\n", angle)
 	rotMat := geom.Rotate(angle)
 	v1 := rotMat.Transform(geom.Point{-4, 9}).Add(a.p2)
-	v2 := rotMat.Transform(geom.Point{ 4, 9}).Add(a.p2)
+	v2 := rotMat.Transform(geom.Point{4, 9}).Add(a.p2)
 
 	gc.MoveTo(v1.AsCoord())
 	gc.LineTo(a.p2.AsCoord())
@@ -97,7 +98,7 @@ type Text struct {
 	width float64
 	face  font.Face
 	align gg.Align
-	color color.Color
+	color colors.Color
 	vis   bool
 }
 
@@ -108,7 +109,7 @@ func NewText(txt string, pos geom.Point, width float64, face font.Face) *Text {
 	t.width = width
 	t.face = face
 	t.align = gg.AlignLeft
-	t.color = color.WhiteSmoke
+	t.color = colors.WhiteSmoke
 	t.vis = true
 	return t
 }
@@ -142,18 +143,18 @@ func NewTarget(refPt adatft.RefPointType, pos geom.Point) *Target {
 	t.samples = make([]adatft.TouchRawPos, numSamples)
 	t.curSample = 0
 	t.vis = true
-    t.act = false
+	t.act = false
 	return t
 }
 
 func (t *Target) Reset() {
 	t.curSample = 0
-    t.vis = true
-    t.act = true
+	t.vis = true
+	t.act = true
 }
 
 func (t *Target) IsActive() bool {
-    return t.act
+	return t.act
 }
 
 func (t *Target) IsVisible() bool {
@@ -163,9 +164,9 @@ func (t *Target) IsVisible() bool {
 func (t *Target) AddSample(pos adatft.TouchRawPos) bool {
 	var sumX, sumY int
 
-    if ! t.IsActive() {
-        return false
-    }
+	if !t.IsActive() {
+		return false
+	}
 	t.samples[t.curSample] = pos
 	t.curSample++
 	if t.curSample == len(t.samples) {
@@ -176,7 +177,7 @@ func (t *Target) AddSample(pos adatft.TouchRawPos) bool {
 		}
 		t.avg.RawX = uint16(sumX / len(t.samples))
 		t.avg.RawY = uint16(sumY / len(t.samples))
-        t.act = false
+		t.act = false
 		return false
 	}
 	return true
@@ -219,8 +220,8 @@ func (t *Target) Draw(gc *gg.Context) {
 //-----------------------------------------------------------------------------
 
 type Iterator[T any] struct {
-	lst []T
-	idx int
+	lst   []T
+	idx   int
 	cycle bool
 }
 
@@ -257,21 +258,21 @@ var (
 		`Mit diesem Programm wird der Versatz zwischen TouchScreens und Displays gemessen. Das daraus resultierende Parameterfile wird von AdaTFT verwendet, um den Versatz zu begleichen.`,
 		`Damit dieses Wunder vollbracht werden kann, ist Deine Mithilfe notwendig! Im Folgenden werden dir vier Kontrollpunkte in den Ecken des Bildschirms gezeigt. Diese gilt es so präzis wie möglich mit einem Stift anzutippen und über eine bestimmte Zeit zu halten.`,
 		`Im Anschluss wird im aktuellen Verzeichnis eine Datei namens «TouchCalib.json» erstellt, welche die berechneten Werte enthält. Um diese Datei zu aktivieren, verschiebt man sie einfach in das Verzeichnis «~/.config/adatft».`,
-        `Die Werte wurden in die Datei «TouchCalib.json» geschrieben.`,
+		`Die Werte wurden in die Datei «TouchCalib.json» geschrieben.`,
 		`Drück mit dem Stift in das Zentrum der Markierung und halte die Position...`,
 		`Heb den Stift kurz hoch, damit das nächste Ziel aktiv wird.`,
 	}
 	textIter *Iterator[string] = NewIterator(textList, false)
 
-	backColorList = []color.Color{
-		color.DarkMagenta.Alpha(0.3),
-        color.DarkBlue.Alpha(0.3),
-		color.DarkCyan.Alpha(0.3),
-		color.DarkGreen.Alpha(0.3),
-		color.Gold.Alpha(0.3),
-		color.DarkRed.Alpha(0.3),
-    }
-	colorIter *Iterator[color.Color] = NewIterator(backColorList, true)
+	backColorList = []colors.Color{
+		colors.DarkMagenta.Alpha(0.3),
+		colors.DarkBlue.Alpha(0.3),
+		colors.DarkCyan.Alpha(0.3),
+		colors.DarkGreen.Alpha(0.3),
+		colors.Gold.Alpha(0.3),
+		colors.DarkRed.Alpha(0.3),
+	}
+	colorIter *Iterator[colors.Color] = NewIterator(backColorList, true)
 )
 
 var (
@@ -351,7 +352,7 @@ func waitForEvent(tch *adatft.Touch, typ adatft.PenEventType) {
 func main() {
 	flag.IntVar(&numSamples, "samples", defNumSamples,
 		"number of samples to collect")
-    dispRotation = defDispRotation
+	dispRotation = defDispRotation
 	flag.Parse()
 
 	dsp = adatft.OpenDisplay(dispRotation)
@@ -376,12 +377,12 @@ func main() {
 
 	//go displayThread(doneQ)
 
-	//gc.SetFillColor(color.Black)
+	//gc.SetFillColor(colors.Black)
 	//gc.Clear()
 
 	targetList = make([]*Target, adatft.NumRefPoints)
 	for refPt := adatft.RefTopLeft; refPt < adatft.NumRefPoints; refPt++ {
-		target := NewTarget(refPt, geom.Point(penPosList[refPt]))
+		target := NewTarget(refPt, geom.Point{penPosList[refPt].X, penPosList[refPt].Y})
 		targetList[refPt] = target
 		graphObjList = append(graphObjList, target)
 	}
@@ -392,8 +393,8 @@ func main() {
 		geom.Point{margin, height - 4*margin}, width-2*margin,
 		fonts.NewFace(fonts.GoItalic, 18.0))
 	statusText.align = gg.AlignRight
-	noteText := NewText(textList[4], geom.Point{2.1*margin, 2.1*margin}, width-4.2*margin,
-	    fonts.NewFace(fonts.LucidaHandwritingItalic, 14.0))
+	noteText := NewText(textList[4], geom.Point{2.1 * margin, 2.1 * margin}, width-4.2*margin,
+		fonts.NewFace(fonts.LucidaHandwritingItalic, 14.0))
 	noteText.vis = false
 
 	graphObjList = append(graphObjList, infoText, statusText, noteText)
@@ -408,7 +409,7 @@ func main() {
 	infoText.txt = "Bereit?"
 	infoText.face = fonts.NewFace(fonts.GoBold, 48.0)
 	infoText.align = gg.AlignCenter
-		backgroundColor = colorIter.Next()
+	backgroundColor = colorIter.Next()
 	UpdateDisplay()
 	waitForEvent(tch, adatft.PenRelease)
 
@@ -419,15 +420,15 @@ func main() {
 	noteText.vis = true
 
 	for refPt := adatft.RefTopLeft; refPt < adatft.NumRefPoints; refPt++ {
-        targetList[refPt].Reset()
-        UpdateDisplay()
+		targetList[refPt].Reset()
+		UpdateDisplay()
 		CollectData(targetList[refPt])
 		if refPt == adatft.RefTopLeft {
 			noteText.txt = textList[5]
 			UpdateDisplay()
 			noteText.vis = false
 		}
-	    waitForEvent(tch, adatft.PenRelease)
+		waitForEvent(tch, adatft.PenRelease)
 	}
 
 	infoText.txt = "Fertig!"

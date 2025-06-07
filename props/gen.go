@@ -4,19 +4,20 @@
 package main
 
 import (
-	"github.com/stefan-muehlebach/adagui/props"
 	"log"
 	"os"
 	"path"
 	"runtime"
 	"text/template"
+
+	"github.com/stefan-muehlebach/adagui/props"
 )
 
 const colorPropTempl = `
-func (pe *PropertyEmbed) {{ .Name }}() (color.Color) {
+func (pe *PropertyEmbed) {{ .Name }}() (colors.Color) {
     return pe.prop.Color({{ .Name }})
 }
-func (pe *PropertyEmbed) Set{{ .Name }}(c color.Color) {
+func (pe *PropertyEmbed) Set{{ .Name }}(c colors.Color) {
     pe.prop.SetColor({{ .Name }}, c)
 }
 `
@@ -71,7 +72,7 @@ func main() {
 package props
 
 import (
-    "github.com/stefan-muehlebach/gg/color"
+    "github.com/stefan-muehlebach/gg/colors"
     "github.com/stefan-muehlebach/gg/fonts"
 )
 
