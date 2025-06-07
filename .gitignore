@@ -8,7 +8,9 @@ cmd/simpleDraw/simpleDraw
 cmd/tabPanel/tabPanel
 cmd/touchCalib/touchCalib
 cmd/touchTest/touchTest
+cmd/showPNG/showPNG
 
+*.go_*
 *.swp
 *.cpuprof
 *.memprof
