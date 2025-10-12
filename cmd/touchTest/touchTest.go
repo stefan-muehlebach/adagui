@@ -116,7 +116,7 @@ func composeScreen(out *image.RGBA, grid, trace, cross *gg.Context) {
 }
 
 func main() {
-	var rotation adatft.RotationType = adatft.Rotate090
+	var rotation adatft.RotationType = adatft.Rotate000
 	var grid, trace, cross *gg.Context
 
 	flag.BoolVar(&debug, "debug", false, "write events to stdout")

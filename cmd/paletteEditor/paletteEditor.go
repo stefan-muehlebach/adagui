@@ -636,20 +636,12 @@ func main() {
 
 	palList, _ := mandel.PaletteNames()
 	btnPalList := adagui.NewListButton(palList)
-	btnBox.Add(btnPalList)
-	btnBox.Add(adagui.NewSpacer())
 	btnQuit := adagui.NewTextButton("Quit")
 	btnQuit.SetOnTap(func(evt touch.Event) {
 		screen.Quit()
 	})
-	btnBox.Add(btnQuit)
+	btnBox.Add(btnPalList, adagui.NewSpacer(), btnQuit)
 
-	//    lbl := adagui.NewLabel("Test")
-	//    lbl.SetPos(geom.Point{10.0, 300.0})
-	//    lbl.SetTextColor(colors.Gold)
-	//    group.Add(lbl)
-
-	// Start der Applikation
 	screen.SetWindow(win)
 	screen.Run()
 }

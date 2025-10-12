@@ -32,6 +32,17 @@ var (
 
 	backgroundColor = colors.DarkBlue.Alpha(0.5)
 	numSamples      int
+	screenMask      uint
+)
+
+const (
+	Info1Scr = (1 << iota)
+	Info2Scr
+	Info3Scr
+	ReadyScr
+	GoScr
+	DoneScr
+	FinalInfoScr
 )
 
 //-----------------------------------------------------------------------------
@@ -253,6 +264,8 @@ func (i *Iterator[T]) Next() T {
 	return i.lst[j]
 }
 
+//-----------------------------------------------------------------------------
+
 var (
 	textList = []string{
 		`Mit diesem Programm wird der Versatz zwischen TouchScreens und Displays gemessen. Das daraus resultierende Parameterfile wird von AdaTFT verwendet, um den Versatz zu begleichen.`,
@@ -352,6 +365,7 @@ func waitForEvent(tch *adatft.Touch, typ adatft.PenEventType) {
 func main() {
 	flag.IntVar(&numSamples, "samples", defNumSamples,
 		"number of samples to collect")
+	flag.UintVar(&screenMask, "screens", 0xFFFFFFFF, "Which Screens to show")
 	dispRotation = defDispRotation
 	flag.Parse()
 
@@ -368,18 +382,6 @@ func main() {
 	penPosList[3] = adatft.TouchPos{X: margin, Y: height - margin}
 
 	curRefPoint = adatft.NumRefPoints
-	//pctData = 0.0
-	//penDataList = make([]adatft.TouchRawPos, numSamples)
-	//curSample = 0
-	//collecting = false
-
-	//doneQ = make(chan bool)
-
-	//go displayThread(doneQ)
-
-	//gc.SetFillColor(colors.Black)
-	//gc.Clear()
-
 	targetList = make([]*Target, adatft.NumRefPoints)
 	for refPt := adatft.RefTopLeft; refPt < adatft.NumRefPoints; refPt++ {
 		target := NewTarget(refPt, geom.Point{penPosList[refPt].X, penPosList[refPt].Y})
@@ -397,43 +399,54 @@ func main() {
 		fonts.NewFace(fonts.LucidaHandwritingItalic, 14.0))
 	noteText.vis = false
 
+	// Die ersten 3 Screens sind Anleitungen, wie das Programm zu verwenden
+	// ist. Diese teilen die graphischen Parameter.
 	graphObjList = append(graphObjList, infoText, statusText, noteText)
 	for i := 0; i < 3; i++ {
+		if screenMask&(1<<i) == 0 {
+			continue
+		}
 		infoText.txt = textIter.Next()
 		backgroundColor = colorIter.Next()
 		UpdateDisplay()
 		waitForEvent(tch, adatft.PenRelease)
 	}
 
-	infoText.pos = infoText.pos.AddXY(0, 100)
-	infoText.txt = "Bereit?"
-	infoText.face = fonts.NewFace(fonts.GoBold, 48.0)
-	infoText.align = gg.AlignCenter
-	backgroundColor = colorIter.Next()
-	UpdateDisplay()
-	waitForEvent(tch, adatft.PenRelease)
-
-	infoText.txt = "Los!"
-	statusText.vis = false
-	backgroundColor = colorIter.Next()
-
-	noteText.vis = true
-
-	for refPt := adatft.RefTopLeft; refPt < adatft.NumRefPoints; refPt++ {
-		targetList[refPt].Reset()
+	if screenMask&ReadyScr != 0 {
+		infoText.pos = infoText.pos.AddXY(0, 100)
+		infoText.txt = "Bereit?"
+		infoText.face = fonts.NewFace(fonts.GoBold, 48.0)
+		infoText.align = gg.AlignCenter
+		backgroundColor = colorIter.Next()
 		UpdateDisplay()
-		CollectData(targetList[refPt])
-		if refPt == adatft.RefTopLeft {
-			noteText.txt = textList[5]
-			UpdateDisplay()
-			noteText.vis = false
-		}
 		waitForEvent(tch, adatft.PenRelease)
 	}
 
-	infoText.txt = "Fertig!"
-	UpdateDisplay()
-	time.Sleep(2 * time.Second)
+	if screenMask&GoScr != 0 {
+		infoText.txt = "Los!"
+		statusText.vis = false
+		backgroundColor = colorIter.Next()
+
+		noteText.vis = true
+
+		for refPt := adatft.RefTopLeft; refPt < adatft.NumRefPoints; refPt++ {
+			targetList[refPt].Reset()
+			UpdateDisplay()
+			CollectData(targetList[refPt])
+			if refPt == adatft.RefTopLeft {
+				noteText.txt = textList[5]
+				UpdateDisplay()
+				noteText.vis = false
+			}
+			waitForEvent(tch, adatft.PenRelease)
+		}
+	}
+
+	if screenMask&DoneScr != 0 {
+		infoText.txt = "Fertig!"
+		UpdateDisplay()
+		time.Sleep(2 * time.Second)
+	}
 
 	distortedPlane := &adatft.DistortedPlane{}
 	for i, target := range targetList {
@@ -442,13 +455,15 @@ func main() {
 	}
 	distortedPlane.WriteConfigFile("TouchCalib.json")
 
-	infoText.txt = textList[3]
-	infoText.face = fonts.NewFace(fonts.GoRegular, 18.0)
-	infoText.align = gg.AlignLeft
-	statusText.vis = true
-	backgroundColor = colorIter.Next()
-	UpdateDisplay()
-	waitForEvent(tch, adatft.PenRelease)
+	if screenMask&FinalInfoScr != 0 {
+		infoText.txt = textList[3]
+		infoText.face = fonts.NewFace(fonts.GoRegular, 18.0)
+		infoText.align = gg.AlignLeft
+		statusText.vis = true
+		backgroundColor = colorIter.Next()
+		UpdateDisplay()
+		waitForEvent(tch, adatft.PenRelease)
+	}
 
 	tch.Close()
 	dsp.Close()
