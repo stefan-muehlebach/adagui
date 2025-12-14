@@ -1,6 +1,6 @@
 module github.com/stefan-muehlebach/adagui
 
-go 1.25.2
+go 1.25.5
 
 replace github.com/stefan-muehlebach/adatft => ../adatft
 
@@ -14,12 +14,12 @@ require (
 	github.com/stefan-muehlebach/gg v1.4.1
 	github.com/stefan-muehlebach/ledgrid v0.0.0-00010101000000-000000000000
 	github.com/stefan-muehlebach/mandel v1.2.0
-	golang.org/x/image v0.32.0
+	golang.org/x/image v0.34.0
 )
 
 require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
 	periph.io/x/conn/v3 v3.7.2 // indirect
 	periph.io/x/host/v3 v3.8.5 // indirect
 )
