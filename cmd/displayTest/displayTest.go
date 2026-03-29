@@ -3,91 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/stefan-muehlebach/adatft"
-	"github.com/stefan-muehlebach/gg"
+	"image"
 	"log"
 	"os"
 	"os/signal"
-	"path"
-	"runtime"
-	"runtime/pprof"
-	"runtime/trace"
 	"syscall"
 	"time"
-    "image"
+
+	"github.com/stefan-muehlebach/adatft"
+	"github.com/stefan-muehlebach/gg"
 )
-
-//-----------------------------------------------------------------------------
-
-var (
-	doCpuProf, doMemProf, doTrace       bool
-	cpuProfFile, memProfFile, traceFile string
-	fhCpu, fhMem, fhTrace               *os.File
-)
-
-func init() {
-	cpuProfFile = fmt.Sprintf("%s.cpuprof", path.Base(os.Args[0]))
-	memProfFile = fmt.Sprintf("%s.memprof", path.Base(os.Args[0]))
-	traceFile = fmt.Sprintf("%s.trace", path.Base(os.Args[0]))
-
-	flag.BoolVar(&doCpuProf, "cpuprof", false,
-		"write cpu profile to "+cpuProfFile)
-	flag.BoolVar(&doMemProf, "memprof", false,
-		"write memory profile to "+memProfFile)
-	flag.BoolVar(&doTrace, "trace", false,
-		"write trace data to "+traceFile)
-}
-
-func StartProfiling() {
-	var err error
-
-	if doCpuProf {
-		fhCpu, err = os.Create(cpuProfFile)
-		if err != nil {
-			log.Fatal("couldn't create cpu profile: ", err)
-		}
-		err = pprof.StartCPUProfile(fhCpu)
-		if err != nil {
-			log.Fatal("couldn't start cpu profiling: ", err)
-		}
-	}
-
-	if doMemProf {
-		fhMem, err = os.Create(memProfFile)
-		if err != nil {
-			log.Fatal("couldn't create memory profile: ", err)
-		}
-	}
-
-	if doTrace {
-		fhTrace, err = os.Create(traceFile)
-		if err != nil {
-			log.Fatal("couldn't create tracefile: ", err)
-		}
-		trace.Start(fhTrace)
-	}
-}
-
-func StopProfiling() {
-	if fhCpu != nil {
-		pprof.StopCPUProfile()
-		fhCpu.Close()
-	}
-
-	if fhMem != nil {
-		runtime.GC()
-		err := pprof.WriteHeapProfile(fhMem)
-		if err != nil {
-			log.Fatal("couldn't write memory profile: ", err)
-		}
-		fhMem.Close()
-	}
-
-	if fhTrace != nil {
-		trace.Stop()
-		fhTrace.Close()
-	}
-}
 
 //-----------------------------------------------------------------------------
 
@@ -106,7 +31,7 @@ func DrawScreenshot(gc *gg.Context, disp *adatft.Display) {
 }
 
 func DrawMovie(gc *gg.Context, disp *adatft.Display) {
-	fileName := fmt.Sprintf("images/movie.%03d.png", movieCurrentFrame)
+	fileName := fmt.Sprintf("images/movie.%04d.png", movieCurrentFrame)
 	gc.SavePNG(fileName)
 	disp.Draw(gc.Image())
 	movieCurrentFrame++
@@ -139,17 +64,23 @@ func SignalHandler() {
 func TouchHandler() {
 	for penEvent := range touch.EventQ {
 		if penEvent.Type == adatft.PenRelease {
-            if penEvent.X > float64(gc.Width())/2.0 {
-		        animNum += 1
-                if animNum >= len(AnimationList) {
-                    animNum %= len(AnimationList)
-                }
-            } else {
-		        animNum -= 1
-                if animNum < 0 {
-                    animNum += len(AnimationList)
-                }
-            }
+			if penEvent.X < float64(gc.Width())/3.0 {
+				animNum -= 1
+				if animNum < 0 {
+					animNum += len(AnimationList)
+				}
+			} else if penEvent.X < 2.0*float64(gc.Width())/3.0 {
+				if penEvent.Y < float64(gc.Height())/2.0 {
+
+				} else {
+					quitFlag = true
+				}
+			} else {
+				animNum += 1
+				if animNum >= len(AnimationList) {
+					animNum %= len(AnimationList)
+				}
+			}
 			runFlag = false
 		}
 	}
@@ -158,26 +89,32 @@ func TouchHandler() {
 //-----------------------------------------------------------------------------
 
 type Animation interface {
-    RefreshTime() time.Duration
+	RefreshTime() time.Duration
 	Init(gc *gg.Context)
+	Animate(dt time.Duration)
 	Paint()
-    Clean()
+	Clean()
 }
 
 func ShowAnimation(a Animation) {
+	dt := a.RefreshTime()
+
 	a.Init(gc)
-	ticker := time.NewTicker(a.RefreshTime())
+	ticker := time.NewTicker(dt)
 	defer ticker.Stop()
 	for range ticker.C {
 		if !runFlag {
 			break
 		}
+		adatft.AnimWatch.Start()
+		a.Animate(dt)
+		adatft.AnimWatch.Stop()
 		adatft.PaintWatch.Start()
 		a.Paint()
 		adatft.PaintWatch.Stop()
 		Draw(gc, disp)
 	}
-    a.Clean()
+	a.Clean()
 }
 
 type AnimationListType struct {
@@ -187,14 +124,15 @@ type AnimationListType struct {
 
 var (
 	AnimationList = []AnimationListType{
+		{"Introduction", NewIntroAnim()},
 		{"Dancing Polygons", &PolygonAnim{}},
 		{"Rotating Cube (3D)", &Cube3DAnim{}},
 		{"Text on the run", &TextAnim{}},
 		{"Plasma... some sort of", &PlasmaAnim{}},
 		{"SBB (are you Swiss?)", &SBBAnim{}},
-        {"Scrolling Text", &ScrollAnim{}},
-        {"Using Pico-8 font",
-            NewFixedFontAnim(image.Point{20, 100}, "Hello Pico-8 | HELLO PICO-8")},
+		{"Scrolling Text", &ScrollAnim{}},
+		{"Using Pico-8 font",
+			NewFixedFontAnim(image.Point{20, 100}, "Hello Pico-8 | HELLO PICO-8")},
 	}
 )
 
@@ -207,20 +145,21 @@ var (
 	gc                                  *gg.Context
 	pageNum                             int
 	animNum                             int
-	numObjs, numEdges                   int
+	numObjs                             = 5
+	numEdges                            = 3
 	blurFactor                          float64
 	msg                                 string
-	rotation                            adatft.RotationType = adatft.Rotate000
+	rotation                            adatft.RotationType = adatft.Rotate090
 	runFlag, quitFlag                   bool
 	movieTotalFrames, movieCurrentFrame int
 )
 
 func main() {
+	InitProfiling()
+
 	flag.IntVar(&animNum, "anim", 0, "Start with a given animation")
-	flag.IntVar(&numObjs, "objs", 5, "Number of objects")
-	flag.IntVar(&numEdges, "edges", 3, "Number of edges of an object")
 	flag.Float64Var(&blurFactor, "blur", 1.0, "(Only for Anim 1) Blur factor [0,1] (1: no blur, 0: max blur).\nIn order to see something, choose a value < 0.1")
-	flag.StringVar(&msg, "text", "Hello, world!", "The text that will be displayed in animation 3")
+	flag.StringVar(&msg, "text", "Hello, world!", "Sample text")
 	flag.Var(&rotation, "rotation", "Display rotation")
 	flag.Parse()
 
@@ -229,9 +168,11 @@ func main() {
 	log.Printf("> OpenDisplay()\n")
 	disp = adatft.OpenDisplay(rotation)
 	log.Printf(" > done\n")
+
 	log.Printf("> OpenTouch()\n")
 	touch = adatft.OpenTouch(rotation)
 	log.Printf(" > done\n")
+
 	log.Printf("> NewContext()\n")
 	gc = gg.NewContext(adatft.Width, adatft.Height)
 	log.Printf(" > done\n")
@@ -244,11 +185,11 @@ func main() {
 		runFlag = true
 		log.Printf("[%d] %s", animNum, AnimationList[animNum].description)
 		ShowAnimation(AnimationList[animNum].animation)
+		adatft.PrintStat()
+		adatft.ResetStat()
 	}
 
 	disp.Close()
 	touch.Close()
 	StopProfiling()
-
-	adatft.PrintStat()
 }

@@ -3,15 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
+
 	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/adagui/binding"
 	"github.com/stefan-muehlebach/adagui/props"
 	"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/adatft"
-	"github.com/stefan-muehlebach/gg/color"
+	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/geom"
-	"os"
-	"os/signal"
 )
 
 type Tool int
@@ -69,7 +70,7 @@ var (
 	r0, r1, r2 *adagui.Rectangle
 	dbgDom     adagui.DebugDomain
 
-	paleBlue = color.RGBAF{0.447, 0.706, 0.839, 1.0}
+	paleBlue = colors.RGBAF{0.447, 0.706, 0.839, 1.0}
 )
 
 func SignalHandler() {
@@ -109,13 +110,13 @@ func NewLine() *adagui.Line {
 	l.SetOnPress(func(evt touch.Event) {
 		dp = evt.Pos.Sub(l.Pos())
 		adagui.Debugf(dbgDom, "dp: %v", dp)
-        l.SetP0(evt.Pos)
+		l.SetP0(evt.Pos)
 		l.Mark(adagui.MarkNeedsPaint)
 	})
 	l.SetOnDrag(func(evt touch.Event) {
 		adagui.Debugf(dbgDom, "new pos: %v", evt.Pos)
 		//l.SetPos(evt.Pos.Sub(dp))
-        l.SetP0(evt.Pos)
+		l.SetP0(evt.Pos)
 		l.Mark(adagui.MarkNeedsPaint)
 	})
 	l.SetOnRelease(func(evt touch.Event) {
@@ -198,7 +199,7 @@ func NewCanvas(w, h float64) *adagui.Panel {
 
 	p.SetOnPress(func(evt touch.Event) {
 		l = NewLine()
-        l.SetP0(evt.Pos)
+		l.SetP0(evt.Pos)
 		p.Add(l)
 		p.Mark(adagui.MarkNeedsPaint)
 	})
@@ -244,7 +245,7 @@ func main() {
 	main := adagui.NewGroupPL(root, adagui.NewVBoxLayout())
 
 	canvas = NewCanvas(0.0, win.Rect.Dy()-88.0)
-	canvas.SetColor(color.Snow)
+	canvas.SetColor(colors.Snow)
 	canvas.SetBorderWidth(0.0)
 
 	iconBar01 := adagui.NewGroup()
@@ -279,9 +280,8 @@ func main() {
 	c1.SetPos(geom.Point{160, 40})
 
 	l1 = NewLine()
-    l1.SetP0(geom.Point{20, 20})
-    l1.SetP1(geom.Point{40, 40})
-
+	l1.SetP0(geom.Point{20, 20})
+	l1.SetP1(geom.Point{40, 40})
 
 	//l2 = NewLine(geom.Point{10, 100}, geom.Point{130.0, 220.0})
 

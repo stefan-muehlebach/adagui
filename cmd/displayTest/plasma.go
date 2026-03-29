@@ -1,11 +1,12 @@
 package main
 
 import (
-    "image"
-    "math"
-    "time"
-    "github.com/stefan-muehlebach/gg"
-    "github.com/stefan-muehlebach/gg/color"
+	"image"
+	"math"
+	"time"
+
+	"github.com/stefan-muehlebach/gg"
+	"github.com/stefan-muehlebach/gg/colors"
 )
 
 // The famous plasma animation ------------------------------------------------
@@ -19,28 +20,28 @@ var (
 
 const (
 	numThreads = 3
-    numShades  = 256
-    dispWidth  = 1.6 
-    dispHeight = 1.2
-    dt         = 0.05
+	numShades  = 256
+	dispWidth  = 1.6
+	dispHeight = 1.2
+	adt        = 0.05
 )
 
 type PlasmaAnim struct {
-    gc *gg.Context
-	t float64
-	pal *Palette
-	orderQ [numThreads]chan float64
-	doneQ [numThreads]chan bool
+	gc      *gg.Context
+	t       float64
+	pal     *Palette
+	orderQ  [numThreads]chan float64
+	doneQ   [numThreads]chan bool
 	valFlds [numThreads]*ValFieldType
-    img *image.RGBA
+	img     *image.RGBA
 }
 
 func (a *PlasmaAnim) RefreshTime() time.Duration {
-    return 30 * time.Millisecond
+	return 30 * time.Millisecond
 }
 
 func (a *PlasmaAnim) Init(gc *gg.Context) {
-    a.gc = gc
+	a.gc = gc
 
 	for i := 0; i < numThreads; i++ {
 		a.orderQ[i] = make(chan float64)
@@ -53,24 +54,27 @@ func (a *PlasmaAnim) Init(gc *gg.Context) {
 	}
 
 	a.pal = NewPalette("Simpel",
-		color.RandColor(),
-		color.RandColor(),
-		color.RandColor(),
-		color.RandColor(),
-		color.RandColor(),
+		colors.RandColor(),
+		colors.RandColor(),
+		colors.RandColor(),
+		colors.RandColor(),
+		colors.RandColor(),
 	)
 	a.img = gc.Image().(*image.RGBA)
 	a.t = 0.0
 }
 
-func (a *PlasmaAnim) Paint() {
+func (a *PlasmaAnim) Animate(dt time.Duration) {
+	a.t += adt
 	for i := range numThreads {
 		a.orderQ[i] <- a.t
 	}
 	for i := range numThreads {
 		<-a.doneQ[i]
 	}
+}
 
+func (a *PlasmaAnim) Paint() {
 	pixIdx := 0
 	valIdx := 0
 	for row := 0; row < a.gc.Height(); row++ {
@@ -88,13 +92,12 @@ func (a *PlasmaAnim) Paint() {
 			valIdx += 1
 		}
 	}
-	a.t += dt
 }
 
 func (a *PlasmaAnim) Clean() {
-    for i := range numThreads {
-        close(a.orderQ[i])
-    }
+	for i := range numThreads {
+		close(a.orderQ[i])
+	}
 }
 
 func UpdateThread(valFld *ValFieldType, orderQ chan float64, doneQ chan bool) {
@@ -176,42 +179,41 @@ func ColorFunc03(x, y, t float64) float64 {
 }
 
 type Palette struct {
-    name      string
-    colorList []color.Color
-    shadeList []color.Color
+	name      string
+	colorList []colors.Color
+	shadeList []colors.Color
 }
 
-func NewPalette(name string, colors ...color.Color) *Palette {
-    p := &Palette{}
-    p.name = name
-    for _, color := range colors {
-        p.colorList = append(p.colorList, color)
-    }
-    p.CalcLinearShades()
-    return p
+func NewPalette(name string, colors ...colors.Color) *Palette {
+	p := &Palette{}
+	p.name = name
+	for _, color := range colors {
+		p.colorList = append(p.colorList, color)
+	}
+	p.CalcLinearShades()
+	return p
 }
 
-func (p *Palette) GetColor(t float64) color.Color {
-    idx := int(t * float64(numShades*(len(p.colorList)-1)))
-    return p.shadeList[idx]
+func (p *Palette) GetColor(t float64) colors.Color {
+	idx := int(t * float64(numShades*(len(p.colorList)-1)))
+	return p.shadeList[idx]
 }
 
 // Berechnet die Abstufung zwischen den Stuetzfarben einfach, d.h.
 // linear.
 func (p *Palette) CalcLinearShades() {
-    var i, j, k int
-    var color1, color2 color.Color
-    var t float64
+	var i, j, k int
+	var color1, color2 colors.Color
+	var t float64
 
-    p.shadeList = make([]color.Color, numShades*(len(p.colorList)-1))
-    for i = 0; i < len(p.colorList)-1; i++ {
-        for j = 0; j < numShades; j++ {
-            color1 = p.colorList[i]
-            color2 = p.colorList[i+1]
-            t = float64(j) / float64(numShades)
-            k = i*numShades + j
-            p.shadeList[k] = color1.Interpolate(color2, t)
-        }
-    }
+	p.shadeList = make([]colors.Color, numShades*(len(p.colorList)-1))
+	for i = 0; i < len(p.colorList)-1; i++ {
+		for j = 0; j < numShades; j++ {
+			color1 = p.colorList[i]
+			color2 = p.colorList[i+1]
+			t = float64(j) / float64(numShades)
+			k = i*numShades + j
+			p.shadeList[k] = color1.Interpolate(color2, t)
+		}
+	}
 }
-

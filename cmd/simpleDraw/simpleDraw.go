@@ -2,21 +2,25 @@ package main
 
 import (
 	"flag"
-    "os"
-    _ "image/png"
+	_ "image/png"
+	"os"
+
 	//"image/color"
+	"log"
+
 	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/adagui/binding"
 	"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/adatft"
-	"log"
+
 	//"math/rand"
+	"encoding/json"
 	_ "sync"
-    "encoding/json"
+
 	//"github.com/stefan-muehlebach/gg/color"
-	"github.com/stefan-muehlebach/gg/color"
+	"github.com/cpmech/gosl/fun/fftw"
+	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/geom"
-    "github.com/cpmech/gosl/fun/fftw"
 )
 
 // Dieses Programm dient der Demonstration, wie mit dem Touchscreen umgegangen
@@ -26,13 +30,13 @@ import (
 type ToolType int
 
 const (
-    MoveTool ToolType = iota
-    PointTool
-    LineTool
+	MoveTool ToolType = iota
+	PointTool
+	LineTool
 	RectangleTool
 	CircleTool
 	EllipseTool
-    PolygonTool
+	PolygonTool
 )
 
 func init() {
@@ -41,25 +45,25 @@ func init() {
 }
 
 var (
-	screen *adagui.Screen
-	win    *adagui.Window
-	tool   ToolType
-    poly *adagui.Polygon
-    outFile string
+	screen  *adagui.Screen
+	win     *adagui.Window
+	tool    ToolType
+	poly    *adagui.Polygon
+	outFile string
 )
 
 //-----------------------------------------------------------------------------
 
 type Complex struct {
-    Re, Im float64
+	Re, Im float64
 }
 
 func NewComplex(c complex128) Complex {
-    return Complex{real(c), imag(c)}
+	return Complex{real(c), imag(c)}
 }
 
 func (c *Complex) AsComplex() complex128 {
-    return complex(c.Re, c.Im)
+	return complex(c.Re, c.Im)
 }
 
 //-----------------------------------------------------------------------------
@@ -67,48 +71,48 @@ func (c *Complex) AsComplex() complex128 {
 // Erstellt ein neues Panel der angegebenen Groesse und legt alle wichtigen
 // Handler fuer das Touch-Event fest.
 func NewPanel(w, h float64) *adagui.Panel {
-    var point *adagui.Point
-    var line *adagui.Line
+	var point *adagui.Point
+	var line *adagui.Line
 	var circ *adagui.Circle
 	var rect *adagui.Rectangle
 	var elli *adagui.Ellipse
 
 	p := adagui.NewPanel(w, h)
-    p.SetColor(color.Gainsboro)
+	p.SetColor(colors.Gainsboro)
 
 	p.SetOnTap(func(evt touch.Event) {
 		switch tool {
-        case PointTool:
-            point = NewPoint()
-            point.SetPos(evt.Pos)
-            p.Add(point)
-/*
-		case CircleTool:
-			r := 30.0 + 10.0*rand.Float64()
-			circ = NewCircle(r)
-			circ.SetPos(evt.Pos)
-			p.Add(circ)
-		case RectangleTool:
-			w, h := 60.0+20.0*rand.Float64(), 45.0+15.0*rand.Float64()
-			rect = NewRectangle(w, h)
-			rect.SetPos(evt.Pos.Sub(geom.Point{w / 2, h / 2}))
-			p.Add(rect)
-		case EllipseTool:
-			rx, ry := 30.0+20.0*rand.Float64(), 20.0+10.0*rand.Float64()
-			elli = NewEllipse(rx, ry)
-			elli.SetPos(evt.Pos)
-			p.Add(elli)
-*/
+		case PointTool:
+			point = NewPoint()
+			point.SetPos(evt.Pos)
+			p.Add(point)
+			/*
+				case CircleTool:
+					r := 30.0 + 10.0*rand.Float64()
+					circ = NewCircle(r)
+					circ.SetPos(evt.Pos)
+					p.Add(circ)
+				case RectangleTool:
+					w, h := 60.0+20.0*rand.Float64(), 45.0+15.0*rand.Float64()
+					rect = NewRectangle(w, h)
+					rect.SetPos(evt.Pos.Sub(geom.Point{w / 2, h / 2}))
+					p.Add(rect)
+				case EllipseTool:
+					rx, ry := 30.0+20.0*rand.Float64(), 20.0+10.0*rand.Float64()
+					elli = NewEllipse(rx, ry)
+					elli.SetPos(evt.Pos)
+					p.Add(elli)
+			*/
 		}
 		p.Mark(adagui.MarkNeedsPaint)
 	})
 
 	p.SetOnLongPress(func(evt touch.Event) {
 		switch tool {
-        case LineTool:
-            line = NewLine()
-            line.SetP0(evt.Pos)
-            p.Add(line)
+		case LineTool:
+			line = NewLine()
+			line.SetP0(evt.Pos)
+			p.Add(line)
 		case RectangleTool:
 			rect = NewRectangle(1.0, 1.0)
 			rect.SetPos(evt.Pos)
@@ -121,13 +125,13 @@ func NewPanel(w, h float64) *adagui.Panel {
 			elli = NewEllipse(1.0, 1.0)
 			elli.SetPos(evt.Pos)
 			p.Add(elli)
-        case PolygonTool:
-            if poly != nil {
-                poly.Remove()
-            }
-            poly = adagui.NewPolygon(evt.Pos)
-            poly.Closed = true
-            p.Add(poly)
+		case PolygonTool:
+			if poly != nil {
+				poly.Remove()
+			}
+			poly = adagui.NewPolygon(evt.Pos)
+			poly.Closed = true
+			p.Add(poly)
 		}
 		p.Mark(adagui.MarkNeedsPaint)
 	})
@@ -137,8 +141,8 @@ func NewPanel(w, h float64) *adagui.Panel {
 			return
 		}
 		switch tool {
-        case LineTool:
-            line.SetP1(evt.Pos)
+		case LineTool:
+			line.SetP1(evt.Pos)
 		case RectangleTool:
 			d := evt.Pos.Sub(evt.InitPos)
 			rect.SetSize(d)
@@ -148,8 +152,8 @@ func NewPanel(w, h float64) *adagui.Panel {
 		case EllipseTool:
 			rx, ry := evt.Pos.Sub(evt.InitPos).AsCoord()
 			elli.SetRadius(rx, ry)
-        case PolygonTool:
-            poly.AddPoint(evt.Pos)
+		case PolygonTool:
+			poly.AddPoint(evt.Pos)
 		}
 		p.Mark(adagui.MarkNeedsPaint)
 	})
@@ -169,8 +173,8 @@ func NewPanel(w, h float64) *adagui.Panel {
 			elli.SetPos(r.Min)
 			elli.SetSize(r.Size())
 			elli.Mark(adagui.MarkNeedsPaint)
-        case PolygonTool:
-            poly.Flatten()
+		case PolygonTool:
+			poly.Flatten()
 			poly.Mark(adagui.MarkNeedsPaint)
 		}
 	})
@@ -197,7 +201,7 @@ func NewPoint() *adagui.Point {
 		p.Mark(adagui.MarkNeedsPaint)
 	})
 
-    return p
+	return p
 }
 
 func NewLine() *adagui.Line {
@@ -219,7 +223,7 @@ func NewLine() *adagui.Line {
 		l.Mark(adagui.MarkNeedsPaint)
 	})
 
-    return l
+	return l
 }
 
 // Erstellt einen neuen Kreis und definiert alle Handler, welche fuer diese
@@ -228,7 +232,7 @@ func NewCircle(r float64) *adagui.Circle {
 	var dp geom.Point
 
 	c := adagui.NewCircle(r)
-	col := color.RandGroupColor(color.Blues)
+	col := colors.RandGroupColor(colors.Blues)
 	c.SetColor(col)
 	c.SetPushedColor(col.Alpha(0.5))
 
@@ -273,7 +277,7 @@ func NewEllipse(rx, ry float64) *adagui.Ellipse {
 	var dp geom.Point
 
 	e := adagui.NewEllipse(rx, ry)
-	col := color.RandGroupColor(color.Greens)
+	col := colors.RandGroupColor(colors.Greens)
 	e.SetColor(col)
 	e.SetPushedColor(col.Alpha(0.5))
 
@@ -319,7 +323,7 @@ func NewRectangle(w, h float64) *adagui.Rectangle {
 	var dp geom.Point
 
 	r := adagui.NewRectangle(w, h)
-	col := color.RandGroupColor(color.Reds)
+	col := colors.RandGroupColor(colors.Reds)
 	r.SetColor(col)
 	r.SetPushedColor(col.Alpha(0.5))
 
@@ -361,8 +365,8 @@ func NewRectangle(w, h float64) *adagui.Rectangle {
 
 // Hauptprogramm.
 func main() {
-    flag.StringVar(&outFile, "out", "coeff.json", "Output File")
-    flag.Parse()
+	flag.StringVar(&outFile, "out", "coeff.json", "Output File")
+	flag.Parse()
 
 	screen = adagui.NewScreen(adatft.Rotate090)
 	win = screen.NewWindow()
@@ -371,10 +375,10 @@ func main() {
 	win.SetRoot(group)
 
 	panel := NewPanel(float64(adatft.Width-10), float64(adatft.Height-10-40))
-	//panel.SetColor(color.Gray)
+	//panel.SetColor(colors.Gray)
 	group.Add(panel)
 
-    btnGrp := adagui.NewGroupPL(group, adagui.NewHBoxLayout())
+	btnGrp := adagui.NewGroupPL(group, adagui.NewHBoxLayout())
 
 	btnData := binding.NewInt()
 	btnData.Set(-1)
@@ -409,49 +413,49 @@ func main() {
 		tool = EllipseTool
 	})
 
-    btnFFT := adagui.NewTextButton("FFT")
-    btnFFT.SetOnTap(func(evt touch.Event) {
-        if poly == nil {
-            return
-        }
-        pts := poly.Points()
-        data := make([]complex128, len(pts))
-        out  := make([]Complex, len(pts))
-        fftPlan := fftw.NewPlan1d(data, false, true)
-        for i, pt := range pts {
-            data[i] = complex(pt.X, pt.Y)
-        }
-        fftPlan.Execute()
-        n := complex(float64(len(data)), 0.0)
-        for i, dat := range data {
-            out[i] = NewComplex(dat / n)
-        }
+	btnFFT := adagui.NewTextButton("FFT")
+	btnFFT.SetOnTap(func(evt touch.Event) {
+		if poly == nil {
+			return
+		}
+		pts := poly.Points()
+		data := make([]complex128, len(pts))
+		out := make([]Complex, len(pts))
+		fftPlan := fftw.NewPlan1d(data, false, true)
+		for i, pt := range pts {
+			data[i] = complex(pt.X, pt.Y)
+		}
+		fftPlan.Execute()
+		n := complex(float64(len(data)), 0.0)
+		for i, dat := range data {
+			out[i] = NewComplex(dat / n)
+		}
 
-        fh, err := os.Create(outFile)
-        if err != nil {
-            log.Fatal(err)
-        }
-        b, err := json.Marshal(out)
-        if err != nil {
-            log.Fatal(err)
-        }
-        fh.Write(b)
-        fh.Close()
-/*
-        fmt.Printf("package main\n")
-        fmt.Printf("var (\n")
-        fmt.Printf("    CoeffList = []FourierCoeff{\n")
-        for i, dat := range data[:len(data)/2] {
-            fmt.Printf("        FourierCoeff{%3d, %+9.4f},\n", i, dat/n)
-            if i > 0 {
-                fmt.Printf("        FourierCoeff{%3d, %+9.4f},\n", -i, data[len(data)-i]/n)
-            }
-        }
-        fmt.Printf("    }\n")
-        fmt.Printf(")\n")
-*/
-        fftPlan.Free()
-    })
+		fh, err := os.Create(outFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		b, err := json.Marshal(out)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fh.Write(b)
+		fh.Close()
+		/*
+		   fmt.Printf("package main\n")
+		   fmt.Printf("var (\n")
+		   fmt.Printf("    CoeffList = []FourierCoeff{\n")
+		   for i, dat := range data[:len(data)/2] {
+		       fmt.Printf("        FourierCoeff{%3d, %+9.4f},\n", i, dat/n)
+		       if i > 0 {
+		           fmt.Printf("        FourierCoeff{%3d, %+9.4f},\n", -i, data[len(data)-i]/n)
+		       }
+		   }
+		   fmt.Printf("    }\n")
+		   fmt.Printf(")\n")
+		*/
+		fftPlan.Free()
+	})
 
 	btnGrp.Add(btnX, btn0, btn1, btn2, btn3, btn4, btnFFT, adagui.NewSpacer())
 

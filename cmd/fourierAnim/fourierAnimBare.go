@@ -10,26 +10,27 @@ import (
 	"os"
 	"os/signal"
 	"time"
-	"github.com/stefan-muehlebach/adatft"
+
 	"github.com/stefan-muehlebach/adagui"
+	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
-	"github.com/stefan-muehlebach/gg/color"
+	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/geom"
 )
 
 const (
-    F float64   = 1.0
-    DefMaxFreq  = 20 
-    Dt float64  = 0.05 / float64(DefMaxFreq)
-    DefCoeffFile = "coeff.json"
+	F            float64 = 1.0
+	DefMaxFreq           = 20
+	Dt           float64 = 0.05 / float64(DefMaxFreq)
+	DefCoeffFile         = "coeff.json"
 )
 
 var (
-	disp    *adatft.Display
-	gc, img *gg.Context
-	tmp     = math.Sqrt(3.0) / 2.0
-    coeffFile string
-    coeffList *CoeffList
+	disp      *adatft.Display
+	gc, img   *gg.Context
+	tmp       = math.Sqrt(3.0) / 2.0
+	coeffFile string
+	coeffList *CoeffList
 )
 
 //-----------------------------------------------------------------------------
@@ -46,7 +47,7 @@ type FourierObject interface {
 type FourierDisc struct {
 	mp, nextMp geom.Point
 
-	fillColor, borderColor, pointerColor   color.Color
+	fillColor, borderColor, pointerColor   colors.Color
 	borderWidth, pointerWidth, pointerSize float64
 
 	freq                     float64
@@ -62,10 +63,10 @@ func NewFourierDisc(coeff FourierCoeff, parent *FourierDisc) *FourierDisc {
 	d.radius = F * cmplx.Abs(coeff.factor)
 	d.initAngle = cmplx.Phase(coeff.factor)
 
-	d.fillColor = color.LightSkyBlue.Alpha(0.1)
-	d.borderColor = color.WhiteSmoke.Alpha(0.5)
+	d.fillColor = colors.LightSkyBlue.Alpha(0.1)
+	d.borderColor = colors.WhiteSmoke.Alpha(0.5)
 	d.borderWidth = 1.0
-	d.pointerColor = color.WhiteSmoke.Alpha(0.5)
+	d.pointerColor = colors.WhiteSmoke.Alpha(0.5)
 	d.pointerWidth = 1.0
 	d.pointerSize = 6.0
 	d.SetAngle(0.0)
@@ -129,18 +130,18 @@ func (d *FourierDisc) Draw(gc *gg.Context) {
 
 type FourierPen struct {
 	mp, prevPt geom.Point
-	img      *gg.Context
-	penColor color.Color
-	penWidth float64
-    firstPoint bool
+	img        *gg.Context
+	penColor   colors.Color
+	penWidth   float64
+	firstPoint bool
 }
 
 func NewFourierPen(img *gg.Context, parent *FourierDisc) *FourierPen {
 	p := &FourierPen{}
 	p.img = img
-	p.penColor = color.WhiteSmoke
+	p.penColor = colors.WhiteSmoke
 	p.penWidth = 1.0
-    p.firstPoint = true
+	p.firstPoint = true
 	parent.child = p
 	return p
 }
@@ -154,17 +155,17 @@ func (p *FourierPen) SetAngle(angle float64) {}
 func (p *FourierPen) Animate(t float64) {}
 
 func (p *FourierPen) Draw(gc *gg.Context) {
-    pt := gc.Matrix().Transform(p.mp)
-    if !p.firstPoint {
-	    p.img.SetFillColor(p.penColor)
-	    p.img.SetStrokeColor(p.penColor)
-        p.img.SetStrokeWidth(p.penWidth)
-        p.img.DrawLine(p.prevPt.X, p.prevPt.Y, pt.X, pt.Y)
-        p.img.Stroke()
-    } else {
-        p.firstPoint = false
-    }
-    p.prevPt = pt
+	pt := gc.Matrix().Transform(p.mp)
+	if !p.firstPoint {
+		p.img.SetFillColor(p.penColor)
+		p.img.SetStrokeColor(p.penColor)
+		p.img.SetStrokeWidth(p.penWidth)
+		p.img.DrawLine(p.prevPt.X, p.prevPt.Y, pt.X, pt.Y)
+		p.img.Stroke()
+	} else {
+		p.firstPoint = false
+	}
+	p.prevPt = pt
 	//p.img.DrawPoint(p.mp.X, p.mp.Y, p.penWidth)
 	//p.img.FillStroke()
 }
@@ -178,7 +179,7 @@ func paintThread(obj *FourierDisc, syncQ chan bool) {
 			break
 		}
 		t1 := time.Now()
-		gc.SetFillColor(color.DarkRed.Alpha(0.5))
+		gc.SetFillColor(colors.DarkRed.Alpha(0.5))
 		gc.Clear()
 		obj.Draw(gc)
 		gc.DrawImageAnchored(img.Image(), 0.0, 0.0, 0.0, 0.0)
@@ -229,36 +230,36 @@ func main() {
 	var firstDisc *FourierDisc
 	var syncQ, quitQ chan bool
 	var sigChan chan os.Signal
-    var maxFreq int
+	var maxFreq int
 
 	flag.DurationVar(&step, "step", 30*time.Millisecond,
 		"time step of the animation")
-    flag.IntVar(&maxFreq, "freq", DefMaxFreq, "Max. Frequence")
-    flag.StringVar(&coeffFile, "in", DefCoeffFile, "Input file with coeff.")
+	flag.IntVar(&maxFreq, "freq", DefMaxFreq, "Max. Frequence")
+	flag.StringVar(&coeffFile, "in", DefCoeffFile, "Input file with coeff.")
 	flag.Parse()
 
-    adagui.StartProfiling()
+	adagui.StartProfiling()
 
-    coeffList = ReadCoeffList(coeffFile)
+	coeffList = ReadCoeffList(coeffFile)
 
 	disp = adatft.OpenDisplay(adatft.Rotate000)
 
 	gc = gg.NewContext(adatft.Width, adatft.Height)
 	img = gg.NewContext(adatft.Width, adatft.Height)
-	img.SetFillColor(color.Transparent)
+	img.SetFillColor(colors.Transparent)
 	img.Clear()
 
 	firstDisc = NewFourierDisc(coeffList.Get(0), nil)
 	disc := firstDisc
 	for i := range maxFreq {
-        freq := i + 1
+		freq := i + 1
 		disc = NewFourierDisc(coeffList.Get(freq), disc)
 		disc = NewFourierDisc(coeffList.Get(-freq), disc)
 	}
 	NewFourierPen(img, disc)
 	firstDisc.SetPos(geom.Point{float64(adatft.Width) / 2.0,
 		float64(adatft.Height) / 2.0})
-    firstDisc.SetAngle(0.0)
+	firstDisc.SetAngle(0.0)
 
 	syncQ = make(chan bool)
 	quitQ = make(chan bool)
@@ -275,7 +276,7 @@ func main() {
 	time.Sleep(1 * time.Second)
 
 	disp.Close()
-    adagui.StopProfiling()
+	adagui.StopProfiling()
 
 	adatft.PrintStat()
 	fmt.Printf("animation:\n")
