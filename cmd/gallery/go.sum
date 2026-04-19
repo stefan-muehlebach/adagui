@@ -6,8 +6,8 @@ github.com/stefan-muehlebach/adagui v1.3.0 h1:PSVb5C6xxB1NqcWnkbO/luehZ0ZP4cWsdP
 github.com/stefan-muehlebach/adagui v1.3.0/go.mod h1:bJpPGqPG7frEzYC0y3gpplCLNsgDtW0vGE1WnLMa+fo=
 github.com/stefan-muehlebach/adatft v1.3.0 h1:3/LolpXCEMX8uis6/EId945nz3+nafWQc4od7mJhp+I=
 github.com/stefan-muehlebach/adatft v1.3.0/go.mod h1:zPfr6vLYMHLysfQ6klYNhE4Fl1HH4a08/YnshdxhazE=
-github.com/stefan-muehlebach/gg v1.4.1 h1:ZLh5m5MiOwuMuDvSU/mZS/RcH53hxNr0zK94IrEUGbc=
-github.com/stefan-muehlebach/gg v1.4.1/go.mod h1:nYMIGs8l4C08FF5Qhj9VhpqqI4Ie6cm5TkjWHbuIrIo=
+github.com/stefan-muehlebach/gg v1.5.0 h1:mLh93/kb3YiA8V+A9ZspXwGjYZ9oIvi2Awt9/twwTZ4=
+github.com/stefan-muehlebach/gg v1.5.0/go.mod h1:XIPMRM6MkIWmxwetnXZGlx1PFIICiVfan8BPrKJZrFo=
 golang.org/x/image v0.39.0 h1:skVYidAEVKgn8lZ602XO75asgXBgLj9G/FE3RbuPFww=
 golang.org/x/image v0.39.0/go.mod h1:sIbmppfU+xFLPIG0FoVUTvyBMmgng1/XAMhQ2ft0hpA=
 golang.org/x/text v0.36.0 h1:JfKh3XmcRPqZPKevfXVpI1wXPTqbkE5f7JA92a55Yxg=

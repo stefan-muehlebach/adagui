@@ -3,9 +3,8 @@ module github.com/stefan-muehlebach/adagui
 go 1.26.2
 
 require (
-	github.com/stefan-muehlebach/adatft v1.2.1
-	github.com/stefan-muehlebach/gg v1.4.1
-	github.com/stefan-muehlebach/ledgrid v1.4.3
+	github.com/stefan-muehlebach/adatft v1.3.0
+	github.com/stefan-muehlebach/gg v1.5.0
 	golang.org/x/image v0.39.0
 )
 
