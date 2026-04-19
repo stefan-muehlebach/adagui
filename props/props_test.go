@@ -11,7 +11,7 @@ var (
 	defProps      *Properties
 	typeProps     *Properties
 	objProps      *Properties
-	c1, c2, c3    colors.Color
+	c1, c2, c3    colors.RGBA
 	f             *fonts.Font
 	s1            float64
 	colorPropName = Color
@@ -154,6 +154,6 @@ func BenchmarkGetObjSize(b *testing.B) {
 }
 
 func TestPropFileRead(t *testing.T) {
-	initPropsMapFromFile("TestProps.json")
+	PropsMap = NewPropsMapFromUserFile("TestProps.json")
 	t.Logf("Default.Color: %+v", PropsMap["Default"].Color(Color))
 }

@@ -70,7 +70,7 @@ var (
 	r0, r1, r2 *adagui.Rectangle
 	dbgDom     adagui.DebugDomain
 
-	paleBlue = colors.RGBAF{0.447, 0.706, 0.839, 1.0}
+	paleBlue = colors.RGBA{0x79, 0xB4, 0xD5, 0xFF}
 )
 
 func SignalHandler() {
@@ -225,7 +225,9 @@ func main() {
 	//var err error
 	var icon *adagui.IconButton
 
-	prop := props.NewPropsFromUser(props.PropsMap["Button"],
+	prop := props.NewPropsMapFromUserFile("IconButtonProps.json")
+	prop.parent
+props.PropsMap["Button"],
 		"IconButtonProps.json")
 	props.PropsMap["IconButton"] = prop
 
@@ -234,7 +236,7 @@ func main() {
 	dbgDom = adagui.NewDebugDomain()
 	adagui.AddDebugDomain(dbgDom)
 
-	scr = adagui.NewScreen(adatft.Rotate090)
+	scr = adagui.NewScreen(adatft.Rotate270)
 	win = scr.NewWindow()
 
 	root = adagui.NewPanel(10, 10)

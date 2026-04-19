@@ -50,7 +50,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	disp = adatft.OpenDisplay(adatft.Rotate090)
+	disp = adatft.OpenDisplay(adatft.Rotate270)
 	pngImg = image.NewRGBA(image.Rect(0, 0, adatft.Width, adatft.Height))
 	tftImg = image.NewRGBA(image.Rect(0, 0, adatft.Width, adatft.Height))
 	backColor = image.NewUniform(color.Black)

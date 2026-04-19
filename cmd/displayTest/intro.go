@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 
+    "github.com/stefan-muehlebach/adatft"
+
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/fonts"
@@ -11,7 +13,7 @@ import (
 )
 
 var (
-	colorList = []colors.Color{
+	colorList = []colors.RGBA{
 		colors.DarkGreen,
 		colors.DarkRed,
 		colors.DarkMagenta,
@@ -23,14 +25,22 @@ var (
 
 //----------------------------------------------------------------------------
 
+const (
+	StrokeWidth = 8.0
+)
+
+var (
+	PrevRect, QuitRect, NextRect *Rectangle
+)
+
 type Rectangle struct {
 	geom.Rectangle
-	color colors.Color
+	color colors.RGBA
 	face  font.Face
 	txt   string
 }
 
-func NewRectangle(rect geom.Rectangle, color colors.Color,
+func NewRectangle(rect geom.Rectangle, color colors.RGBA,
 	face font.Face, txt string) *Rectangle {
 	r := &Rectangle{}
 	r.Rectangle = rect
@@ -41,14 +51,14 @@ func NewRectangle(rect geom.Rectangle, color colors.Color,
 }
 
 func (r *Rectangle) Paint(gc *gg.Context) {
-	gc.SetStrokeWidth(5.0)
+	gc.SetStrokeWidth(StrokeWidth)
 	gc.SetStrokeColor(r.color)
 	gc.SetFillColor(r.color.Alpha(0.3))
-	gc.DrawRectangle(r.Inset(3, 3).AsCoord())
+	gc.DrawRectangle(r.Inset(StrokeWidth/2, StrokeWidth/2).AsCoord())
 	gc.FillStroke()
 	gc.SetTextColor(r.color)
 	gc.SetFontFace(r.face)
-	c := r.Center()
+	c := r.C()
 	gc.DrawStringAnchored(r.txt, c.X, c.Y, 0.5, 0.5)
 }
 
@@ -67,7 +77,7 @@ type IntroAnim struct {
 func NewIntroAnim() *IntroAnim {
 	a := &IntroAnim{}
 	a.rectList = make([]*Rectangle, 0)
-	a.face = fonts.NewFace(fonts.LucidaBright, 20.)
+	a.face, _ = fonts.NewFace(fonts.LucidaBright, 20.0)
 	a.txt = introText
 	return a
 }
@@ -78,17 +88,15 @@ func (a *IntroAnim) RefreshTime() time.Duration {
 
 func (a *IntroAnim) Init(gc *gg.Context) {
 	a.gc = gc
-	rect := NewRectangle(geom.Rect(0, 0, 480/3, 320), colors.DarkGreen,
-		fonts.NewFace(fonts.LucidaBrightDemibold, 40.0), "prev")
+	face, _ := fonts.NewFace(fonts.LucidaBrightDemiboldItalic, 26.0)
+	rect := NewRectangle(prevRect, colors.DarkGreen, face, "Prev")
 	a.rectList = append(a.rectList, rect)
-	rect = NewRectangle(geom.Rect(480/3, 0, 2*480/3, 320/2), colors.DarkBlue,
-		fonts.NewFace(fonts.LucidaBrightDemibold, 40.0), "extra")
+//	rect = NewRectangle(geom.NewRectangleWH(480/5, 0, 3*480/5, 320/5),
+//		colors.DarkBlue, face, "extra")
+//	a.rectList = append(a.rectList, rect)
+	rect = NewRectangle(quitRect, colors.DarkRed, face, "Quit")
 	a.rectList = append(a.rectList, rect)
-	rect = NewRectangle(geom.Rect(480/3, 320/2, 2*480/3, 320), colors.DarkRed,
-		fonts.NewFace(fonts.LucidaBrightDemibold, 40.0), "quit")
-	a.rectList = append(a.rectList, rect)
-	rect = NewRectangle(geom.Rect(2*480/3, 0, 480, 320), colors.DarkCyan,
-		fonts.NewFace(fonts.LucidaBrightDemibold, 40.0), "next")
+	rect = NewRectangle(nextRect, colors.DarkCyan, face, "Next")
 	a.rectList = append(a.rectList, rect)
 }
 
@@ -103,3 +111,5 @@ func (a *IntroAnim) Paint() {
 }
 
 func (a *IntroAnim) Clean() {}
+
+func (a *IntroAnim) Handle(evt adatft.PenEvent) {}

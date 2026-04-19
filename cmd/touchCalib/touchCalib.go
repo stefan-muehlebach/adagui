@@ -109,7 +109,7 @@ type Text struct {
 	width float64
 	face  font.Face
 	align gg.Align
-	color colors.Color
+	color colors.RGBA
 	vis   bool
 }
 
@@ -277,7 +277,7 @@ var (
 	}
 	textIter *Iterator[string] = NewIterator(textList, false)
 
-	backColorList = []colors.Color{
+	backColorList = []colors.RGBA{
 		colors.DarkMagenta.Alpha(0.3),
 		colors.DarkBlue.Alpha(0.3),
 		colors.DarkCyan.Alpha(0.3),
@@ -285,7 +285,7 @@ var (
 		colors.Gold.Alpha(0.3),
 		colors.DarkRed.Alpha(0.3),
 	}
-	colorIter *Iterator[colors.Color] = NewIterator(backColorList, true)
+	colorIter *Iterator[colors.RGBA] = NewIterator(backColorList, true)
 )
 
 var (
@@ -389,14 +389,17 @@ func main() {
 		graphObjList = append(graphObjList, target)
 	}
 
-	infoText := NewText("", geom.Point{margin, 3.0 * margin}, width-2*margin,
-		fonts.NewFace(fonts.GoRegular, 18.0))
+	face, _ := fonts.NewFace(fonts.LucidaBright, 14.0)
+	infoText := NewText("", geom.Point{margin, 3.0 * margin},
+		width-2*margin, face)
+	face, _ = fonts.NewFace(fonts.LucidaBrightItalic, 14.0)
 	statusText := NewText("Tap für weiter...",
-		geom.Point{margin, height - 4*margin}, width-2*margin,
-		fonts.NewFace(fonts.GoItalic, 18.0))
+		geom.Point{margin, height - 4*margin},
+		width-2*margin, face)
 	statusText.align = gg.AlignRight
-	noteText := NewText(textList[4], geom.Point{2.1 * margin, 2.1 * margin}, width-4.2*margin,
-		fonts.NewFace(fonts.LucidaHandwritingItalic, 14.0))
+	face, _ = fonts.NewFace(fonts.LucidaHandwritingItalic, 12.0)
+	noteText := NewText(textList[4], geom.Point{2.1 * margin, 2.1 * margin},
+		width-4.2*margin, face)
 	noteText.vis = false
 
 	// Die ersten 3 Screens sind Anleitungen, wie das Programm zu verwenden
@@ -415,7 +418,7 @@ func main() {
 	if screenMask&ReadyScr != 0 {
 		infoText.pos = infoText.pos.AddXY(0, 100)
 		infoText.txt = "Bereit?"
-		infoText.face = fonts.NewFace(fonts.GoBold, 48.0)
+		infoText.face, _ = fonts.NewFace(fonts.GoBold, 48.0)
 		infoText.align = gg.AlignCenter
 		backgroundColor = colorIter.Next()
 		UpdateDisplay()
@@ -457,7 +460,7 @@ func main() {
 
 	if screenMask&FinalInfoScr != 0 {
 		infoText.txt = textList[3]
-		infoText.face = fonts.NewFace(fonts.GoRegular, 18.0)
+		infoText.face, _ = fonts.NewFace(fonts.GoRegular, 18.0)
 		infoText.align = gg.AlignLeft
 		statusText.vis = true
 		backgroundColor = colorIter.Next()

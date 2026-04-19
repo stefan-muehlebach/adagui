@@ -12,13 +12,17 @@ import (
 
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
+	"github.com/stefan-muehlebach/gg/geom"
 )
 
 //-----------------------------------------------------------------------------
 
-type DrawFunc func(gc *gg.Context, disp *adatft.Display)
+var (
+	Draw DrawFunc = DrawNormal
+	movieTotalFrames, movieCurrentFrame int
+)
 
-var Draw DrawFunc = DrawNormal
+type DrawFunc func(gc *gg.Context, disp *adatft.Display)
 
 func DrawNormal(gc *gg.Context, disp *adatft.Display) {
 	disp.Draw(gc.Image())
@@ -63,26 +67,41 @@ func SignalHandler() {
 
 func TouchHandler() {
 	for penEvent := range touch.EventQ {
-		if penEvent.Type == adatft.PenRelease {
-			if penEvent.X < float64(gc.Width())/3.0 {
+		//log.Printf("penEvent: %#v", penEvent)
+		pt := geom.Point{penEvent.X, penEvent.Y}
+		switch {
+		case pt.In(prevRect):
+			switch penEvent.Type {
+			case adatft.PenPress, adatft.PenDrag:
+				continue
+			case adatft.PenRelease:
 				animNum -= 1
 				if animNum < 0 {
 					animNum += len(AnimationList)
 				}
-			} else if penEvent.X < 2.0*float64(gc.Width())/3.0 {
-				if penEvent.Y < float64(gc.Height())/2.0 {
-
-				} else {
-					quitFlag = true
-				}
-			} else {
+			}
+		case pt.In(quitRect):
+			switch penEvent.Type {
+			case adatft.PenPress, adatft.PenDrag:
+				continue
+			case adatft.PenRelease:
+				quitFlag = true
+			}
+		case pt.In(nextRect):
+			switch penEvent.Type {
+			case adatft.PenPress, adatft.PenDrag:
+				continue
+			case adatft.PenRelease:
 				animNum += 1
 				if animNum >= len(AnimationList) {
 					animNum %= len(AnimationList)
 				}
 			}
-			runFlag = false
+		default:
+			AnimationList[animNum].animation.Handle(penEvent)
+			continue
 		}
+		runFlag = false
 	}
 }
 
@@ -94,9 +113,10 @@ type Animation interface {
 	Animate(dt time.Duration)
 	Paint()
 	Clean()
+	Handle(ev adatft.PenEvent)
 }
 
-func ShowAnimation(a Animation) {
+func ShowAnimation(gc *gg.Context, a Animation) {
 	dt := a.RefreshTime()
 
 	a.Init(gc)
@@ -125,6 +145,7 @@ type AnimationListType struct {
 var (
 	AnimationList = []AnimationListType{
 		{"Introduction", NewIntroAnim()},
+		{"Circle", &CircleAnim{}},
 		{"Dancing Polygons", &PolygonAnim{}},
 		{"Rotating Cube (3D)", &Cube3DAnim{}},
 		{"Text on the run", &TextAnim{}},
@@ -145,13 +166,16 @@ var (
 	gc                                  *gg.Context
 	pageNum                             int
 	animNum                             int
-	numObjs                             = 5
+	numObjs                             = 10
 	numEdges                            = 3
 	blurFactor                          float64
 	msg                                 string
-	rotation                            adatft.RotationType = adatft.Rotate090
+	rotation                            adatft.RotationType = adatft.Rotate270
 	runFlag, quitFlag                   bool
-	movieTotalFrames, movieCurrentFrame int
+
+	prevRect = geom.NewRectangleWH(0, 4*320/5, 480/3, 320/5)
+	quitRect = geom.NewRectangleWH(480/3, 4*320/5, 480/3, 320/5)
+	nextRect = geom.NewRectangleWH(2*480/3, 4*320/5, 480/3, 320/5)
 )
 
 func main() {
@@ -184,7 +208,7 @@ func main() {
 	for !quitFlag {
 		runFlag = true
 		log.Printf("[%d] %s", animNum, AnimationList[animNum].description)
-		ShowAnimation(AnimationList[animNum].animation)
+		ShowAnimation(gc, AnimationList[animNum].animation)
 		adatft.PrintStat()
 		adatft.ResetStat()
 	}

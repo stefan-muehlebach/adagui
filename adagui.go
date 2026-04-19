@@ -4,11 +4,29 @@ package adagui
 
 import (
     "log"
+	"math"
+	"golang.org/x/image/math/fixed"
 )
 
 func check(err error) {
     if err != nil {
         log.Fatal(err)
     }
+}
+
+func flt2fix(x float64) fixed.Int26_6 {
+	return fixed.Int26_6(math.Round(x * 64))
+}
+
+func fix2flt(x fixed.Int26_6) float64 {
+	const shift, mask = 6, 1<<6 - 1
+	if x >= 0 {
+		return float64(x>>shift) + float64(x&mask)/64
+	}
+	x = -x
+	if x >= 0 {
+		return -(float64(x>>shift) + float64(x&mask)/64)
+	}
+	return 0
 }
 

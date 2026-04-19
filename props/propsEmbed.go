@@ -16,123 +16,120 @@ type PropertyEmbed struct {
 func (pe *PropertyEmbed) Init(parent *Properties) {
     pe.prop = NewProperties(parent)
 }
-func (pe *PropertyEmbed) Init2(parent *Properties, propFile string) {
-    pe.prop = NewPropsFromFile(parent, propFile)
-}
 func (pe *PropertyEmbed) InitByName(name string) {
     pe.prop = NewProperties(PropsMap[name])
 }
 
 
-func (pe *PropertyEmbed) Color() (colors.Color) {
+func (pe *PropertyEmbed) Color() (colors.RGBA) {
     return pe.prop.Color(Color)
 }
-func (pe *PropertyEmbed) SetColor(c colors.Color) {
+func (pe *PropertyEmbed) SetColor(c colors.RGBA) {
     pe.prop.SetColor(Color, c)
 }
 
-func (pe *PropertyEmbed) PushedColor() (colors.Color) {
+func (pe *PropertyEmbed) PushedColor() (colors.RGBA) {
     return pe.prop.Color(PushedColor)
 }
-func (pe *PropertyEmbed) SetPushedColor(c colors.Color) {
+func (pe *PropertyEmbed) SetPushedColor(c colors.RGBA) {
     pe.prop.SetColor(PushedColor, c)
 }
 
-func (pe *PropertyEmbed) SelectedColor() (colors.Color) {
+func (pe *PropertyEmbed) SelectedColor() (colors.RGBA) {
     return pe.prop.Color(SelectedColor)
 }
-func (pe *PropertyEmbed) SetSelectedColor(c colors.Color) {
+func (pe *PropertyEmbed) SetSelectedColor(c colors.RGBA) {
     pe.prop.SetColor(SelectedColor, c)
 }
 
-func (pe *PropertyEmbed) BorderColor() (colors.Color) {
+func (pe *PropertyEmbed) BorderColor() (colors.RGBA) {
     return pe.prop.Color(BorderColor)
 }
-func (pe *PropertyEmbed) SetBorderColor(c colors.Color) {
+func (pe *PropertyEmbed) SetBorderColor(c colors.RGBA) {
     pe.prop.SetColor(BorderColor, c)
 }
 
-func (pe *PropertyEmbed) PushedBorderColor() (colors.Color) {
+func (pe *PropertyEmbed) PushedBorderColor() (colors.RGBA) {
     return pe.prop.Color(PushedBorderColor)
 }
-func (pe *PropertyEmbed) SetPushedBorderColor(c colors.Color) {
+func (pe *PropertyEmbed) SetPushedBorderColor(c colors.RGBA) {
     pe.prop.SetColor(PushedBorderColor, c)
 }
 
-func (pe *PropertyEmbed) SelectedBorderColor() (colors.Color) {
+func (pe *PropertyEmbed) SelectedBorderColor() (colors.RGBA) {
     return pe.prop.Color(SelectedBorderColor)
 }
-func (pe *PropertyEmbed) SetSelectedBorderColor(c colors.Color) {
+func (pe *PropertyEmbed) SetSelectedBorderColor(c colors.RGBA) {
     pe.prop.SetColor(SelectedBorderColor, c)
 }
 
-func (pe *PropertyEmbed) TextColor() (colors.Color) {
+func (pe *PropertyEmbed) TextColor() (colors.RGBA) {
     return pe.prop.Color(TextColor)
 }
-func (pe *PropertyEmbed) SetTextColor(c colors.Color) {
+func (pe *PropertyEmbed) SetTextColor(c colors.RGBA) {
     pe.prop.SetColor(TextColor, c)
 }
 
-func (pe *PropertyEmbed) PushedTextColor() (colors.Color) {
+func (pe *PropertyEmbed) PushedTextColor() (colors.RGBA) {
     return pe.prop.Color(PushedTextColor)
 }
-func (pe *PropertyEmbed) SetPushedTextColor(c colors.Color) {
+func (pe *PropertyEmbed) SetPushedTextColor(c colors.RGBA) {
     pe.prop.SetColor(PushedTextColor, c)
 }
 
-func (pe *PropertyEmbed) SelectedTextColor() (colors.Color) {
+func (pe *PropertyEmbed) SelectedTextColor() (colors.RGBA) {
     return pe.prop.Color(SelectedTextColor)
 }
-func (pe *PropertyEmbed) SetSelectedTextColor(c colors.Color) {
+func (pe *PropertyEmbed) SetSelectedTextColor(c colors.RGBA) {
     pe.prop.SetColor(SelectedTextColor, c)
 }
 
-func (pe *PropertyEmbed) LineColor() (colors.Color) {
+func (pe *PropertyEmbed) LineColor() (colors.RGBA) {
     return pe.prop.Color(LineColor)
 }
-func (pe *PropertyEmbed) SetLineColor(c colors.Color) {
+func (pe *PropertyEmbed) SetLineColor(c colors.RGBA) {
     pe.prop.SetColor(LineColor, c)
 }
 
-func (pe *PropertyEmbed) PushedLineColor() (colors.Color) {
+func (pe *PropertyEmbed) PushedLineColor() (colors.RGBA) {
     return pe.prop.Color(PushedLineColor)
 }
-func (pe *PropertyEmbed) SetPushedLineColor(c colors.Color) {
+func (pe *PropertyEmbed) SetPushedLineColor(c colors.RGBA) {
     pe.prop.SetColor(PushedLineColor, c)
 }
 
-func (pe *PropertyEmbed) SelectedLineColor() (colors.Color) {
+func (pe *PropertyEmbed) SelectedLineColor() (colors.RGBA) {
     return pe.prop.Color(SelectedLineColor)
 }
-func (pe *PropertyEmbed) SetSelectedLineColor(c colors.Color) {
+func (pe *PropertyEmbed) SetSelectedLineColor(c colors.RGBA) {
     pe.prop.SetColor(SelectedLineColor, c)
 }
 
-func (pe *PropertyEmbed) BarColor() (colors.Color) {
+func (pe *PropertyEmbed) BarColor() (colors.RGBA) {
     return pe.prop.Color(BarColor)
 }
-func (pe *PropertyEmbed) SetBarColor(c colors.Color) {
+func (pe *PropertyEmbed) SetBarColor(c colors.RGBA) {
     pe.prop.SetColor(BarColor, c)
 }
 
-func (pe *PropertyEmbed) PushedBarColor() (colors.Color) {
+func (pe *PropertyEmbed) PushedBarColor() (colors.RGBA) {
     return pe.prop.Color(PushedBarColor)
 }
-func (pe *PropertyEmbed) SetPushedBarColor(c colors.Color) {
+func (pe *PropertyEmbed) SetPushedBarColor(c colors.RGBA) {
     pe.prop.SetColor(PushedBarColor, c)
 }
 
-func (pe *PropertyEmbed) BackgroundColor() (colors.Color) {
+func (pe *PropertyEmbed) BackgroundColor() (colors.RGBA) {
     return pe.prop.Color(BackgroundColor)
 }
-func (pe *PropertyEmbed) SetBackgroundColor(c colors.Color) {
+func (pe *PropertyEmbed) SetBackgroundColor(c colors.RGBA) {
     pe.prop.SetColor(BackgroundColor, c)
 }
 
-func (pe *PropertyEmbed) MenuBackgroundColor() (colors.Color) {
+func (pe *PropertyEmbed) MenuBackgroundColor() (colors.RGBA) {
     return pe.prop.Color(MenuBackgroundColor)
 }
-func (pe *PropertyEmbed) SetMenuBackgroundColor(c colors.Color) {
+func (pe *PropertyEmbed) SetMenuBackgroundColor(c colors.RGBA) {
     pe.prop.SetColor(MenuBackgroundColor, c)
 }
 
@@ -141,6 +138,13 @@ func (pe *PropertyEmbed) Font() (*fonts.Font) {
 }
 func (pe *PropertyEmbed) SetFont(f *fonts.Font) {
     pe.prop.SetFont(Font, f)
+}
+
+func (pe *PropertyEmbed) BoldFont() (*fonts.Font) {
+    return pe.prop.Font(BoldFont)
+}
+func (pe *PropertyEmbed) SetBoldFont(f *fonts.Font) {
+    pe.prop.SetFont(BoldFont, f)
 }
 
 func (pe *PropertyEmbed) Width() (float64) {

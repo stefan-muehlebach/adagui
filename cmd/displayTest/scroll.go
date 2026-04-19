@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+    "github.com/stefan-muehlebach/adatft"
+
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/fonts"
@@ -62,8 +64,10 @@ func (a *ScrollAnim) Paint() {
 
 func (a *ScrollAnim) Clean() {}
 
+func (a *ScrollAnim) Handle(evt adatft.PenEvent) {}
+
 func (a *ScrollAnim) Setup() {
-	a.face = fonts.NewFace(fontList[fontIdx], fontSize)
+	a.face, _ = fonts.NewFace(fontList[fontIdx], fontSize)
 	a.gc.SetFontFace(a.face)
 	a.x, a.y = textMargin, textMargin
 	a.textWidth = float64(a.gc.Width()) - 2*textMargin

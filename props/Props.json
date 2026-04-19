@@ -72,12 +72,12 @@
     		"SelectedBorderWidth":  3,
     		"CornerRadius":         6,
     		"BarSize":              3,
-    		"CtrlSize":            20,
+    		"CtrlSize":            18,
     		"FieldSize":            0.0,
     		"LineWidth":            2.5,
-    		"FontSize":            16,
+    		"FontSize":            12,
     		"Padding":             15,
-    		"InnerPadding":         5
+    		"InnerPadding":        5 
     	}
     },
 
@@ -85,8 +85,12 @@
 		"Name": "Panel",
 		"ParentName": "Default",
 		"Colors": {
-		    "Color": { "R": 0, "G": 0, "B": 0, "A": 0 },
-		    "BorderColor": { "R": 0, "G": 0, "B": 0, "A": 0 }
+		    "Color": {
+				"Name": "Black", "Alpha": 0
+			},
+		    "BorderColor": {
+				"Name": "Black", "Alpha": 0
+			}
 		},
 		"Sizes": {
 			"BorderWidth":         0,
@@ -131,20 +135,26 @@
 		"Name": "Label",
 		"ParentName": "Default",
 	    "Colors": {
-		    "Color": { "R": 0, "G": 0, "B": 0, "A": 0 }
+		    "Color": {
+				"Name": "Black", "Alpha": 0
+			}
         }
     },
 
 	{
 		"Name": "Button",
         "ParentName": "Default",
-		"Fonts": {
-			"Font": "GoBold"
-		},
 		"Sizes": {
 			"Width":        36,
-			"Height":       36,
-       	 	"InnerPadding": 15
+			"Height":       36
+		}
+	},
+
+	{
+		"Name": "TextButton",
+        "ParentName": "Button",
+		"Sizes": {
+			"InnerPadding": 15
 		}
 	},
 
@@ -181,18 +191,20 @@
 	{
 		"Name": "ListButton",
 		"ParentName": "Button",
+	    "Colors": {
+    		"LineColor": {
+			    "Name": "Teal", "Bright": 0.6
+    		}
+		},
 		"Sizes": {
 			"Width":        45,
-			"InnerPadding":  8
+			"InnerPadding": 5
 		}
 	},
 
 	{
 		"Name": "Checkbox",
 		"ParentName": "Button",
-		"Fonts": {
-			"Font": "GoRegular"
-		},
 		"Sizes": {
 			"Width":        20,
 			"Height":       20,
@@ -205,9 +217,6 @@
 	{
 		"Name": "RadioButton",
 		"ParentName": "Button",
-		"Fonts": {
-			"Font": "GoRegular"
-		},
 		"Sizes": {
 			"Width":        20,
 			"Height":       20,
@@ -238,9 +247,15 @@
 		"Name": "Shape",
 		"ParentName": "Default",
 		"Colors": {
-        	"Color"              : {"R": 0, "G": 0, "B": 0, "A": 0},
-        	"PushedColor"        : {"R": 0, "G": 0, "B": 0, "A": 0},
-        	"SelectedColor"      : {"R": 0, "G": 0, "B": 0, "A": 0},
+        	"Color": {
+				"Name": "Black", "Alpha": 0.0
+			},
+        	"PushedColor": {
+				"Name": "Black", "Alpha": 0.0
+			},
+        	"SelectedColor": {
+				"Name": "Black", "Alpha": 0.0
+			},
         	"BorderColor"        : {"Name": "Black"},
         	"_PushedBorderColor"  : {"Name": "Black", "Alpha": 0.1},
         	"_SelectedBorderColor": {"Name": "Black", "Alpha": 0.1}
@@ -265,10 +280,10 @@
 		"Name": "Polygon",
 		"ParentName": "Shape",
 		"Colors": {
-        	"BorderColor" : {"R": 0.980, "G": 0.922, "B": 0.843, "A": 1}
-    	},
+        	"BorderColor" : "0xFAEBD7"
+		},
     	"Sizes": {
-        	"BorderWidth":          3.5
+        	"BorderWidth": 3.5
     	}
 	}
 ]

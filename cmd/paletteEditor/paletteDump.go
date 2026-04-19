@@ -13,7 +13,6 @@ import (
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/fonts"
-	"github.com/stefan-muehlebach/mandel"
 )
 
 const (
@@ -27,13 +26,11 @@ const (
 )
 
 func main() {
-	var palType string
-
-	palNameList, err := mandel.PaletteNames()
+	palNames, palMap, err := colors.ReadPaletteFile("palette.json")
 	if err != nil {
 		log.Fatalf("couldn't read palette names: %v", err)
 	}
-	numPals := len(palNameList)
+	numPals := len(palNames)
 	numRows := numPals / numColumns
 	if numPals%numColumns != 0 {
 		numRows += 1
@@ -45,9 +42,10 @@ func main() {
 
 	gc.SetFillColor(colors.WhiteSmoke)
 	gc.Clear()
-	gc.SetFontFace(fonts.NewFace(fonts.GoRegular, 18.0))
+	face, _ := fonts.NewFace(fonts.GoRegular, 18.0)
+	gc.SetFontFace(face)
 	gc.SetStrokeColor(colors.Black)
-	for i, palName := range palNameList {
+	for i, palName := range palNames {
 		col := i / numRows
 		row := i % numRows
 		x0 := float64(col * stripeWidth)
@@ -58,22 +56,14 @@ func main() {
 		gc.FillStroke()
 
 		fmt.Printf("  [%2d]: %s\n", i, palName)
-		pal, err := mandel.NewPalette(palName)
-		if err != nil {
-			log.Fatalf("couldn't create palette: %v", err)
-		}
-		switch pal.(type) {
-		case *mandel.GradientPalette:
-			palType = "Gradient Palette"
-		case *mandel.ProcPalette:
-			palType = "Procedure Palette"
-		}
-		pal.SetLength(colorBarWidth)
-		pal.LenIsMaxIter()
-		pal.SetOffset(0.0)
+		pal := palMap[palName]
+		//pal.SetLength(colorBarWidth)
+		//pal.LenIsMaxIter()
+		//pal.SetOffset(0.0)
 
 		for x := 0; x < colorBarWidth; x++ {
-			color := pal.GetColor(float64(x))
+			t := float64(x)/float64(colorBarWidth-1)
+			color := pal.Color(t)
 			for y := 0; y < colorBarHeight; y++ {
 				img.Set(int(x0+padding)+x, int(y0+textHeight+padding)+y, color)
 			}
@@ -84,7 +74,7 @@ func main() {
 		gc.Stroke()
 
 		gc.DrawStringAnchored(palName, x0+padding, y0+padding+textHeight-padding, 0.0, 0.0)
-		gc.DrawStringAnchored(palType, x0+stripeWidth-padding,
+		gc.DrawStringAnchored(pal.Type().String(), x0+stripeWidth-padding,
 			y0+padding+textHeight-padding, 1.0, 0.0)
 	}
 	fileName := "palette.png"

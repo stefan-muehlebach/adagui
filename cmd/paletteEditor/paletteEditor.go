@@ -21,7 +21,6 @@ import (
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/geom"
-	"github.com/stefan-muehlebach/mandel"
 )
 
 //----------------------------------------------------------------------------
@@ -41,17 +40,17 @@ var (
 	// nicht homogen ist, d.h. 0xff fuer Rot ist leicht dunkler in der Wahr-
 	// nehmung als 0xff fuer Gruen (was ziemlich hell erscheint). Daher koennen
 	// die Farben hier einzeln definiert werden.
-	BrightColors = []colors.Color{
+	BrightColors = []colors.RGBA{
 		colors.Red,
 		colors.Lime,
 		colors.Blue,
 	}
-	NormalColors = []colors.Color{
+	NormalColors = []colors.RGBA{
 		colors.Red.Dark(0.37),
 		colors.Lime.Dark(0.37),
 		colors.Blue.Dark(0.37),
 	}
-	DimmedColors = []colors.Color{
+	DimmedColors = []colors.RGBA{
 		colors.Red.Dark(0.92),
 		colors.Lime.Dark(0.92),
 		colors.Blue.Dark(0.92),
@@ -108,13 +107,13 @@ var (
 type PalettePreview struct {
 	adagui.LeafEmbed
 	Inset   geom.Rectangle
-	Palette mandel.Palette
+	Palette colors.Palette
 }
 
 // NewPalettePreview erzeugt ein neues Widget zur Anzeige einer Palette.
 // Als einziges Pflichargument muss eine geladene Palette aus dem [mandel]
 // Package angegeben werden.
-func NewPalettePreview(palette mandel.Palette) *PalettePreview {
+func NewPalettePreview(palette colors.Palette) *PalettePreview {
 	n := &PalettePreview{}
 	n.Wrapper = n
 	n.Init()
@@ -133,7 +132,7 @@ func (n *PalettePreview) Paint(gc *gg.Context) {
 	n.Palette.SetLength(int(n.Inset.Dx()))
 	pos0 := n.Inset.Min.Int()
 	for col := 0; col < int(n.Inset.Dx()); col++ {
-		color := n.Palette.GetColor(float64(col))
+		color := n.Palette.Color(float64(col))
 		for row := 0; row < int(n.Inset.Dy()); row++ {
 			gc.SetPixel(pos0.X+col, pos0.Y+row, color)
 		}
@@ -146,17 +145,17 @@ func (n *PalettePreview) Paint(gc *gg.Context) {
 
 //----------------------------------------------------------------------------
 
-type GradientEditor struct {
+type ColorStopsEditor struct {
 	adagui.ContainerEmbed
 	Inset                   geom.Rectangle
-	palette                 *mandel.GradientPalette
-	color                   mandel.BaseColorType
+	palette                 *colors.ColorStopsPalette
+	color                   colors.ColorIdent
 	firstCtrlPt, lastCtrlPt *CtrlPoint
 }
 
-func NewGradientEditor(palette *mandel.GradientPalette,
-	color mandel.BaseColorType) *GradientEditor {
-	n := &GradientEditor{}
+func NewColorStopsEditor(palette *colors.ColorStopsPalette,
+	color colors.ColorIdent) *ColorStopsEditor {
+	n := &ColorStopsEditor{}
 	n.Wrapper = n
 	n.Init()
 	n.PropertyEmbed.InitByName("Default")
@@ -167,13 +166,13 @@ func NewGradientEditor(palette *mandel.GradientPalette,
 	return n
 }
 
-func (n *GradientEditor) SetSize(s geom.Point) {
+func (n *ColorStopsEditor) SetSize(s geom.Point) {
 	n.Embed.SetSize(s)
 	n.Inset = n.Bounds().Inset(gradEditInset, gradEditInset)
 	n.CreateCtrlPoints()
 }
 
-func (n *GradientEditor) Paint(gc *gg.Context) {
+func (n *ColorStopsEditor) Paint(gc *gg.Context) {
 	gc.DrawRoundedRectangle(n.Inset.X0(), n.Inset.Y0(), n.Inset.Dx(), n.Inset.Dy(),
 		gradEditRectRound)
 	gc.SetStrokeWidth(gradEditLineWidth)
@@ -199,14 +198,14 @@ func (n *GradientEditor) Paint(gc *gg.Context) {
 	//gc.Pop()
 }
 
-func (n *GradientEditor) OnInputEvent(evt touch.Event) {
+func (n *ColorStopsEditor) OnInputEvent(evt touch.Event) {
 	switch evt.Type {
 	case touch.TypeLongPress:
 		rect := n.Inset
 		pos := rect.SetInside(evt.Pos)
 		fx, fy := rect.PosRel(pos)
 		fy = 1 - fy
-		gp := &mandel.GradPoint{fx, fy}
+		gp := &colors.GradPoint{fx, fy}
 		n.palette.AddGradPoint(n.color, gp)
 		n.palette.Update()
 		cp := NewCtrlPoint(n, gp)
@@ -215,7 +214,7 @@ func (n *GradientEditor) OnInputEvent(evt touch.Event) {
 	}
 }
 
-func (n *GradientEditor) CreateCtrlPoints() {
+func (n *ColorStopsEditor) CreateCtrlPoints() {
 	var first, last *CtrlPoint
 
 	n.ChildList.Init()
@@ -237,15 +236,15 @@ func (n *GradientEditor) CreateCtrlPoints() {
 
 type CtrlPoint struct {
 	adagui.LeafEmbed
-	color  mandel.BaseColorType
+	color  colors.ColorIdent
 	active bool
-	ge     *GradientEditor
-	gp     *mandel.GradPoint
+	ge     *ColorStopsEditor
+	gp     *colors.ValueStop
 	sync   *CtrlPoint
 	inSync bool
 }
 
-func NewCtrlPoint(ge *GradientEditor, gp *mandel.GradPoint) *CtrlPoint {
+func NewCtrlPoint(ge *ColorStopsEditor, gp *colors.GradPoint) *CtrlPoint {
 	n := &CtrlPoint{}
 	n.Wrapper = n
 	n.Init()
@@ -358,13 +357,13 @@ func (n *CtrlPoint) UpdateValue() {
 type ProcEditor struct {
 	adagui.ContainerEmbed
 	Inset   geom.Rectangle
-	palette *mandel.ProcPalette
-	color   mandel.BaseColorType
+	palette *colors.ProcPalette
+	color   colors.BaseColorType
 	fncPts  []*FuncPoint
 }
 
-func NewProcEditor(palette *mandel.ProcPalette,
-	color mandel.BaseColorType) *ProcEditor {
+func NewProcEditor(palette *colors.ProcPalette,
+	color colors.BaseColorType) *ProcEditor {
 	n := &ProcEditor{}
 	n.Wrapper = n
 	n.Init()
@@ -458,7 +457,7 @@ func init() {
 type FuncPoint struct {
 	adagui.LeafEmbed
 	pe        *ProcEditor
-	color     mandel.BaseColorType
+	color     colors.BaseColorType
 	active    bool
 	pointType FuncPointType
 }
@@ -560,16 +559,16 @@ var (
 // (main) --
 func main() {
 	var palName string
-	var palette mandel.Palette
+	var palette colors.Palette
 	var err error
-	var rotation adatft.RotationType = adatft.Rotate090
+	var rotation adatft.RotationType = adatft.Rotate270
 
 	flag.StringVar(&palName, "palette", "Default",
 		"name of the palette to edit")
 	flag.Var(&rotation, "rotation", "Rotation of the Display")
 	flag.Parse()
 
-	palette, err = mandel.NewPalette(palName)
+	palette, err = colors.NewPalette(palName)
 	if err != nil {
 		log.Fatalf("Couldn'r read palette: %v", err)
 	}
@@ -599,42 +598,42 @@ func main() {
 	switch palImpl := palette.(type) {
 
 	// Erstellt alle Objekte fuer die Bearbeitung einer Gradienten-Palette.
-	case *mandel.GradientPalette:
+	case *colors.ColorStopsPalette:
 		// Editor fuer Rot
-		geRed := NewGradientEditor(palImpl, mandel.Red)
+		geRed := NewColorStopsEditor(palImpl, colors.Red)
 		//geRed.SetPos(geom.Point{0.0, palPrevHeight})
 		group.Add(geRed)
 
 		// Editor fuer Gruen
-		geGreen := NewGradientEditor(palImpl, mandel.Green)
+		geGreen := NewColorStopsEditor(palImpl, colors.Green)
 		//geGreen.SetPos(geom.Point{0.0, palPrevHeight + gradEditHeight})
 		group.Add(geGreen)
 
 		// Editor fuer Blau
-		geBlue := NewGradientEditor(palImpl, mandel.Blue)
+		geBlue := NewColorStopsEditor(palImpl, colors.Blue)
 		//geBlue.SetPos(geom.Point{0.0, palPrevHeight + 2*gradEditHeight})
 		group.Add(geBlue)
 
 	// Analoger Aufbau, jedoch fuer eine prozedurale Palette.
 	// >>> Dieser Teil ist noch im Aufbau begriffen <<<
-	case *mandel.ProcPalette:
+	case *colors.ProcPalette:
 
-		peRed := NewProcEditor(palImpl, mandel.Red)
+		peRed := NewProcEditor(palImpl, colors.Red)
 		//peRed.SetPos(geom.Point{0.0, palPrevHeight})
 		group.Add(peRed)
 
-		peGreen := NewProcEditor(palImpl, mandel.Green)
+		peGreen := NewProcEditor(palImpl, colors.Green)
 		//peGreen.SetPos(geom.Point{0.0, palPrevHeight + procEditHeight})
 		group.Add(peGreen)
 
-		peBlue := NewProcEditor(palImpl, mandel.Blue)
+		peBlue := NewProcEditor(palImpl, colors.Blue)
 		//peBlue.SetPos(geom.Point{0.0, palPrevHeight + 2*procEditHeight})
 		group.Add(peBlue)
 	}
 
 	btnBox := adagui.NewGroupPL(group, adagui.NewHBoxLayout(9.5))
 
-	palList, _ := mandel.PaletteNames()
+	palList, _ := colors.PaletteNames()
 	btnPalList := adagui.NewListButton(palList)
 	btnQuit := adagui.NewTextButton("Quit")
 	btnQuit.SetOnTap(func(evt touch.Event) {

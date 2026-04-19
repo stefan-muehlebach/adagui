@@ -5,6 +5,8 @@ import (
 	"math"
 	"time"
 
+    "github.com/stefan-muehlebach/adatft"
+
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 )
@@ -100,6 +102,9 @@ func (a *PlasmaAnim) Clean() {
 	}
 }
 
+func (a *PlasmaAnim) Handle(evt adatft.PenEvent) {
+}
+
 func UpdateThread(valFld *ValFieldType, orderQ chan float64, doneQ chan bool) {
 	var t float64
 	var ok bool
@@ -180,11 +185,11 @@ func ColorFunc03(x, y, t float64) float64 {
 
 type Palette struct {
 	name      string
-	colorList []colors.Color
-	shadeList []colors.Color
+	colorList []colors.RGBA
+	shadeList []colors.RGBA
 }
 
-func NewPalette(name string, colors ...colors.Color) *Palette {
+func NewPalette(name string, colors ...colors.RGBA) *Palette {
 	p := &Palette{}
 	p.name = name
 	for _, color := range colors {
@@ -194,7 +199,7 @@ func NewPalette(name string, colors ...colors.Color) *Palette {
 	return p
 }
 
-func (p *Palette) GetColor(t float64) colors.Color {
+func (p *Palette) GetColor(t float64) colors.RGBA {
 	idx := int(t * float64(numShades*(len(p.colorList)-1)))
 	return p.shadeList[idx]
 }
@@ -203,10 +208,10 @@ func (p *Palette) GetColor(t float64) colors.Color {
 // linear.
 func (p *Palette) CalcLinearShades() {
 	var i, j, k int
-	var color1, color2 colors.Color
+	var color1, color2 colors.RGBA
 	var t float64
 
-	p.shadeList = make([]colors.Color, numShades*(len(p.colorList)-1))
+	p.shadeList = make([]colors.RGBA, numShades*(len(p.colorList)-1))
 	for i = 0; i < len(p.colorList)-1; i++ {
 		for j = 0; j < numShades; j++ {
 			color1 = p.colorList[i]

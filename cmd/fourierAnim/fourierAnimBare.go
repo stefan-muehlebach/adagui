@@ -1,5 +1,3 @@
-//go:build ignore
-
 package main
 
 import (
@@ -47,7 +45,7 @@ type FourierObject interface {
 type FourierDisc struct {
 	mp, nextMp geom.Point
 
-	fillColor, borderColor, pointerColor   colors.Color
+	fillColor, borderColor, pointerColor   colors.RGBA
 	borderWidth, pointerWidth, pointerSize float64
 
 	freq                     float64
@@ -131,7 +129,7 @@ func (d *FourierDisc) Draw(gc *gg.Context) {
 type FourierPen struct {
 	mp, prevPt geom.Point
 	img        *gg.Context
-	penColor   colors.Color
+	penColor   colors.RGBA
 	penWidth   float64
 	firstPoint bool
 }
@@ -231,18 +229,20 @@ func main() {
 	var syncQ, quitQ chan bool
 	var sigChan chan os.Signal
 	var maxFreq int
+	var rotation adatft.RotationType = adatft.Rotate000
 
 	flag.DurationVar(&step, "step", 30*time.Millisecond,
 		"time step of the animation")
 	flag.IntVar(&maxFreq, "freq", DefMaxFreq, "Max. Frequence")
 	flag.StringVar(&coeffFile, "in", DefCoeffFile, "Input file with coeff.")
+	flag.Var(&rotation, "rotation", "Display rotation")
 	flag.Parse()
 
 	adagui.StartProfiling()
 
 	coeffList = ReadCoeffList(coeffFile)
 
-	disp = adatft.OpenDisplay(adatft.Rotate000)
+	disp = adatft.OpenDisplay(rotation)
 
 	gc = gg.NewContext(adatft.Width, adatft.Height)
 	img = gg.NewContext(adatft.Width, adatft.Height)

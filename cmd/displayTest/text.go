@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"time"
 
+    "github.com/stefan-muehlebach/adatft"
+
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/fonts"
@@ -87,20 +89,22 @@ func (a *TextAnim) Paint() {
 
 func (a *TextAnim) Clean() {}
 
+func (a *TextAnim) Handle(evt adatft.PenEvent) {}
+
 type TextObject struct {
 	x, y          float64
 	txt           string
 	face          font.Face
 	width, height float64
-	color         colors.Color
+	color         colors.RGBA
 	xVel, yVel    float64
 }
 
 func NewTextObject(txt string, fnt *fonts.Font, fontSize float64,
-	color colors.Color) *TextObject {
+	color colors.RGBA) *TextObject {
 	o := &TextObject{}
 	o.txt = txt
-	o.face = fonts.NewFace(fnt, fontSize)
+	o.face, _ = fonts.NewFace(fnt, fontSize)
 	o.color = color
 	o.width = float64(font.MeasureString(o.face, o.txt)) / 64.0
 	o.height = float64(o.face.Metrics().Ascent) / 64.0

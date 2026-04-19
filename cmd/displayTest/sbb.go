@@ -6,6 +6,8 @@ import (
 	"math"
 	"time"
 
+    "github.com/stefan-muehlebach/adatft"
+
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 )
@@ -76,3 +78,5 @@ func (a *SBBAnim) Paint() {
 }
 
 func (a *SBBAnim) Clean() {}
+
+func (a *SBBAnim) Handle(evt adatft.PenEvent) {}

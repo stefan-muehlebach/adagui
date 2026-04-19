@@ -5,6 +5,8 @@ import (
 	"image/color"
 	"time"
 
+    "github.com/stefan-muehlebach/adatft"
+
 	"github.com/stefan-muehlebach/gg"
 	"golang.org/x/image/draw"
 	"golang.org/x/image/font"
@@ -60,4 +62,7 @@ func (a *FixedFontAnim) Paint() {
 }
 
 func (a *FixedFontAnim) Clean() {
+}
+
+func (a *FixedFontAnim) Handle(evt adatft.PenEvent) {
 }

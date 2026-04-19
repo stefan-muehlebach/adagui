@@ -185,7 +185,7 @@ func (l *Label) SetFontSize(fontSize float64) {
 }
 
 func (l *Label) updateSize() {
-    l.fontFace = fonts.NewFace(l.Font(), l.FontSize())
+    l.fontFace, _ = fonts.NewFace(l.Font(), l.FontSize())
     w := float64(font.MeasureString(l.fontFace, l.Text())) / 64.0
     h := l.FontSize()
     l.desc = float64(l.fontFace.Metrics().Descent) / 64.0
@@ -292,7 +292,6 @@ type TextButton struct {
     align AlignType
     refPt geom.Point
     ax, ay float64
-    desc float64
 }
 
 func NewTextButton(label string) (*TextButton) {
@@ -300,7 +299,7 @@ func NewTextButton(label string) (*TextButton) {
     b.Wrapper = b
     b.LeafEmbed.Init()
     b.PushEmbed.Init(b, nil)
-    b.PropertyEmbed.InitByName("Button")
+    b.PropertyEmbed.InitByName("TextButton")
     b.label = label
     b.align = AlignCenter | AlignMiddle
     b.updateSize()
@@ -329,7 +328,7 @@ func (b *TextButton) SetAlign(a AlignType) {
 }
 
 func (b *TextButton) SetFont(fontFont *fonts.Font) {
-    b.PropertyEmbed.SetFont(fontFont)
+    b.PropertyEmbed.SetBoldFont(fontFont)
     b.updateSize()
 }
 
@@ -339,10 +338,9 @@ func (b *TextButton) SetFontSize(fontSize float64) {
 }
 
 func (b *TextButton) updateSize() {
-    b.fontFace = fonts.NewFace(b.Font(), b.FontSize())
-    w := float64(font.MeasureString(b.fontFace, b.label)) / 64.0
+    b.fontFace, _ = fonts.NewFace(b.BoldFont(), b.FontSize())
+    w := fix2flt(font.MeasureString(b.fontFace, b.label))
     h := b.Height()
-    b.desc = float64(b.fontFace.Metrics().Descent) / 64.0
     b.SetMinSize(geom.Point{w+2*b.InnerPadding(), h})
     b.updateRefPoint()
 }
@@ -358,15 +356,15 @@ func (b *TextButton) updateRefPoint() {
         b.refPt.X = b.Bounds().Max.X - b.InnerPadding()
         b.ax = 1.0
     }
-    if b.align & AlignBottom != 0 {
-        b.refPt.Y = b.Bounds().Max.Y - b.InnerPadding()
-        b.ay = 0.0
+    if b.align & AlignTop != 0 {
+        b.refPt.Y = b.Bounds().Min.Y + b.InnerPadding()
+        b.ay = 1.0
     } else if b.align & AlignMiddle != 0 {
         b.refPt.Y = b.Bounds().Center().Y
         b.ay = 0.5
     } else {
-        b.refPt.Y = b.Bounds().Min.Y + b.InnerPadding()
-        b.ay = 1.0
+        b.refPt.Y = b.Bounds().Max.Y - b.InnerPadding()
+        b.ay = 0.0
     }
 }
 
@@ -400,7 +398,7 @@ func NewListButton(options []string) (*ListButton) {
     b.LeafEmbed.Init()
     b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.InitByName("ListButton")
-    b.fontFace  = fonts.NewFace(b.Font(), b.FontSize())
+    b.fontFace, _ = fonts.NewFace(b.BoldFont(), b.FontSize())
     b.Options   = options
     b.selIdx    = 0
     b.Selected  = b.Options[b.selIdx]
@@ -444,11 +442,6 @@ func (b *ListButton) Paint(gc *gg.Context) {
     gc.DrawStringAnchored(b.Selected, pt.X, pt.Y, 0.0, 0.5)
 
     if b.Pushed() {
-        gc.SetStrokeColor(b.PushedBorderColor())
-    } else {
-        gc.SetStrokeColor(b.BorderColor())
-    }
-    if b.Pushed() {
         gc.SetFillColor(b.PushedLineColor())
         gc.SetStrokeColor(b.PushedLineColor())
     } else {
@@ -456,7 +449,6 @@ func (b *ListButton) Paint(gc *gg.Context) {
         gc.SetStrokeColor(b.LineColor())
     }
     gc.SetLineCapButt()
-    //gc.SetStrokeWidth(1.0)
     // Trennlinie zwischen Text und Pfeil (links)
     p1l := geom.Point{0.6*b.Size().Y, 0.0}
     gc.DrawLine(p1l.X, p1l.Y, p1l.X, p1l.Y+b.Size().Y)
@@ -469,7 +461,7 @@ func (b *ListButton) Paint(gc *gg.Context) {
     gc.SetLineCapRound()
     // Pfeil nach links
     pa := p1l.Add(geom.Point{-0.2*b.Size().Y, 0.25*b.Size().Y})
-    pb := p1l.Add(geom.Point{-0.4*b.Size().Y, 0.5*b.Size().Y})
+    pb := p1l.Add(geom.Point{-0.45*b.Size().Y, 0.5*b.Size().Y})
     pc := pa.Add(geom.Point{0.0, 0.5*b.Size().Y})
     gc.MoveTo(pa.AsCoord())
     gc.LineTo(pb.AsCoord())
@@ -479,7 +471,7 @@ func (b *ListButton) Paint(gc *gg.Context) {
 
     // Pfeil nach rechts
     pa = p1r.Add(geom.Point{0.2*b.Size().Y, 0.25*b.Size().Y})
-    pb = p1r.Add(geom.Point{0.4*b.Size().Y, 0.5*b.Size().Y})
+    pb = p1r.Add(geom.Point{0.45*b.Size().Y, 0.5*b.Size().Y})
     pc = pa.Add(geom.Point{0.0, 0.5*b.Size().Y})
     gc.MoveTo(pa.AsCoord())
     gc.LineTo(pb.AsCoord())
@@ -607,7 +599,7 @@ func (b *IconButton) DataChanged(data binding.DataItem) {
 type TabButton struct {
     Button
     label string
-    fontFace font.Face
+    normalFont, activeFont font.Face
     idx int
     data binding.Int
 }
@@ -619,8 +611,9 @@ func NewTabButton(label string, idx int) (*TabButton) {
     b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.InitByName("TabButton")
     b.label     = label
-    b.fontFace  = fonts.NewFace(b.Font(), b.FontSize())
-    w := (float64(font.MeasureString(b.fontFace, b.label))/64.0) +
+    b.normalFont, _  = fonts.NewFace(b.Font(), b.FontSize())
+	b.activeFont, _  = fonts.NewFace(b.BoldFont(), b.FontSize())
+    w := fix2flt(font.MeasureString(b.activeFont, b.label)) +
             (2.0*b.InnerPadding())
     h := b.Height()
     b.SetMinSize(geom.Point{w, h})
@@ -658,15 +651,17 @@ func (b *TabButton) Paint(gc *gg.Context) {
 
     mp := b.Bounds().Center()
     if b.Pushed() {
+        gc.SetFontFace(b.activeFont)
         gc.SetTextColor(b.PushedTextColor())
     } else {
         if b.checked {
+            gc.SetFontFace(b.activeFont)
             gc.SetTextColor(b.SelectedTextColor())
         } else {
+            gc.SetFontFace(b.normalFont)
             gc.SetTextColor(b.TextColor())
         }
     }
-    gc.SetFontFace(b.fontFace)
     gc.DrawStringAnchored(b.label, mp.X, mp.Y, 0.5, 0.5)
 }
 
@@ -720,7 +715,7 @@ func NewCheckbox(label string) (*Checkbox) {
     c.PushEmbed.Init(c, nil)
     c.PropertyEmbed.InitByName("Checkbox")
     c.label     = label
-    c.fontFace  = fonts.NewFace(c.Font(), c.FontSize())
+    c.fontFace, _  = fonts.NewFace(c.Font(), c.FontSize())
     w := float64(font.MeasureString(c.fontFace, label))/64.0
     c.SetMinSize(geom.Point{c.Width()+c.InnerPadding()+w,
         c.Height()})
@@ -807,7 +802,7 @@ func NewRadioButtonWithData(label string, value int, data binding.Int) (*RadioBu
     b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.InitByName("RadioButton")
     b.label    = label
-    b.fontFace = fonts.NewFace(b.Font(), b.FontSize())
+    b.fontFace, _ = fonts.NewFace(b.Font(), b.FontSize())
     w := float64(font.MeasureString(b.fontFace, label))/64.0
     b.SetMinSize(geom.Point{b.Width()+b.InnerPadding()+w,
         b.Height()})

@@ -27,7 +27,7 @@ const (
 
 type Window struct {
 	Rect        geom.Rectangle
-	Color       colors.Color
+	Color       colors.RGBA
 	s           *Screen
 	gc          *gg.Context
 	eventQ      chan touch.Event

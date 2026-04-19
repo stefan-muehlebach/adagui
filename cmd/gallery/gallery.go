@@ -24,6 +24,11 @@ import (
 
 //-----------------------------------------------------------------------
 
+var (
+	screen *adagui.Screen
+	win    *adagui.Window
+)
+
 func init() {
 	log.SetFlags(log.Lmicroseconds | log.Lmsgprefix)
 	log.SetPrefix(": ")
@@ -36,16 +41,17 @@ func SignalHandler() {
 	screen.Quit()
 }
 
-var (
-	screen *adagui.Screen
-	win    *adagui.Window
-)
-
 func main() {
-	var rotation adatft.RotationType = adatft.Rotate090
+	var rotation adatft.RotationType = adatft.Rotate270
+	var propFileName string
 
 	flag.Var(&rotation, "rotation", "display rotation")
+	flag.StringVar(&propFileName, "props", "", "name of a user specific property file")
 	flag.Parse()
+
+	if propFileName != "" {
+		props.PropsMap = props.NewPropsMapFromUserFile(propFileName)
+	}
 
 	screen = adagui.NewScreen(rotation)
 	win = screen.NewWindow()
@@ -57,6 +63,173 @@ func main() {
 	screen.Run()
 }
 
+// ---------------------------------------------------------------------------
+//
+// Widgets 1
+func WidgetPanel01() adagui.Node {
+	var iconList []*adagui.IconButton
+
+	grpMain := adagui.NewGroup()
+	grpMain.Layout = adagui.NewVBoxLayout()
+
+	grpOptions := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+
+	grpCheck := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
+	chk01 := adagui.NewCheckbox("Senf")
+	chk02 := adagui.NewCheckbox("Mayo")
+	chk03 := adagui.NewCheckbox("Ketchup")
+	chk04 := adagui.NewCheckbox("Knoblauchsauce")
+	grpCheck.Add(chk01, chk02, chk03, chk04)
+
+	grpRadio := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
+	sizeVar := binding.NewInt()
+	sizeVar.Set(1)
+	rad01 := adagui.NewRadioButtonWithData("Klein", 1, sizeVar)
+	rad02 := adagui.NewRadioButtonWithData("Mittel", 2, sizeVar)
+	rad03 := adagui.NewRadioButtonWithData("Gross", 3, sizeVar)
+	grpRadio.Add(rad01, rad02, rad03)
+
+	grpIcon := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+	iconData := binding.NewInt()
+	numIcons := 12
+	iconList = make([]*adagui.IconButton, numIcons)
+	for i := range numIcons {
+		fileName := fmt.Sprintf("icons/%d.png", i+1)
+		iconList[i] = adagui.NewIconButtonWithData(fileName, i, iconData)
+		grpIcon.Add(iconList[i])
+	}
+
+	grpSlider := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+	val := binding.NewFloat()
+	str := binding.FloatToStringWithFormat(val, "%.1f")
+	sld := adagui.NewSliderWithData(400, adagui.Horizontal, val)
+	sld.SetRange(0.0, 1.0, 0.2)
+	lbl := adagui.NewLabelWithData(str)
+	grpSlider.Add(sld, lbl)
+
+	grpSlider = adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+	val = binding.NewFloat()
+	str = binding.FloatToStringWithFormat(val, "%.3f")
+	sld = adagui.NewSliderWithData(400, adagui.Horizontal, val)
+	sld.SetRange(0.0, 2*math.Pi, math.Pi/36.0)
+	lbl = adagui.NewLabelWithData(str)
+	grpSlider.Add(sld, lbl)
+
+	grpLstBtn := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+	lst01 := []string{"Stefan", "Michael", "Luzia"}
+	lst02 := []string{"A", "B", "C", "D", "E", "F"}
+	lstBtn01 := adagui.NewListButton(lst01)
+	lstBtn02 := adagui.NewListButton(lst02)
+	grpLstBtn.Add(lstBtn01, lstBtn02)
+
+	grpMain.Add(adagui.NewSpacer())
+
+	grpBtn := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+	txtBtn01 := adagui.NewTextButton("Open")
+	txtBtn02 := adagui.NewTextButton("Execute")
+	txtBtn03 := adagui.NewTextButton("Quit")
+	txtBtn02.SetFont(fonts.LucidaCalligraphyBold)
+	txtBtn02.SetColor(colors.Purple.Dark(0.1))
+	txtBtn02.SetPushedColor(colors.Purple.Bright(0.8))
+	txtBtn02.SetTextColor(colors.Gold)
+	txtBtn02.SetPushedTextColor(colors.Gold.Dark(0.8))
+	txtBtn02.SetPushedBorderWidth(5.0)
+	txtBtn02.SetPushedBorderColor(colors.Gold)
+	txtBtn03.SetOnTap(func (evt touch.Event) {
+		screen.Quit()
+	})
+	grpBtn.Add(txtBtn01, txtBtn02, adagui.NewSpacer(), txtBtn03)
+
+	return grpMain
+}
+
+// ---------------------------------------------------------------------------
+//
+// Widgets 2
+func WidgetPanel02() adagui.Node {
+	var iconList []*adagui.IconButton
+
+	grpMain := adagui.NewGroup()
+	grpMain.Layout = adagui.NewVBoxLayout()
+
+	grpLabel := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+	label01 := adagui.NewLabel("Hallo")
+	label02 := adagui.NewLabel("Grösser")
+	label02.SetFontSize(28.0)
+	label03 := adagui.NewLabel("Schrift")
+	label03.SetFont(fonts.LucidaHandwritingItalic)
+	label03.SetFontSize(22.0)
+	grpLabel.Add(label01, label02, label03)
+
+	grpBtn := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+	button01 := adagui.NewButton(16, 16)
+	button02 := adagui.NewButton(32, 32)
+	button03 := adagui.NewButton(48, 48)
+	grpBtn.Add(button03, button02, button01)
+
+	grpBtn = adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+	lst01 := []string{"Stefan", "Michael", "Luzia"}
+	lst02 := []string{"A", "B", "C", "D", "E", "F"}
+	lstBtn01 := adagui.NewListButton(lst01)
+	lstBtn02 := adagui.NewListButton(lst02)
+	txtBtn01 := adagui.NewTextButton("Open")
+	txtBtn02 := adagui.NewTextButton("Close")
+	txtBtn03 := adagui.NewTextButton("Execute")
+	txtBtn03.SetFont(fonts.LucidaCalligraphyBold)
+	txtBtn03.SetColor(colors.Purple.Dark(0.1))
+	txtBtn03.SetPushedColor(colors.Purple.Bright(0.8))
+	txtBtn03.SetTextColor(colors.Gold)
+	txtBtn03.SetPushedTextColor(colors.Gold.Dark(0.8))
+	txtBtn03.SetPushedBorderWidth(5.0)
+	txtBtn03.SetPushedBorderColor(colors.Gold)
+	grpBtn.Add(lstBtn02, lstBtn01, txtBtn03, txtBtn02, txtBtn01)
+
+	grpIcon := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+	iconData := binding.NewInt()
+	numIcons := 12
+	iconList = make([]*adagui.IconButton, numIcons)
+	for i := range numIcons {
+		fileName := fmt.Sprintf("icons/%d.png", i+1)
+		iconList[i] = adagui.NewIconButtonWithData(fileName, i, iconData)
+		grpIcon.Add(iconList[i])
+	}
+
+	grpOptions := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
+
+	grpSlider := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
+	sld01 := adagui.NewSlider(200, adagui.Horizontal)
+	sld01.SetRange(0.0, 1.0, 0.01)
+	sld02 := adagui.NewSlider(200, adagui.Horizontal)
+	sld02.SetRange(0.0, 1.0, 0.1)
+	scr01 := adagui.NewScrollbar(200, adagui.Horizontal)
+	scr01.SetVisiRange(0.45)
+	scr02 := adagui.NewScrollbar(200, adagui.Horizontal)
+	scr02.SetVisiRange(0.25)
+	grpSlider.Add(scr01, scr02, sld01, sld02)
+
+	grpCheck := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
+	chk01 := adagui.NewCheckbox("Senf")
+	chk02 := adagui.NewCheckbox("Mayo")
+	chk03 := adagui.NewCheckbox("Ketchup")
+	chk04 := adagui.NewCheckbox("Knoblauchsauce")
+	grpCheck.Add(chk04, chk03, chk02, chk01)
+
+	grpRadio := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
+	sizeVar := binding.NewInt()
+	sizeVar.Set(1)
+	rad01 := adagui.NewRadioButtonWithData("Klein", 1, sizeVar)
+	rad02 := adagui.NewRadioButtonWithData("Mittel", 2, sizeVar)
+	rad03 := adagui.NewRadioButtonWithData("Gross", 3, sizeVar)
+	grpRadio.Add(rad03, rad02, rad01)
+
+	return grpMain
+}
+
+// ---------------------------------------------------------------------------
+//
+// Fonts
+//
+
 // ScrolledFontPanel zeigt erstens die Moeglichkeiten, Text in ansprechenden
 // Fonts darzustellen und den Einsatz eines ScrolledPanels.
 func ScrolledFontPanel() adagui.Node {
@@ -65,9 +238,7 @@ func ScrolledFontPanel() adagui.Node {
 	var size geom.Point = geom.Point{float64(adatft.Width),
 		float64(adatft.Height - 30)}
 
-	//log.Printf("ScrolledFontPanel(size): %+v", size)
-
-	fontSize := 24.0
+	fontSize := 18.0
 	textColor := colors.WhiteSmoke
 	fontList := fonts.Names
 
@@ -80,38 +251,12 @@ func ScrolledFontPanel() adagui.Node {
 	panel.SetVirtualSize(geom.Point{virtualWidth, virtualHeight})
 
 	for _, fontName = range fontList {
-		//		if fontName == "Elegante" {
-		//			fontList = fontList[i:]
-		//			break
-		//		}
 		lbl := adagui.NewLabel(fontName)
 		lbl.SetTextColor(textColor)
 		lbl.SetFont(fonts.Map[fontName])
 		lbl.SetFontSize(fontSize)
 		panel.Add(lbl)
 	}
-	/*
-		fontSize *= 2
-		for i, fontName = range fontList {
-			if fontName == "Elzevier" {
-				fontList = fontList[i:]
-				break
-			}
-			lbl := adagui.NewLabel(fontName)
-			lbl.SetTextColor(textColor)
-			lbl.SetFont(fonts.Map[fontName])
-			lbl.SetFontSize(fontSize)
-			panel.Add(lbl)
-		}
-		fontSize *= 3
-		for _, fontName = range fontList {
-			lbl := adagui.NewLabel(fontName)
-			lbl.SetTextColor(textColor)
-			lbl.SetFont(fonts.Map[fontName])
-			lbl.SetFontSize(fontSize)
-			panel.Add(lbl)
-		}
-	*/
 
 	scrVert = adagui.NewScrollbarWithCallback(200, adagui.Vertical,
 		func(f float64) {
@@ -135,10 +280,15 @@ func ScrolledFontPanel() adagui.Node {
 	return main
 }
 
+// ---------------------------------------------------------------------------
+//
+// Colors
+//
+
 // ScrolledColorPanel
 type ColorInfo struct {
 	name  string
-	color colors.Color
+	color colors.RGBA
 }
 
 func ScrolledColorPanel() adagui.Node {
@@ -214,166 +364,13 @@ func ScrolledColorPanel() adagui.Node {
 	return main
 }
 
-func WidgetPanel01() adagui.Node {
-	var iconList []*adagui.IconButton
-
-	grpMain := adagui.NewGroup()
-	grpMain.Layout = adagui.NewVBoxLayout()
-
-	grpOptions := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-
-	grpCheck := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
-	chk01 := adagui.NewCheckbox("Senf")
-	chk02 := adagui.NewCheckbox("Mayo")
-	chk03 := adagui.NewCheckbox("Ketchup")
-	chk04 := adagui.NewCheckbox("Knoblauchsauce")
-	grpCheck.Add(chk01, chk02, chk03, chk04)
-
-	grpRadio := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
-	sizeVar := binding.NewInt()
-	sizeVar.Set(1)
-	rad01 := adagui.NewRadioButtonWithData("Klein", 1, sizeVar)
-	rad02 := adagui.NewRadioButtonWithData("Mittel", 2, sizeVar)
-	rad03 := adagui.NewRadioButtonWithData("Gross", 3, sizeVar)
-	grpRadio.Add(rad01, rad02, rad03)
-
-	grpIcon := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	iconData := binding.NewInt()
-	numIcons := 12
-	iconList = make([]*adagui.IconButton, numIcons)
-	for i := range numIcons {
-		fileName := fmt.Sprintf("icons/%d.png", i+1)
-		iconList[i] = adagui.NewIconButtonWithData(fileName, i, iconData)
-		grpIcon.Add(iconList[i])
-	}
-
-	grpSlider := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	val := binding.NewFloat()
-	str := binding.FloatToStringWithFormat(val, "%.1f")
-	sld := adagui.NewSliderWithData(200, adagui.Horizontal, val)
-	sld.SetRange(0.0, 1.0, 0.2)
-	lbl := adagui.NewLabelWithData(str)
-	grpSlider.Add(sld, lbl)
-
-	grpSlider = adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	val = binding.NewFloat()
-	str = binding.FloatToStringWithFormat(val, "%.3f")
-	sld = adagui.NewSliderWithData(200, adagui.Horizontal, val)
-	sld.SetRange(0.0, 2*math.Pi, math.Pi/36.0)
-	lbl = adagui.NewLabelWithData(str)
-	grpSlider.Add(sld, lbl)
-
-	grpLstBtn := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	lst01 := []string{"Stefan", "Michael", "Luzia"}
-	lst02 := []string{"A", "B", "C", "D", "E", "F"}
-	lstBtn01 := adagui.NewListButton(lst01)
-	lstBtn02 := adagui.NewListButton(lst02)
-	grpLstBtn.Add(lstBtn01, lstBtn02)
-
-	grpMain.Add(adagui.NewSpacer())
-
-	grpBtn := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	txtBtn01 := adagui.NewTextButton("Open")
-	txtBtn02 := adagui.NewTextButton("Execute")
-	txtBtn03 := adagui.NewTextButton("Quit")
-	txtBtn02.SetFont(fonts.LucidaHandwritingItalic)
-	txtBtn02.SetColor(colors.Purple.Dark(0.1))
-	txtBtn02.SetPushedColor(colors.Purple.Bright(0.8))
-	txtBtn02.SetTextColor(colors.Gold)
-	txtBtn02.SetPushedTextColor(colors.Gold.Dark(0.8))
-	txtBtn02.SetPushedBorderWidth(5.0)
-	txtBtn02.SetPushedBorderColor(colors.Gold)
-	grpBtn.Add(txtBtn01, txtBtn02, adagui.NewSpacer(), txtBtn03)
-
-	return grpMain
-}
-
-func WidgetPanel02() adagui.Node {
-	var iconList []*adagui.IconButton
-
-	grpMain := adagui.NewGroup()
-	grpMain.Layout = adagui.NewVBoxLayout()
-
-	grpLabel := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	label01 := adagui.NewLabel("Hallo zusammen")
-	label02 := adagui.NewLabel("Grösser")
-	label02.SetFontSize(28.0)
-	label03 := adagui.NewLabel("Andere Schrift")
-	label03.SetFont(fonts.LucidaHandwritingItalic)
-	label03.SetFontSize(22.0)
-	grpLabel.Add(label03, label02, label01)
-
-	grpBtn := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	button01 := adagui.NewButton(16, 16)
-	button02 := adagui.NewButton(32, 32)
-	button03 := adagui.NewButton(48, 48)
-	grpBtn.Add(button03, button02, button01)
-
-	grpBtn = adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	lst01 := []string{"Stefan", "Michael", "Luzia"}
-	lst02 := []string{"A", "B", "C", "D", "E", "F"}
-	lstBtn01 := adagui.NewListButton(lst01)
-	lstBtn02 := adagui.NewListButton(lst02)
-	grpBtn.Add(lstBtn02, lstBtn01, adagui.NewSpacer())
-
-	txtBtn01 := adagui.NewTextButton("Open")
-	txtBtn02 := adagui.NewTextButton("Close")
-	txtBtn03 := adagui.NewTextButton("Execute")
-	txtBtn03.SetFont(fonts.LucidaHandwritingItalic)
-	txtBtn03.SetColor(colors.Purple.Dark(0.1))
-	txtBtn03.SetPushedColor(colors.Purple.Bright(0.8))
-	txtBtn03.SetTextColor(colors.Gold)
-	txtBtn03.SetPushedTextColor(colors.Gold.Dark(0.8))
-	txtBtn03.SetPushedBorderWidth(5.0)
-	txtBtn03.SetPushedBorderColor(colors.Gold)
-	grpBtn.Add(txtBtn03, txtBtn02, txtBtn01)
-
-	grpIcon := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	iconData := binding.NewInt()
-	numIcons := 12
-	iconList = make([]*adagui.IconButton, numIcons)
-	for i := range numIcons {
-		fileName := fmt.Sprintf("icons/%d.png", i+1)
-		iconList[i] = adagui.NewIconButtonWithData(fileName, i, iconData)
-		grpIcon.Add(iconList[i])
-	}
-
-	grpOptions := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-
-	grpCheck := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
-	chk01 := adagui.NewCheckbox("Senf")
-	chk02 := adagui.NewCheckbox("Mayo")
-	chk03 := adagui.NewCheckbox("Ketchup")
-	chk04 := adagui.NewCheckbox("Knoblauchsauce")
-	grpCheck.Add(chk04, chk03, chk02, chk01)
-
-	grpRadio := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
-	sizeVar := binding.NewInt()
-	sizeVar.Set(1)
-	rad01 := adagui.NewRadioButtonWithData("Klein", 1, sizeVar)
-	rad02 := adagui.NewRadioButtonWithData("Mittel", 2, sizeVar)
-	rad03 := adagui.NewRadioButtonWithData("Gross", 3, sizeVar)
-	grpRadio.Add(rad03, rad02, rad01)
-
-	grpOptions.Add(adagui.NewSpacer())
-	grpSlider := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
-	sld01 := adagui.NewSlider(220, adagui.Horizontal)
-	sld01.SetRange(0.0, 1.0, 0.01)
-	sld02 := adagui.NewSlider(220, adagui.Horizontal)
-	sld02.SetRange(0.0, 1.0, 0.1)
-	scr01 := adagui.NewScrollbar(220, adagui.Horizontal)
-	scr01.SetVisiRange(0.45)
-	scr02 := adagui.NewScrollbar(220, adagui.Horizontal)
-	scr02.SetVisiRange(0.25)
-	grpSlider.Add(scr01, scr02, sld01, sld02)
-
-	return grpMain
-}
-
+// ---------------------------------------------------------------------------
+//
+// Draw
 func NestedTransformations() adagui.Node {
 	var root *adagui.Group
 	var panel01, panel02, panel03 *adagui.Panel
-	var color02, color03 colors.Color
+	var color02, color03 colors.RGBA
 	var rotPt1, rotPt2 geom.Point
 	var colorFactor float64 = 0.5
 	var size geom.Point = geom.Point{float64(adatft.Width),
@@ -449,8 +446,10 @@ func NestedTransformations() adagui.Node {
 	grp0.Add(obj)
 
 	rotPt1 = panel02.Size()
-	rotPt1.X = 0.0
+	rotPt1.X /= 2.0
 	rotPt1.Y /= 2.0
+	//rotPt1.X = 0.0
+	//rotPt1.Y /= 2.0
 
 	rotVal1.AddCallback(func(data binding.DataItem) {
 		f := data.(binding.Float).Get()
@@ -515,6 +514,7 @@ func NestedTransformations() adagui.Node {
 	grp0.Add(panel03)
 
 	rotPt2 = panel03.Size()
+	rotPt2.X /= 2.0
 	rotPt2.Y /= 2.0
 
 	rotVal2.AddCallback(func(data binding.DataItem) {
@@ -548,9 +548,6 @@ func NewPanel(w, h float64) *adagui.Panel {
 	p := adagui.NewPanel(w, h)
 	p.IsClipping = true
 
-	//p.SetOnPress(func(evt touch.Event) {
-	// log.Printf("Press on Panel: %v", evt)
-	//})
 	p.SetOnLongPress(func(evt touch.Event) {
 		c = NewCircle(1.0)
 		c.SetPos(evt.Pos)
@@ -614,6 +611,9 @@ func NewCircle(r float64) *adagui.Circle {
 	return c
 }
 
+// ---------------------------------------------------------------------------
+//
+// Internal helper functions
 func widgetFlex() adagui.Node {
 	var main, cont *adagui.Group
 	var menu *adagui.TabMenu

@@ -14,10 +14,10 @@ import (
 )
 
 const colorPropTempl = `
-func (pe *PropertyEmbed) {{ .Name }}() (colors.Color) {
+func (pe *PropertyEmbed) {{ .Name }}() (colors.RGBA) {
     return pe.prop.Color({{ .Name }})
 }
-func (pe *PropertyEmbed) Set{{ .Name }}(c colors.Color) {
+func (pe *PropertyEmbed) Set{{ .Name }}(c colors.RGBA) {
     pe.prop.SetColor({{ .Name }}, c)
 }
 `
@@ -82,9 +82,6 @@ type PropertyEmbed struct {
 
 func (pe *PropertyEmbed) Init(parent *Properties) {
     pe.prop = NewProperties(parent)
-}
-func (pe *PropertyEmbed) Init2(parent *Properties, propFile string) {
-    pe.prop = NewPropsFromFile(parent, propFile)
 }
 func (pe *PropertyEmbed) InitByName(name string) {
     pe.prop = NewProperties(PropsMap[name])

@@ -1,25 +1,17 @@
 module github.com/stefan-muehlebach/adagui
 
-go 1.25.5
-
-replace github.com/stefan-muehlebach/adatft => ../adatft
-
-replace github.com/stefan-muehlebach/ledgrid => ../ledgrid
-
-replace github.com/stefan-muehlebach/gg => ../gg
+go 1.26.2
 
 require (
-	github.com/cpmech/gosl v1.2.12
 	github.com/stefan-muehlebach/adatft v1.2.1
 	github.com/stefan-muehlebach/gg v1.4.1
-	github.com/stefan-muehlebach/ledgrid v0.0.0-00010101000000-000000000000
-	github.com/stefan-muehlebach/mandel v1.2.0
-	golang.org/x/image v0.34.0
+	github.com/stefan-muehlebach/ledgrid v1.4.3
+	golang.org/x/image v0.39.0
 )
 
 require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	golang.org/x/text v0.32.0 // indirect
-	periph.io/x/conn/v3 v3.7.2 // indirect
+	golang.org/x/text v0.36.0 // indirect
+	periph.io/x/conn/v3 v3.7.3 // indirect
 	periph.io/x/host/v3 v3.8.5 // indirect
 )

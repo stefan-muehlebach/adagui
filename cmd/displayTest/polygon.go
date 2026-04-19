@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"time"
 
+    "github.com/stefan-muehlebach/adatft"
+
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 )
@@ -28,7 +30,7 @@ func (a *PolygonAnim) Init(gc *gg.Context) {
 
 	a.polyList = make([]*Polygon, numObjs)
 	for i := 0; i < numObjs; i++ {
-		a.polyList[i] = NewPolygon(gc.Width(), gc.Height(), numEdges)
+		a.polyList[i] = NewPolygon(gc, numEdges)
 	}
 
 	a.gc.SetStrokeWidth(3)
@@ -38,7 +40,11 @@ func (a *PolygonAnim) Init(gc *gg.Context) {
 	a.gc.Clear()
 }
 
-func (a *PolygonAnim) Animate(dt time.Duration) {}
+func (a *PolygonAnim) Animate(dt time.Duration) {
+	for _, p := range a.polyList {
+		p.Animate(dt)
+	}
+}
 
 func (a *PolygonAnim) Paint() {
 	a.gc.SetFillColor(colors.RGBAF{0, 0, 0, blurFactor})
@@ -46,49 +52,55 @@ func (a *PolygonAnim) Paint() {
 	a.gc.Fill()
 
 	for _, p := range a.polyList {
-		p.Draw(a.gc)
-		p.Move(a.gc.Bounds().AsCoord())
+		p.Paint()
+		//p.Move(gc.Bounds().AsCoord())
 	}
 }
 
 func (a *PolygonAnim) Clean() {}
 
+func (a *PolygonAnim) Handle(evt adatft.PenEvent) {}
+
 type Polygon struct {
-	p                      []*Point
-	strokeColor, fillColor colors.Color
+	gc *gg.Context
+	xmin, ymin, xmax, ymax float64
+	pts                      []*Point
+	strokeColor, fillColor colors.RGBA
 }
 
-func NewPolygon(dispWidth, dispHeight, edges int) *Polygon {
+func NewPolygon(gc *gg.Context, edges int) *Polygon {
 	p := &Polygon{}
-	p.p = make([]*Point, edges)
+	p.gc = gc
+	p.xmin, p.ymin, p.xmax, p.ymax = gc.Bounds().AsCoord()
+	p.pts = make([]*Point, edges)
 	for i := 0; i < edges; i++ {
 		pt := &Point{}
-		pt.x = rand.Float64() * float64(dispWidth)
-		pt.y = rand.Float64() * float64(dispHeight)
+		pt.x = rand.Float64() * p.xmax
+		pt.y = rand.Float64() * p.ymax
 		pt.dx = rand.Float64()*5.0 - 2.0
 		pt.dy = rand.Float64()*5.0 - 2.0
-		p.p[i] = pt
+		p.pts[i] = pt
 	}
 	p.strokeColor = colors.White
 	p.fillColor = colors.RandColor().Alpha(0.5)
 	return p
 }
 
-func (p *Polygon) Move(xmin, ymin, xmax, ymax float64) {
-	for _, p := range p.p {
-		p.Move(xmin, xmax, ymin, ymax)
+func (p *Polygon) Animate(dt time.Duration) {
+	for _, pt := range p.pts {
+		pt.Move(p.xmin, p.xmax, p.ymin, p.ymax)
 	}
 }
 
-func (p *Polygon) Draw(gc *gg.Context) {
-	gc.MoveTo(p.p[0].x, p.p[0].y)
-	for _, p := range p.p[1:] {
-		gc.LineTo(p.x, p.y)
+func (p *Polygon) Paint() {
+	p.gc.MoveTo(p.pts[0].x, p.pts[0].y)
+	for _, pt := range p.pts[1:] {
+		p.gc.LineTo(pt.x, pt.y)
 	}
-	gc.ClosePath()
-	gc.SetStrokeStyle(gg.NewSolidPattern(p.strokeColor))
-	gc.SetFillStyle(gg.NewSolidPattern(p.fillColor))
-	gc.FillStroke()
+	p.gc.ClosePath()
+	p.gc.SetStrokeStyle(gg.NewSolidPattern(p.strokeColor))
+	p.gc.SetFillStyle(gg.NewSolidPattern(p.fillColor))
+	p.gc.FillStroke()
 }
 
 type Point struct {

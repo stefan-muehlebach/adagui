@@ -1,0 +1,208 @@
+[
+    {
+        "name": "Plasma",
+        "colors": [
+            "0xF0F921",
+            "0xFEBC2B",
+            "0xF48948",
+            "0xDB5B68",
+            "0xB93389",
+            "0x8B09A5",
+            "0x5402A3",
+            "0x0F0787"
+        ]
+    },
+    {
+        "name": "Viridis",
+        "colors": [
+            "0xFDE725",
+            "0x9EDA3A",
+            "0x4BC26D",
+            "0x1FA187",
+            "0x277F8E",
+            "0x365B8D",
+            "0x46327F",
+            "0x570255"
+        ]
+    },
+    {
+        "name": "YellowBlue",
+        "colors": [
+            "0x595905",
+            "0x063833"
+        ]
+    },
+    {
+        "name": "YellowBlueCycle",
+        "colors": [
+            "0xB9B90A",
+            "0x0A5853",
+            "0xB9B90A"
+        ]
+    },
+    {
+        "name": "ZDefault",
+        "colors": [
+        		"0x010662",
+			"0xD9F8FD",
+			"0xFDBB07",
+			"0xD9F8FD",
+			"0x010662"
+        ]
+    },
+    {
+        "name": "Default",
+        "stops": [
+            {
+                "pos": 0.0,  "color": "0x010662"
+            },
+            {
+                "pos": 0.25, "color": "0xD9F8FD"
+            },
+            {
+                "pos": 0.5,  "color": "0xFDBB07"
+            },
+            {
+                "pos": 0.75, "color": "0xD9F8FD"
+            },
+            {
+                "pos": 1.0,  "color": "0x010662"
+            }
+        ]
+    },
+    {
+        "name": "EarthAndSky",
+        "stops": [
+            {
+                "pos": 0.00000, "color": "0xFFFFFF"
+            },
+            {
+                "pos": 0.13238, "color": "0xFFFF00"
+            },
+            {
+                "pos": 0.45975, "color": "0xFF3300"
+            },
+            {
+                "pos": 0.76207, "color": "0x000099"
+            },
+            {
+                "pos": 0.90161, "color": "0x0066FF"
+            },
+            {
+                "pos": 1.00000, "color": "0xFFFFFF"
+            }
+        ]
+    },
+    {
+        "name": "Fire",
+        "stops": [
+            {
+                "pos": 0.0, "color": "0x000000"
+            },
+            {
+                "pos": 0.2, "color": "0xFF0000", "ignore": "B"
+            },
+            {
+                "pos": 0.4, "color": "0x00FF00", "ignore": "R"
+            },
+            {
+                "pos": 0.5, "color": "0x0000FF", "ignore": "RG"
+            },
+            {
+                "pos": 0.6, "color": "0x00FF00", "ignore": "R"
+            },
+            {
+                "pos": 0.8, "color": "0xFF0000", "ignore": "B"
+            },
+            {
+                "pos": 1.0, "color": "0x000000"
+            }
+        ]
+    },
+    {
+        "name": "Fraqtive",
+        "stops": [
+            {
+                "pos": 0.00, "color": "0x000000"
+            },
+            {
+                "pos": 0.16, "color": "0xFF0000", "ignore": "GB"
+            },
+            {
+                "pos": 0.25, "color": "0x00FF00", "ignore": "RB"
+            },
+            {
+                "pos": 0.33, "color": "0x0000FF", "ignore": "RG"
+            },
+            {
+                "pos": 0.50, "color": "0x000000"
+            },
+            {
+                "pos": 0.66, "color": "0x00FF00", "ignore": "RB"
+            },
+            {
+                "pos": 0.75, "color": "0x0000FF", "ignore": "RG"
+            },
+            {
+                "pos": 0.84, "color": "0xFF0000", "ignore": "GB"
+            },
+            {
+                "pos": 1.00, "color": "0x000000"
+            }
+        ]
+    },
+    {
+        "name": "NewGradient",
+        "stops": [
+            {
+                "pos": 0.00, "color": "0xFF0000"
+            },
+            {
+                "pos": 0.50, "color": "0x0000FF", "ignore": "RG"
+            },
+            {
+                "pos": 1.00, "color": "0x00FF00"
+            }
+        ]
+    },
+	{
+		"name": "Neon",
+		"params": [
+			{ "p0": 0.5, "p1": 0.5, "p2": 2.0, "p3": 0.5 },
+			{ "p0": 0.5, "p1": 0.5, "p2": 1.0, "p3": 0.2 },
+			{ "p0": 0.5, "p1": 0.5, "p2": 0.0, "p3": 0.25 }
+		]
+	},
+	{
+		"name": "LandAndSea",
+		"params": [
+			{ "p0": 0.5, "p1": 0.5, "p2": 1.0, "p3": 0.0 },
+			{ "p0": 0.5, "p1": -0.5, "p2": 1.0, "p3": -0.4 },
+			{ "p0": 0.5, "p1": -0.5, "p2": 1.0, "p3": -0.3 }
+		]
+	},
+	{
+		"name": "Jungle",
+		"params": [
+			{ "p0": 0.5, "p1": -0.5, "p2": 1.0, "p3": -0.2 },
+			{ "p0": 0.5, "p1": -0.5, "p2": 1.0, "p3": -0.3 },
+			{ "p0": 0.5, "p1": -0.5, "p2": 1.0, "p3": -0.3 }
+		]
+	},
+	{
+		"name": "Forest",
+		"params": [
+			{ "p0": 0.5, "p1": 0.5, "p2": 1.0, "p3": -0.2 },
+			{ "p0": 0.5, "p1": 0.5, "p2": 1.0, "p3": -0.1 },
+			{ "p0": 0.5, "p1": 0.5, "p2": 0.5, "p3": 0.3 }
+		]
+	},
+	{
+		"name": "Rainbow",
+		"params": [
+			{ "p0": 0.5, "p1": 0.5, "p2": 1.0, "p3": 0.0 },
+			{ "p0": 0.5, "p1": -0.5, "p2": 1.0, "p3": -0.17 },
+			{ "p0": 0.5, "p1": 0.5, "p2": 1.0, "p3": -0.33 }
+		]
+	}
+]

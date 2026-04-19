@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"time"
 
+    "github.com/stefan-muehlebach/adatft"
+
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 )
@@ -84,6 +86,8 @@ func (a *Cube3DAnim) Paint() {
 
 func (a *Cube3DAnim) Clean() {}
 
+func (a *Cube3DAnim) Handle(evt adatft.PenEvent) {}
+
 // 3D-Animation ---------------------------------------------------------------
 /*
 func Cube3DAnimation() {
@@ -161,7 +165,7 @@ func Cube3DAnimation() {
 type Cube struct {
 	Pts         []Vector
 	LineWidth   float64
-	StrokeColor colors.Color
+	StrokeColor colors.RGBA
 }
 
 func NewCube(s float64, lineWidth float64) *Cube {
@@ -212,7 +216,7 @@ func (c *Cube) Draw(gc *gg.Context) {
 
 type Cloud struct {
 	Pts   []Vector
-	Color colors.Color
+	Color colors.RGBA
 	Size  float64
 }
 
