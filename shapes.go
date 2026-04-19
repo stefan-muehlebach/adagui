@@ -171,20 +171,36 @@ func NewRectangle(w, h float64) (*Rectangle) {
 func (r *Rectangle) Paint(gc *gg.Context) {
     Debugf(Painting, "")
     gc.DrawRectangle(r.LocalBounds().AsCoord())
+	gc.SetLineCapRound()
+	gc.SetLineJoinRound()
     if r.Pushed() {
-        gc.SetFillColor(r.PushedColor())
-    } else {
-        gc.SetFillColor(r.Color())
-    }
-    gc.FillPreserve()
-    if r.Pushed() || r.Selected() {
         gc.SetStrokeWidth(r.PushedBorderWidth())
         gc.SetStrokeColor(r.PushedBorderColor())
-        gc.StrokePreserve()
-    }
-    gc.SetStrokeWidth(r.BorderWidth())
-    gc.SetStrokeColor(r.BorderColor())
-    gc.Stroke()
+        gc.SetFillColor(r.PushedColor())
+		if r.PushedBorderWidth() == 0.0 {
+			gc.Fill()
+		} else {
+    		gc.FillStroke()
+		}
+    } else if r.Selected() {
+        gc.SetStrokeWidth(r.SelectedBorderWidth())
+        gc.SetStrokeColor(r.SelectedBorderColor())
+        gc.SetFillColor(r.SelectedColor())
+		if r.SelectedBorderWidth() == 0.0 {
+			gc.Fill()
+		} else {
+    		gc.FillStroke()
+		}
+    } else {
+    	gc.SetStrokeWidth(r.BorderWidth())
+    	gc.SetStrokeColor(r.BorderColor())
+        gc.SetFillColor(r.Color())
+		if r.BorderWidth() == 0.0 {
+			gc.Fill()
+		} else {
+    		gc.FillStroke()
+		}
+	}
 }
 
 func (r *Rectangle) Contains(pt geom.Point) (bool) {

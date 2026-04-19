@@ -599,7 +599,7 @@ func (b *IconButton) DataChanged(data binding.DataItem) {
 type TabButton struct {
     Button
     label string
-    normalFont, activeFont font.Face
+    fontFace font.Face
     idx int
     data binding.Int
 }
@@ -611,9 +611,8 @@ func NewTabButton(label string, idx int) (*TabButton) {
     b.PushEmbed.Init(b, nil)
     b.PropertyEmbed.InitByName("TabButton")
     b.label     = label
-    b.normalFont, _  = fonts.NewFace(b.Font(), b.FontSize())
-	b.activeFont, _  = fonts.NewFace(b.BoldFont(), b.FontSize())
-    w := fix2flt(font.MeasureString(b.activeFont, b.label)) +
+	b.fontFace, _  = fonts.NewFace(b.BoldFont(), b.FontSize())
+    w := fix2flt(font.MeasureString(b.fontFace, b.label)) +
             (2.0*b.InnerPadding())
     h := b.Height()
     b.SetMinSize(geom.Point{w, h})
@@ -650,15 +649,13 @@ func (b *TabButton) Paint(gc *gg.Context) {
     gc.FillStroke()
 
     mp := b.Bounds().Center()
+    gc.SetFontFace(b.fontFace)
     if b.Pushed() {
-        gc.SetFontFace(b.activeFont)
         gc.SetTextColor(b.PushedTextColor())
     } else {
         if b.checked {
-            gc.SetFontFace(b.activeFont)
             gc.SetTextColor(b.SelectedTextColor())
         } else {
-            gc.SetFontFace(b.normalFont)
             gc.SetTextColor(b.TextColor())
         }
     }

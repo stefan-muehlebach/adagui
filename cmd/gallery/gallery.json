@@ -70,7 +70,6 @@
     		"BorderWidth":          0,
     		"PushedBorderWidth":    0,
     		"SelectedBorderWidth":  3,
-    		"CornerRadius":         6,
     		"BarSize":              3,
     		"CtrlSize":            18,
     		"FieldSize":            0.0,
@@ -146,7 +145,8 @@
         "ParentName": "Default",
 		"Sizes": {
 			"Width":        36,
-			"Height":       36
+			"Height":       36,
+    		"CornerRadius":  6
 		}
 	},
 

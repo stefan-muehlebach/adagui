@@ -75,7 +75,13 @@ func WidgetPanel01() adagui.Node {
 	grpOptions := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
 
 	grpCheck := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
-	chk01 := adagui.NewCheckbox("Senf")
+	chk01 := adagui.NewCheckboxWithCallback("Senf", func (val bool) {
+		if val {
+			log.Printf("MIT Senf")
+		} else {
+			log.Printf("OHNE Senf")
+		}
+	})
 	chk02 := adagui.NewCheckbox("Mayo")
 	chk03 := adagui.NewCheckbox("Ketchup")
 	chk04 := adagui.NewCheckbox("Knoblauchsauce")
@@ -84,23 +90,40 @@ func WidgetPanel01() adagui.Node {
 	grpRadio := adagui.NewGroupPL(grpOptions, adagui.NewVBoxLayout())
 	sizeVar := binding.NewInt()
 	sizeVar.Set(1)
+
+	lsnr := binding.NewDataListener(func (item binding.DataItem) {
+		val := item.(binding.Int)
+		log.Printf("(listener) value of 'sizeVar': %d\n", val.Get())
+	})
+	sizeVar.AddListener(lsnr)
+
 	rad01 := adagui.NewRadioButtonWithData("Klein", 1, sizeVar)
 	rad02 := adagui.NewRadioButtonWithData("Mittel", 2, sizeVar)
 	rad03 := adagui.NewRadioButtonWithData("Gross", 3, sizeVar)
 	grpRadio.Add(rad01, rad02, rad03)
 
 	grpIcon := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
-	iconData := binding.NewInt()
+	iconVar := binding.NewInt()
+	lsnr = binding.NewDataListener(func (item binding.DataItem) {
+		val := item.(binding.Int)
+		log.Printf("(listener) value of 'iconData': %d\n", val.Get())
+	})
+	iconVar.AddListener(lsnr)
+
 	numIcons := 12
 	iconList = make([]*adagui.IconButton, numIcons)
 	for i := range numIcons {
 		fileName := fmt.Sprintf("icons/%d.png", i+1)
-		iconList[i] = adagui.NewIconButtonWithData(fileName, i, iconData)
+		iconList[i] = adagui.NewIconButtonWithData(fileName, i, iconVar)
 		grpIcon.Add(iconList[i])
 	}
 
 	grpSlider := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
 	val := binding.NewFloat()
+	val.AddCallback(func (item binding.DataItem) {
+		val := item.(binding.Float)
+		log.Printf("(callback) slider value: %.1f", val.Get())
+	})
 	str := binding.FloatToStringWithFormat(val, "%.1f")
 	sld := adagui.NewSliderWithData(400, adagui.Horizontal, val)
 	sld.SetRange(0.0, 1.0, 0.2)
@@ -109,6 +132,10 @@ func WidgetPanel01() adagui.Node {
 
 	grpSlider = adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
 	val = binding.NewFloat()
+	val.AddCallback(func (item binding.DataItem) {
+		val := item.(binding.Float)
+		log.Printf("(callback) slider value: %.3f", val.Get())
+	})
 	str = binding.FloatToStringWithFormat(val, "%.3f")
 	sld = adagui.NewSliderWithData(400, adagui.Horizontal, val)
 	sld.SetRange(0.0, 2*math.Pi, math.Pi/36.0)
@@ -126,8 +153,13 @@ func WidgetPanel01() adagui.Node {
 
 	grpBtn := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
 	txtBtn01 := adagui.NewTextButton("Open")
+	txtBtn01.SetOnTap(func (evt touch.Event) {
+		log.Printf("You tapped on the 'Open' button")
+	})
 	txtBtn02 := adagui.NewTextButton("Execute")
-	txtBtn03 := adagui.NewTextButton("Quit")
+	txtBtn02.SetOnTap(func (evt touch.Event) {
+		log.Printf("You tapped on the 'Execute' button")
+	})
 	txtBtn02.SetFont(fonts.LucidaCalligraphyBold)
 	txtBtn02.SetColor(colors.Purple.Dark(0.1))
 	txtBtn02.SetPushedColor(colors.Purple.Bright(0.8))
@@ -135,6 +167,7 @@ func WidgetPanel01() adagui.Node {
 	txtBtn02.SetPushedTextColor(colors.Gold.Dark(0.8))
 	txtBtn02.SetPushedBorderWidth(5.0)
 	txtBtn02.SetPushedBorderColor(colors.Gold)
+	txtBtn03 := adagui.NewTextButton("Quit")
 	txtBtn03.SetOnTap(func (evt touch.Event) {
 		screen.Quit()
 	})
@@ -186,6 +219,12 @@ func WidgetPanel02() adagui.Node {
 
 	grpIcon := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
 	iconData := binding.NewInt()
+	iconData.Set(0)
+	iconData.AddCallback(func (data binding.DataItem) {
+		val := data.(binding.Int)
+		log.Printf("value of 'iconData': %d\n", val.Get())
+	})
+
 	numIcons := 12
 	iconList = make([]*adagui.IconButton, numIcons)
 	for i := range numIcons {
@@ -288,21 +327,32 @@ func ScrolledFontPanel() adagui.Node {
 // ScrolledColorPanel
 type ColorInfo struct {
 	name  string
+	group colors.ColorGroup
 	color colors.RGBA
 }
 
 func ScrolledColorPanel() adagui.Node {
-	var size geom.Point = geom.Point{float64(adatft.Width),
+	size := geom.Point{float64(adatft.Width),
 		float64(adatft.Height - 30)}
-
 	s := props.PropsMap["Scrollbar"].Size(props.Width)
 	w, h := size.X-s-2, size.Y
 
+	colorList := make([]ColorInfo, 0)
+	for group := range colors.NumColorGroups {
+		for _, name := range colors.Groups[group] {
+			colorList = append(colorList, ColorInfo{name, group, colors.Map[name]})
+		}
+	}
+
+	numColumns := 5
+	numRows := (len(colorList) / numColumns) + 1
+	tileWidth := w / float64(numColumns)
+	tileHeight := 30.0
+	borderWidth := 4.0
+
 	panel := adagui.NewScrollPanel(0, 0)
 	panel.SetSize(size)
-	panel.SetVirtualSize(geom.Point{w, 870})
-	panel.SetColor(colors.Transparent)
-	panel.SetBorderColor(colors.Transparent)
+	panel.SetVirtualSize(geom.Point{w, float64(numRows) * tileHeight})
 
 	scrVert := adagui.NewScrollbarWithCallback(h, adagui.Vertical,
 		func(f float64) {
@@ -313,42 +363,32 @@ func ScrolledColorPanel() adagui.Node {
 	visRange := panel.VisibleRange()
 	scrVert.SetVisiRange(visRange.Y)
 
-	colorList := make([]ColorInfo, 0)
-	for _, nameList := range colors.Groups {
-		for _, name := range nameList {
-			colorList = append(colorList, ColorInfo{name, colors.Map[name]})
-		}
-	}
-
-	numColumns := 5
-	numRows := 29
-	tileWidth := w / float64(numColumns)
-	tileHeight := 870 / float64(numRows)
-
 	for col := 0; col < numColumns; col++ {
 		for row := 0; row < numRows; row++ {
 			idx := col*numRows + row
 			if idx >= len(colorList) {
 				continue
 			}
-			x0, y0 := float64(col)*tileWidth, float64(row)*tileHeight
-			colorInfo := colorList[idx]
-			tile := adagui.NewRectangle(tileWidth-4.0, tileHeight-4.0)
-			tile.SetPos(geom.Point{x0, y0})
+			rect := geom.NewRectangleWH(float64(col)*tileWidth, float64(row)*tileHeight,
+				tileWidth, tileHeight).Inset(borderWidth/2.0, borderWidth/2.0)
+			tile := adagui.NewRectangle(rect.Size().AsCoord())
+			tile.SetPos(rect.Min)
 
+			colorInfo := colorList[idx]
 			tile.SetColor(colorInfo.color)
 			tile.SetPushedColor(colorInfo.color.Bright(0.5))
 			tile.SetSelectedColor(colorInfo.color)
 			tile.SetBorderColor(colorInfo.color)
-			tile.SetPushedBorderColor(colorInfo.color.Bright(0.5))
-			tile.SetSelectedBorderColor(colorInfo.color)
-
+			tile.SetPushedBorderColor(colors.White)
+			tile.SetSelectedBorderColor(colorInfo.color.Bright(0.5))
 			tile.SetBorderWidth(0.0)
-			tile.SetPushedBorderWidth(0.0)
-			tile.SetSelectedBorderWidth(0.0)
+			tile.SetPushedBorderWidth(borderWidth+2.0)
+			tile.SetSelectedBorderWidth(borderWidth)
 
+			tile.SetOnTap(func(evt touch.Event) {
+				log.Printf("'%s', group '%s'", colorInfo.name, colorInfo.group)
+			})
 			tile.SetOnDoubleTap(func(evt touch.Event) {
-				log.Printf("remove tile")
 				tile.Remove()
 				panel.Mark(adagui.MarkNeedsPaint)
 			})
@@ -626,7 +666,7 @@ func widgetFlex() adagui.Node {
 	menu.Layout = adagui.NewHBoxLayout()
 	main.Add(menu, cont)
 
-	menu.AddTab("Widgets 1", WidgetPanel01())
+	menu.AddTab("Widgets", WidgetPanel01())
 	menu.AddTab("Widgets 2", WidgetPanel02())
 	menu.AddTab("Fonts", ScrolledFontPanel())
 	menu.AddTab("Colors", ScrolledColorPanel())

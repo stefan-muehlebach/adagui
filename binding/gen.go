@@ -325,8 +325,7 @@ import (
 	item := template.Must(template.New("item").Parse(itemBindTemplate))
 	fromString := template.Must(template.New("fromString").Parse(fromStringTemplate))
 	toString := template.Must(template.New("toString").Parse(toStringTemplate))
-	//preference := template.Must(template.New("preference").Parse(prefTemplate))
-	//list := template.Must(template.New("list").Parse(listBindTemplate))
+
 	binds := []bindValues{
 		bindValues{Name: "Bool", Type: "bool", Default: "false", Format: "%t"},
 		bindValues{Name: "Bytes", Type: "[]byte", Default: "nil", Comparator: "bytes.Equal"},
@@ -334,10 +333,6 @@ import (
 		bindValues{Name: "Int", Type: "int", Default: "0", Format: "%d"},
 		bindValues{Name: "Rune", Type: "rune", Default: "rune(0)"},
 		bindValues{Name: "String", Type: "string", Default: "\"\""},
-		//bindValues{Name: "Untyped", Type: "interface{}", Default: "nil"},
-		//bindValues{Name: "Untyped", Type: "interface{}", Default: "nil", Since: "2.1"},
-		//bindValues{Name: "URI", Type: "fyne.URI", Default: "fyne.URI(nil)", Since: "2.1",
-		//FromString: "uriFromString", ToString: "uriToString", Comparator: "compareURI"},
 	}
 	for _, b := range binds {
 		writeFile(itemFile, item, b)
