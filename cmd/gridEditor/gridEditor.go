@@ -267,8 +267,7 @@ func NewLedGrid(size image.Point, host string, port uint) *LedGrid {
 	g.SetMinSize(geom.Point{g.fieldSize, g.fieldSize})
 	g.DrawColor = colors.RGBA{0x00, 0x00, 0x00, 0xFF}
 	g.quitQ = make(chan bool)
-	g.client = ledgrid.NewNetGridClient("raspi-3", "tcp", ledgrid.DefDataPort,
-		ledgrid.DefRPCPort)
+	g.client = ledgrid.NewNetGridClient(host, port, ledgrid.DefRPCPort)
 	modConf := g.client.ModuleConfig()
 	g.grid = ledgrid.NewLedGrid(g.client, modConf)
 	//	g.grid = ledgrid.NewLedGridBySize(host, port, size)

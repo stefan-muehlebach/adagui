@@ -46,7 +46,7 @@ func (a *Cube3DAnim) Init(gc *gg.Context) {
 	a.beta = math.Pi / 18.0
 	a.dBeta = math.Pi / 126.0
 
-	a.mBase = Identity().Multiply(Scale(NewVector(1.0, -1.0, 1.0))).Multiply(Translate(NewVector(240.0, -160.0, 0.0)))
+	a.mBase = Identity().Multiply(Scale(NewVector(1.0, -1.0, 1.0))).Multiply(Translate(NewVector(float64(adatft.Width/2), -float64(adatft.Height/2), 0.0)))
 }
 
 func (a *Cube3DAnim) Animate(dt time.Duration) {}
@@ -115,7 +115,7 @@ func Cube3DAnimation() {
 	beta = math.Pi / 18.0
 	dBeta = math.Pi / 126.0
 
-	mBase = Identity().Multiply(Scale(NewVector(1.0, -1.0, 1.0))).Multiply(Translate(NewVector(240.0, -160.0, 0.0)))
+	mBase = Identity().Multiply(Scale(NewVector(1.0, -1.0, 1.0))).Multiply(Translate(NewVector(float64(adatft.Width/2), -float64(adatft.Height/2), 0.0)))
 
 	ticker := time.NewTicker(30 * time.Millisecond)
 	for range ticker.C {
@@ -432,6 +432,7 @@ var (
 	near, far   = -5.0, 30.0
 )
 
+/*
 func ProjectionMatrix(xRot, yRot, dist float64) Matrix {
 	scale := NewVector(320.0/(right-left), 240.0/(bottom-top),
 		120.0/(far-near))
@@ -446,3 +447,4 @@ func ProjectionMatrix(xRot, yRot, dist float64) Matrix {
 		0, 0, (near + far) / near, -far})
 	return ndcMat.Multiply(camMat.Inv())
 }
+*/

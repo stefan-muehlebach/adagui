@@ -354,92 +354,25 @@ var (
 )
 
 func init() {
-	// initPropsMapFromFile("Props.json")
 	PropsMap = NewPropsMapFromEmbedFile("Props.json")
 }
-
-/*
-func initPropsMapFromFile(fileName string) {
-	data, err := propFiles.ReadFile(filepath.Join(fileName))
-	if err != nil {
-		log.Fatal(err)
-	}
-	initPropsMapFromData(data)
-}
-*/
 
 type namedColor struct {
 	Name                string
 	Dark, Bright, Alpha float64
 }
 
-/*
-func initPropsMapFromData(data []byte) {
-	var propList []struct {
-		Name       string
-		ParentName string
-		Colors     map[ColorPropertyName]json.RawMessage
-		//		Colors     map[ColorPropertyName]colors.RGBAF
-		Fonts map[FontPropertyName]*fonts.Font
-		Sizes map[SizePropertyName]float64
-	}
-	var parent *Properties
-	var ok bool
-
-	PropsMap = make(map[string]*Properties)
-	err := json.Unmarshal(data, &propList)
-	if err != nil {
-		log.Fatalf("[1]: failed unmarshaling data: %v", err)
-	}
-	for _, val := range propList {
-		if val.ParentName == "" {
-			parent = nil
-		} else {
-			if parent, ok = PropsMap[val.ParentName]; !ok {
-				log.Fatalf("on processing '%s', parent property '%s' not found", val.Name, val.ParentName)
-			}
-		}
-		p := NewProperties(parent)
-		for colorName, jsonData := range val.Colors {
-			namedCol := namedColor{Alpha: 1.0}
-			rgbaCol := colors.RGBA{}
-
-			err = json.Unmarshal(jsonData, &namedCol)
-			if err != nil {
-				switch err.(type) {
-				case *json.UnmarshalTypeError:
-				default:
-					log.Printf("[2]: failed unmarshaling data: %v", err)
-				}
-			}
-			if namedCol.Name != "" {
-				if col, ok := colors.Map[namedCol.Name]; ok {
-					p.ColorMap[colorName] = col.Dark(namedCol.Dark).Bright(namedCol.Bright).Alpha(namedCol.Alpha)
-				} else {
-					log.Fatalf("color not found: %s", namedCol.Name)
-				}
-				continue
-			}
-			err = json.Unmarshal(jsonData, &rgbaCol)
-			if err != nil {
-				log.Fatalf("[3]: failed unmarshaling data for color '%s': %v, data: %s", colorName, err, jsonData)
-			}
-			p.ColorMap[colorName] = rgbaCol
-		}
-		for key, val := range val.Fonts {
-			p.FontMap[key] = val
-		}
-		for key, val := range val.Sizes {
-			p.SizeMap[key] = val
-		}
-		PropsMap[val.Name] = p
-	}
-}
-*/
-
 // Das sind die Hauptmethoden, um Farben, Font oder Groessen aus den
 // Properties zu lesen. Kann ein Property nicht gefunden werden, dann
 // wird (falls vorhanden) das Parent-Property angefragt.
+func (p *Properties) Parent() *Properties {
+	return p.parent
+}
+
+func (p *Properties) SetParent(parent *Properties) {
+	p.parent = parent
+}
+
 func (p *Properties) Color(name ColorPropertyName) colors.RGBA {
 	var col colors.RGBA
 	var found bool

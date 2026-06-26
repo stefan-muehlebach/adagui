@@ -173,9 +173,7 @@ var (
 	rotation                            adatft.RotationType = adatft.Rotate270
 	runFlag, quitFlag                   bool
 
-	prevRect = geom.NewRectangleWH(0, 4*320/5, 480/3, 320/5)
-	quitRect = geom.NewRectangleWH(480/3, 4*320/5, 480/3, 320/5)
-	nextRect = geom.NewRectangleWH(2*480/3, 4*320/5, 480/3, 320/5)
+	prevRect, quitRect, nextRect geom.Rectangle
 )
 
 func main() {
@@ -200,6 +198,14 @@ func main() {
 	log.Printf("> NewContext()\n")
 	gc = gg.NewContext(adatft.Width, adatft.Height)
 	log.Printf(" > done\n")
+
+	w := float64(adatft.Width)/3.0
+	h := 64.0
+	ypos := float64(adatft.Height)-h
+
+	prevRect = geom.NewRectangleWH(0.0, ypos, w, h)
+	quitRect = geom.NewRectangleWH(w, ypos, w, h)
+	nextRect = geom.NewRectangleWH(2*w, ypos, w, h)
 
 	go SignalHandler()
 	go TouchHandler()

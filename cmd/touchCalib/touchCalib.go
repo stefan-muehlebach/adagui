@@ -19,7 +19,7 @@ const (
 	outerRadius     = 18.0
 	innerRadius     = 9.0
 	margin          = outerSep + outerRadius
-	defNumSamples   = 128
+	defNumSamples   = 16
 	defDispRotation = adatft.Rotate000
 )
 
@@ -120,7 +120,7 @@ func NewText(txt string, pos geom.Point, width float64, face font.Face) *Text {
 	t.width = width
 	t.face = face
 	t.align = gg.AlignLeft
-	t.color = colors.WhiteSmoke
+	t.color = colors.White
 	t.vis = true
 	return t
 }
@@ -278,7 +278,7 @@ var (
 	textIter *Iterator[string] = NewIterator(textList, false)
 
 	backColorList = []colors.RGBA{
-		colors.DarkMagenta.Alpha(0.3),
+		colors.Indigo.Alpha(0.3),
 		colors.DarkBlue.Alpha(0.3),
 		colors.DarkCyan.Alpha(0.3),
 		colors.DarkGreen.Alpha(0.3),
@@ -389,10 +389,10 @@ func main() {
 		graphObjList = append(graphObjList, target)
 	}
 
-	face, _ := fonts.NewFace(fonts.LucidaBright, 14.0)
+	face, _ := fonts.NewFace(fonts.LucidaSans, 14.0)
 	infoText := NewText("", geom.Point{margin, 3.0 * margin},
 		width-2*margin, face)
-	face, _ = fonts.NewFace(fonts.LucidaBrightItalic, 14.0)
+	face, _ = fonts.NewFace(fonts.LucidaSansItalic, 14.0)
 	statusText := NewText("Tap für weiter...",
 		geom.Point{margin, height - 4*margin},
 		width-2*margin, face)
@@ -418,7 +418,7 @@ func main() {
 	if screenMask&ReadyScr != 0 {
 		infoText.pos = infoText.pos.AddXY(0, 100)
 		infoText.txt = "Bereit?"
-		infoText.face, _ = fonts.NewFace(fonts.GoBold, 48.0)
+		infoText.face, _ = fonts.NewFace(fonts.LucidaSansDemiboldRoman, 48.0)
 		infoText.align = gg.AlignCenter
 		backgroundColor = colorIter.Next()
 		UpdateDisplay()
@@ -460,7 +460,7 @@ func main() {
 
 	if screenMask&FinalInfoScr != 0 {
 		infoText.txt = textList[3]
-		infoText.face, _ = fonts.NewFace(fonts.GoRegular, 18.0)
+		infoText.face, _ = fonts.NewFace(fonts.LucidaSans, 18.0)
 		infoText.align = gg.AlignLeft
 		statusText.vis = true
 		backgroundColor = colorIter.Next()

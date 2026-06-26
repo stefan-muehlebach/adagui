@@ -1,7 +1,9 @@
-{
+[
+	{
+	"Name": "IconButton",
     "Colors": {
-        "Color"              : "0xFFF9F9",
-        "PushedColor"        : "0xFFF9F9",
+        "Color"              : "0xFFFFFF",
+        "PushedColor"        : "0xFFFFFF",
         "SelectedColor"      : "0x72C2D6",
         "BorderColor"        : "0x72C2D6",
         "PushedBorderColor"  : "0x72C2D6",
@@ -14,5 +16,6 @@
         "CornerRadius":         8.0,
         "InnerPadding":         5.0
 	}
-}
+	}
+]
 

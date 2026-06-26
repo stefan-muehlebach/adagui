@@ -232,7 +232,7 @@ func NewCircle(r float64) *adagui.Circle {
 	var dp geom.Point
 
 	c := adagui.NewCircle(r)
-	col := colors.RandGroupColor(colors.Blues)
+	col := colors.RandColorByGroup(colors.Blues)
 	c.SetColor(col)
 	c.SetPushedColor(col.Alpha(0.5))
 
@@ -277,7 +277,7 @@ func NewEllipse(rx, ry float64) *adagui.Ellipse {
 	var dp geom.Point
 
 	e := adagui.NewEllipse(rx, ry)
-	col := colors.RandGroupColor(colors.Greens)
+	col := colors.RandColorByGroup(colors.Greens)
 	e.SetColor(col)
 	e.SetPushedColor(col.Alpha(0.5))
 
@@ -323,7 +323,7 @@ func NewRectangle(w, h float64) *adagui.Rectangle {
 	var dp geom.Point
 
 	r := adagui.NewRectangle(w, h)
-	col := colors.RandGroupColor(colors.Reds)
+	col := colors.RandColorByGroup(colors.Reds)
 	r.SetColor(col)
 	r.SetPushedColor(col.Alpha(0.5))
 

@@ -18,22 +18,25 @@ import (
 type Tool int
 
 const (
-	HandTool Tool = iota
-	ErasureTool
-	PointTool
+	PointTool Tool = iota
 	SegmentTool
 	RayTool
 	LineTool
 	CircleTool
-	PolygonTool
 	MidpointTool
 	PerpendBisecTool
-	AngleBisectTool
-	PerpendTool
-	ParallelTool
-	MoveTool
+	numTools
 )
 
+type IconSize int
+
+const (
+	SmallSize IconSize = iota
+	ToolbarSize
+	numIconSizes
+)
+
+/*
 type ToolData struct {
 	Idx      Tool
 	IconFile string
@@ -57,6 +60,7 @@ var (
 		{MoveTool, "12.png"},
 	}
 )
+*/
 
 var (
 	scr        *adagui.Screen
@@ -225,11 +229,9 @@ func main() {
 	//var err error
 	var icon *adagui.IconButton
 
-	prop := props.NewPropsMapFromUserFile("IconButtonProps.json")
-	prop.parent
-props.PropsMap["Button"],
-		"IconButtonProps.json")
-	props.PropsMap["IconButton"] = prop
+	newProps := props.NewPropsMapFromUserFile("IconButtonProps.json")
+	newProps["IconButton"].SetParent(props.PropsMap["Button"])
+	props.PropsMap["IconButton"] = newProps["IconButton"]
 
 	flag.Parse()
 
@@ -250,28 +252,18 @@ props.PropsMap["Button"],
 	canvas.SetColor(colors.Snow)
 	canvas.SetBorderWidth(0.0)
 
-	iconBar01 := adagui.NewGroup()
-	iconBar01.Layout = adagui.NewHBoxLayout()
-	iconBar02 := adagui.NewGroup()
-	iconBar02.Layout = adagui.NewHBoxLayout()
+	iconBar := adagui.NewGroup()
+	iconBar.Layout = adagui.NewHBoxLayout()
 
 	toolIdx := binding.NewInt()
-	handIcon := adagui.NewIconButtonWithData("24x24/90.png", 0, toolIdx)
-	erasureIcon := adagui.NewIconButtonWithData("24x24/91.png", 1, toolIdx)
-	iconBar01.Add(handIcon, adagui.NewSpacer())
-	iconBar02.Add(erasureIcon, adagui.NewSpacer())
-
-	for n := range 18 {
-		fileName := fmt.Sprintf("24x24/%02d.png", n+1)
-		icon = adagui.NewIconButtonWithData(fileName, 2+n, toolIdx)
-		if n < 9 {
-			iconBar01.Add(icon)
-		} else {
-			iconBar02.Add(icon)
-		}
+	for toolId := range numTools {
+		sizeId := ToolbarSize
+		fileName := fmt.Sprintf("icons/Tool_%d_%d.png", sizeId, toolId)
+		icon = adagui.NewIconButtonWithData(fileName, int(toolId), toolIdx)
+		iconBar.Add(icon)
 	}
 
-	main.Add(canvas, iconBar01, iconBar02)
+	main.Add(canvas, iconBar)
 
 	//fmt.Printf("size icon bar: %v\n", iconBar.Size())
 
