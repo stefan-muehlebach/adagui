@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
@@ -23,8 +24,7 @@ func check(err error) {
 //----------------------------------------------------------------------------
 
 const (
-	rotation = 90.0
-	alpha    = rotation / 180.0 * math.Pi
+//rotation = 90.0
 )
 
 var (
@@ -42,15 +42,27 @@ var (
 	scale, offsetX, offsetY float64
 	imgSize, pngSize        image.Point
 	dstRect                 image.Rectangle
+	rotation                adatft.RotationType = adatft.Rotate270
+	alpha                   float64
+	fadeIn = time.Duration(3 * time.Second)
+	hold   = time.Duration(3 * time.Second)
+	fadeOut = time.Duration(3 * time.Second)
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Printf("usage: %s <file> [...]\n", os.Args[0])
+	flag.Var(&rotation, "rotation", "rotation of the main display")
+	flag.DurationVar(&fadeIn, "fadein", fadeIn, "Duration for fade in")
+	flag.DurationVar(&hold, "hold", hold, "Duration for hold")
+	flag.DurationVar(&fadeOut, "fadeout", fadeOut, "Duration for fade out")
+	flag.Parse()
+
+	if len(flag.Args()) <= 0 {
+		fmt.Printf("usage: %s [-rotation <rot>] <file> [...]\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	disp = adatft.OpenDisplay(adatft.Rotate270)
+	alpha = float64(rotation) / 180.0 * math.Pi
+	disp = adatft.OpenDisplay(rotation)
 	pngImg = image.NewRGBA(image.Rect(0, 0, adatft.Width, adatft.Height))
 	tftImg = image.NewRGBA(image.Rect(0, 0, adatft.Width, adatft.Height))
 	backColor = image.NewUniform(color.Black)
@@ -60,7 +72,7 @@ func main() {
 		alphaMask, image.Point{},
 	}
 
-	for _, imgFile = range os.Args[1:] {
+	for _, imgFile = range flag.Args() {
 		png, err = gg.LoadPNG(imgFile)
 		check(err)
 		imgSize = pngImg.Bounds().Size()
@@ -76,11 +88,16 @@ func main() {
 			scale, 0.0, offsetX,
 			0.0, scale, offsetY,
 		}
-        draw.Copy(pngImg, image.Point{}, backColor, pngImg.Bounds(),
-            draw.Src, nil)
+		draw.Copy(pngImg, image.Point{}, backColor, pngImg.Bounds(),
+			draw.Src, nil)
 		draw.BiLinear.Transform(pngImg, t, png, png.Bounds(), draw.Src, nil)
 
-		for alpha := 0; alpha < 256; alpha += 4 {
+		fadeInSteps := int(fadeIn / (70 * time.Millisecond))
+		fadeOutSteps := int(fadeOut / (70 * time.Millisecond))
+		dAlpha := 256 / fadeInSteps
+
+		//t0 := time.Now()
+		for alpha := 0; alpha < 256; alpha += dAlpha {
 			alphaMask.C = color.Alpha{uint8(alpha)}
 			draw.Copy(tftImg, image.Point{}, backColor, tftImg.Bounds(),
 				draw.Src, nil)
@@ -89,8 +106,18 @@ func main() {
 			disp.Draw(tftImg)
 			time.Sleep(20 * time.Millisecond)
 		}
-		time.Sleep(5 * time.Second)
-		for alpha := 255; alpha >= 0; alpha -= 4 {
+		//d0 := time.Since(t0)
+		//log.Printf("fadeIn in %v, using %d steps\n", d0, fadeInSteps)
+
+		//t0 = time.Now()
+		time.Sleep(hold)
+		//d0 = time.Since(t0)
+		//log.Printf("holding for %v\n", d0)
+
+		dAlpha = 256 / fadeOutSteps
+
+		//t0 = time.Now()
+		for alpha := 255; alpha >= 0; alpha -= dAlpha {
 			alphaMask.C = color.Alpha{uint8(alpha)}
 			draw.Copy(tftImg, image.Point{}, backColor, tftImg.Bounds(),
 				draw.Src, nil)
@@ -99,6 +126,8 @@ func main() {
 			disp.Draw(tftImg)
 			time.Sleep(20 * time.Millisecond)
 		}
+		//d0 = time.Since(t0)
+		//log.Printf("fadeOut in %v, using %d steps\n", d0, fadeOutSteps)
 	}
 	disp.Close()
 }

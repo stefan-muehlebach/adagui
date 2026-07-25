@@ -170,7 +170,7 @@ var (
 	numEdges                            = 3
 	blurFactor                          float64
 	msg                                 string
-	rotation                            adatft.RotationType = adatft.Rotate270
+	rotation                            adatft.RotationType = adatft.Rotate000
 	runFlag, quitFlag                   bool
 
 	prevRect, quitRect, nextRect geom.Rectangle
@@ -191,9 +191,9 @@ func main() {
 	disp = adatft.OpenDisplay(rotation)
 	log.Printf(" > done\n")
 
-	log.Printf("> OpenTouch()\n")
-	touch = adatft.OpenTouch(rotation)
-	log.Printf(" > done\n")
+	//log.Printf("> OpenTouch()\n")
+	//touch = adatft.OpenTouch(rotation)
+	//log.Printf(" > done\n")
 
 	log.Printf("> NewContext()\n")
 	gc = gg.NewContext(adatft.Width, adatft.Height)
@@ -208,7 +208,7 @@ func main() {
 	nextRect = geom.NewRectangleWH(2*w, ypos, w, h)
 
 	go SignalHandler()
-	go TouchHandler()
+	//go TouchHandler()
 
 	quitFlag = false
 	for !quitFlag {
