@@ -8,6 +8,7 @@ import (
 
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
+	"github.com/stefan-muehlebach/gg/geom"
 )
 
 // PolygonAnimation --
@@ -18,6 +19,7 @@ import (
 
 type PolygonAnim struct {
 	gc       *gg.Context
+	rect geom.Rectangle
 	polyList []*Polygon
 }
 
@@ -25,15 +27,16 @@ func (a *PolygonAnim) RefreshTime() time.Duration {
 	return 30 * time.Millisecond
 }
 
-func (a *PolygonAnim) Init(gc *gg.Context) {
+func (a *PolygonAnim) Init(gc *gg.Context, rect geom.Rectangle) {
 	a.gc = gc
+	a.rect = rect
 
 	a.polyList = make([]*Polygon, numObjs)
 	for i := 0; i < numObjs; i++ {
-		a.polyList[i] = NewPolygon(gc, numEdges)
+		a.polyList[i] = NewPolygon(gc, rect, numEdges)
 	}
 
-	a.gc.SetStrokeWidth(3)
+	a.gc.SetLineWidth(3)
 	a.gc.SetLineCapRound()
 	a.gc.SetLineJoinRound()
 	a.gc.SetFillColor(colors.Black)
@@ -47,9 +50,11 @@ func (a *PolygonAnim) Animate(dt time.Duration) {
 }
 
 func (a *PolygonAnim) Paint() {
-	a.gc.SetFillColor(colors.RGBAF{0, 0, 0, blurFactor})
-	a.gc.DrawRectangle(a.gc.Bounds().AsCoord())
-	a.gc.Fill()
+	a.gc.SetFillColor(colors.Black)
+	a.gc.Clear()
+	//a.gc.SetFillColor(colors.RGBAF{0, 0, 0, blurFactor})
+	//a.gc.DrawRectangle(a.gc.Bounds().AsCoord())
+	//a.gc.Fill()
 
 	for _, p := range a.polyList {
 		p.Paint()
@@ -59,7 +64,7 @@ func (a *PolygonAnim) Paint() {
 
 func (a *PolygonAnim) Clean() {}
 
-func (a *PolygonAnim) Handle(evt adatft.PenEvent) {}
+func (a *PolygonAnim) Handle(evt adatft.PointerEvent) {}
 
 type Polygon struct {
 	gc *gg.Context
@@ -68,10 +73,11 @@ type Polygon struct {
 	strokeColor, fillColor colors.RGBA
 }
 
-func NewPolygon(gc *gg.Context, edges int) *Polygon {
+func NewPolygon(gc *gg.Context, rect geom.Rectangle, edges int) *Polygon {
 	p := &Polygon{}
 	p.gc = gc
-	p.xmin, p.ymin, p.xmax, p.ymax = gc.Bounds().AsCoord()
+	p.xmin, p.ymin = rect.Min.X, rect.Min.Y
+    p.xmax, p.ymax = rect.Max.X, rect.Max.Y
 	p.pts = make([]*Point, edges)
 	for i := 0; i < edges; i++ {
 		pt := &Point{}
@@ -98,7 +104,7 @@ func (p *Polygon) Paint() {
 		p.gc.LineTo(pt.x, pt.y)
 	}
 	p.gc.ClosePath()
-	p.gc.SetStrokeStyle(gg.NewSolidPattern(p.strokeColor))
+	p.gc.SetLineStyle(gg.NewSolidPattern(p.strokeColor))
 	p.gc.SetFillStyle(gg.NewSolidPattern(p.fillColor))
 	p.gc.FillStroke()
 }

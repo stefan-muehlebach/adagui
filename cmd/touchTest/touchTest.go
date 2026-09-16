@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"image"
 	"image/draw"
 	"log"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stefan-muehlebach/adatft"
+	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/fonts"
@@ -72,7 +72,7 @@ var (
 		geom.NewRectangleWH(-btnWidth, -btnHeight, btnWidth, btnHeight),
 	}
 
-	touch        *adatft.Touch
+	pointer        *adagui.Pointer
 	disp         *adatft.Display
 	debug, nogui bool
 	W, H         float64
@@ -89,12 +89,13 @@ var (
 	}
 )
 
-func printEvent(event adatft.PenEvent) {
+func printEvent(event adatft.PointerEvent) {
+
 	if !debug {
 		return
 	}
-	fmt.Printf("[%d]: %10s: %v => %v\n",
-		event.Time.UnixMilli(), event.Type, event.TouchRawPos, event.TouchPos)
+	log.Printf("[%d]: %10s: %v",
+		event.Time.UnixMilli(), event.Type, event.Pos)
 }
 
 func initGrid(gc *gg.Context, actCol, actRow int) {
@@ -142,9 +143,9 @@ func initTrace(gc *gg.Context) {
 	//gc.SetFillColor(pointColor)
 }
 
-func updateTrace(gc *gg.Context, x, y float64) {
+func updateTrace(gc *gg.Context, pt geom.Point) {
 	gc.SetFillColor(pointColors[pointIdx])
-	gc.DrawPoint(x, y, pointRadiae[pointIdx])
+	gc.DrawPoint(pt.X, pt.Y, pointRadiae[pointIdx])
 	gc.Fill()
 }
 
@@ -155,10 +156,10 @@ func initCross(gc *gg.Context) {
 	gc.SetStrokeColor(crossColor)
 }
 
-func drawCross(gc *gg.Context, x, y float64) {
+func drawCross(gc *gg.Context, pt geom.Point) {
 	gc.Clear()
-	gc.DrawLine(x-crossSize/2, y, x+crossSize/2, y)
-	gc.DrawLine(x, y-crossSize/2, x, y+crossSize/2)
+	gc.DrawLine(pt.X-crossSize/2, pt.Y, pt.X+crossSize/2, pt.Y)
+	gc.DrawLine(pt.X, pt.Y-crossSize/2, pt.X, pt.Y+crossSize/2)
 	gc.Stroke()
 }
 
@@ -205,34 +206,45 @@ func main() {
 
 	flag.BoolVar(&debug, "debug", false, "write events to stdout")
 	flag.BoolVar(&nogui, "nogui", false, "dont paint on the screen")
-	flag.Var(&rotation, "rotation", "display rotation")
+	flag.Var(&rotation, "rotate", "display rotation")
 	flag.Parse()
 
 	//adatft.Init()
 	log.Printf("> OpenDisplay()\n")
 	disp = adatft.OpenDisplay(rotation)
-	log.Printf("> OpenTouch()\n")
-	touch = adatft.OpenTouch(rotation)
+	//m := disp.Matrix()
+
+	log.Printf("> OpenPointer()\n")
+	pointer = adagui.OpenPointer()
+	r := geom.Rectangle{Max: disp.DrawBounds().Size()}
+	pointer.SetPosRange(r)
+	pointer.SetWheelRange(0, 0, 50)
+	pointer.StartEvents()
 
 	W, H = float64(adatft.Width), float64(adatft.Height)
+	//sz := disp.DispBounds().Size().Int()
 
 	log.Printf("> NewContext() for Grid\n")
-	grid = gg.NewContext(adatft.Width, adatft.Height)
+	grid = disp.Canvas()
+	//grid.SetMatrix(m)
 	initGrid(grid, 0, 0)
 
 	log.Printf("> NewContext() for Trace\n")
-	trace = gg.NewContext(adatft.Width, adatft.Height)
+	trace = disp.Canvas()
+	//trace.SetMatrix(m)
 	initTrace(trace)
 
 	log.Printf("> NewContext() for Cross\n")
-	cross = gg.NewContext(adatft.Width, adatft.Height)
+	cross = disp.Canvas()
+	//cross.SetMatrix(m)
 	initCross(cross)
 
 	log.Printf("> NewContext() for Controls\n")
-	ctrls = gg.NewContext(adatft.Width, adatft.Height)
+	ctrls = disp.Canvas()
+	//ctrls.SetMatrix(m)
 	initCtrls(ctrls)
 
-	out = image.NewRGBA(disp.Bounds())
+	out = image.NewRGBA(disp.DispBounds().Int())
 
 	done := make(chan bool)
 	ticker := time.NewTicker(30 * time.Millisecond)
@@ -242,7 +254,9 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
+				adatft.PaintWatch.Start()
 				composeScreen(out, grid, trace, cross, ctrls)
+				adatft.PaintWatch.Stop()
 				disp.Draw(out)
 			case <-done:
 				return
@@ -251,33 +265,31 @@ func main() {
 	}()
 
 EVENT_LOOP:
-	for event := range touch.EventQ {
+	for event := range pointer.EventQ {
 		printEvent(event)
 
-		pt := geom.Point{event.X, event.Y}
-
-		switch {
-		case pt.In(btnRects[0]):
-			break EVENT_LOOP
-		case pt.In(btnRects[1]):
-			initTrace(trace)
-			continue
-		case pt.In(btnRects[2]):
-			pointIdx = 1
-			continue
-		case pt.In(btnRects[3]):
-			pointIdx = 2
-			continue
-		}
-
-		if nogui {
-			continue
-		}
+		pt := event.Pos
 
 		switch event.Type {
-		case adatft.PenPress, adatft.PenDrag, adatft.PenRelease:
-			updateTrace(trace, event.X, event.Y)
-			drawCross(cross, event.X, event.Y)
+		case adatft.PointerMove:
+			drawCross(cross, event.Pos)
+		case adatft.PointerPress, adatft.PointerDrag:
+			updateTrace(trace, event.Pos)
+			drawCross(cross, event.Pos)
+		case adatft.PointerRelease:
+			switch {
+			case pt.In(btnRects[0]):
+				break EVENT_LOOP
+			case pt.In(btnRects[1]):
+				initTrace(trace)
+				continue
+			case pt.In(btnRects[2]):
+				pointIdx = 1
+				continue
+			case pt.In(btnRects[3]):
+				pointIdx = 2
+				continue
+			}
 		}
 	}
 
@@ -295,7 +307,7 @@ EVENT_LOOP:
 	disp.Draw(out)
 
 	disp.Close()
-	touch.Close()
+	pointer.Close()
 
 	adatft.PrintStat()
 }

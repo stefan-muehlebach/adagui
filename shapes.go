@@ -3,7 +3,7 @@ package adagui
 import (
 	//"fmt"
     //"math"
-    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/adagui/point"
     "github.com/stefan-muehlebach/gg"
     "github.com/stefan-muehlebach/gg/geom"
 )
@@ -27,11 +27,11 @@ func (s *Shape) Init() {
     s.SelectEmbed.Init(s, nil)
 }
 
-func (s *Shape) OnInputEvent(evt touch.Event) {
+func (s *Shape) OnInputEvent(evt point.Event) {
     Debugf(Events, "evt: %v", evt)
     s.PushEmbed.OnInputEvent(evt)
     s.SelectEmbed.OnInputEvent(evt)
-    s.CallTouchFunc(evt)
+    s.CallPointFunc(evt)
 }
 
 // Punkte
@@ -59,12 +59,12 @@ func (p *Point) Paint(gc *gg.Context) {
     }
     gc.FillPreserve()
     if p.Pushed() || p.Selected() {
-        gc.SetStrokeWidth(p.PushedBorderWidth())
-        gc.SetStrokeColor(p.PushedBorderColor())
+        gc.SetLineWidth(p.PushedBorderWidth())
+        gc.SetLineColor(p.PushedBorderColor())
         gc.StrokePreserve()
     }
-    gc.SetStrokeWidth(p.BorderWidth())
-    gc.SetStrokeColor(p.BorderColor())
+    gc.SetLineWidth(p.BorderWidth())
+    gc.SetLineColor(p.BorderColor())
     gc.Stroke()
 }
 
@@ -134,12 +134,12 @@ func (l *Line) Paint(gc *gg.Context) {
     Debugf(Painting, "")
     gc.DrawLine(l.p0.X, l.p0.Y, l.p1.X, l.p1.Y)
     if l.Pushed() || l.Selected() {
-        gc.SetStrokeWidth(l.PushedBorderWidth())
-        gc.SetStrokeColor(l.PushedBorderColor())
+        gc.SetLineWidth(l.PushedBorderWidth())
+        gc.SetLineColor(l.PushedBorderColor())
         gc.StrokePreserve()
     }
-    gc.SetStrokeWidth(l.BorderWidth())
-    gc.SetStrokeColor(l.BorderColor())
+    gc.SetLineWidth(l.BorderWidth())
+    gc.SetLineColor(l.BorderColor())
     gc.Stroke()
 }
 
@@ -174,8 +174,8 @@ func (r *Rectangle) Paint(gc *gg.Context) {
 	gc.SetLineCapRound()
 	gc.SetLineJoinRound()
     if r.Pushed() {
-        gc.SetStrokeWidth(r.PushedBorderWidth())
-        gc.SetStrokeColor(r.PushedBorderColor())
+        gc.SetLineWidth(r.PushedBorderWidth())
+        gc.SetLineColor(r.PushedBorderColor())
         gc.SetFillColor(r.PushedColor())
 		if r.PushedBorderWidth() == 0.0 {
 			gc.Fill()
@@ -183,8 +183,8 @@ func (r *Rectangle) Paint(gc *gg.Context) {
     		gc.FillStroke()
 		}
     } else if r.Selected() {
-        gc.SetStrokeWidth(r.SelectedBorderWidth())
-        gc.SetStrokeColor(r.SelectedBorderColor())
+        gc.SetLineWidth(r.SelectedBorderWidth())
+        gc.SetLineColor(r.SelectedBorderColor())
         gc.SetFillColor(r.SelectedColor())
 		if r.SelectedBorderWidth() == 0.0 {
 			gc.Fill()
@@ -192,8 +192,8 @@ func (r *Rectangle) Paint(gc *gg.Context) {
     		gc.FillStroke()
 		}
     } else {
-    	gc.SetStrokeWidth(r.BorderWidth())
-    	gc.SetStrokeColor(r.BorderColor())
+    	gc.SetLineWidth(r.BorderWidth())
+    	gc.SetLineColor(r.BorderColor())
         gc.SetFillColor(r.Color())
 		if r.BorderWidth() == 0.0 {
 			gc.Fill()
@@ -234,12 +234,12 @@ func (c *Circle) Paint(gc *gg.Context) {
     }
     gc.FillPreserve()
     if c.Pushed() || c.Selected() {
-        gc.SetStrokeWidth(c.PushedBorderWidth())
-        gc.SetStrokeColor(c.PushedBorderColor())
+        gc.SetLineWidth(c.PushedBorderWidth())
+        gc.SetLineColor(c.PushedBorderColor())
         gc.StrokePreserve()
     }
-    gc.SetStrokeWidth(c.BorderWidth())
-    gc.SetStrokeColor(c.BorderColor())
+    gc.SetLineWidth(c.BorderWidth())
+    gc.SetLineColor(c.BorderColor())
     gc.Stroke()
 }
 
@@ -293,12 +293,12 @@ func (e *Ellipse) Paint(gc *gg.Context) {
     }
     gc.FillPreserve()
     if e.Pushed() || e.Selected() {
-        gc.SetStrokeWidth(e.PushedBorderWidth())
-        gc.SetStrokeColor(e.PushedBorderColor())
+        gc.SetLineWidth(e.PushedBorderWidth())
+        gc.SetLineColor(e.PushedBorderColor())
         gc.StrokePreserve()
     }
-    gc.SetStrokeWidth(e.BorderWidth())
-    gc.SetStrokeColor(e.BorderColor())
+    gc.SetLineWidth(e.BorderWidth())
+    gc.SetLineColor(e.BorderColor())
     gc.Stroke()
 }
 
@@ -348,8 +348,8 @@ func NewPolygon(p0 geom.Point) (*Polygon) {
 }
 
 func (p *Polygon) Paint(gc *gg.Context) {
-    gc.SetStrokeWidth(p.BorderWidth())
-    gc.SetStrokeColor(p.BorderColor())
+    gc.SetLineWidth(p.BorderWidth())
+    gc.SetLineColor(p.BorderColor())
     for _, pt := range p.pts {
         gc.LineTo(pt.X, pt.Y)
     }
@@ -422,8 +422,8 @@ func NewCanvas(w, h float64) (*Canvas) {
     return c
 }
 
-func (c *Canvas) OnInputEvent(evt touch.Event) {
-    c.CallTouchFunc(evt)
+func (c *Canvas) OnInputEvent(evt point.Event) {
+    c.CallPointFunc(evt)
 }
 
 func (c *Canvas) Paint(gc *gg.Context) {
@@ -431,8 +431,8 @@ func (c *Canvas) Paint(gc *gg.Context) {
     gc.Push()
     gc.Multiply(c.Matrix())
     gc.SetFillColor(c.Color())
-    gc.SetStrokeColor(c.BorderColor())
-    gc.SetStrokeWidth(c.BorderWidth())
+    gc.SetLineColor(c.BorderColor())
+    gc.SetLineWidth(c.BorderWidth())
     gc.DrawRectangle(c.LocalBounds().AsCoord())
     if c.Clip {
         gc.ClipPreserve()

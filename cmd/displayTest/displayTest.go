@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stefan-muehlebach/adatft"
+	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/geom"
 )
@@ -65,40 +66,40 @@ func SignalHandler() {
 	}
 }
 
-func TouchHandler() {
-	for penEvent := range touch.EventQ {
-		//log.Printf("penEvent: %#v", penEvent)
-		pt := geom.Point{penEvent.X, penEvent.Y}
+func PointerHandler() {
+	for pointerEvent := range pointer.EventQ {
+		// log.Printf("pointerEvent: %#v", pointerEvent)
+		pt := pointerEvent.Pos
 		switch {
 		case pt.In(prevRect):
-			switch penEvent.Type {
-			case adatft.PenPress, adatft.PenDrag:
-				continue
-			case adatft.PenRelease:
+			switch pointerEvent.Type {
+			case adatft.PointerRelease:
 				animNum -= 1
 				if animNum < 0 {
 					animNum += len(AnimationList)
 				}
+			default:
+				continue
 			}
 		case pt.In(quitRect):
-			switch penEvent.Type {
-			case adatft.PenPress, adatft.PenDrag:
-				continue
-			case adatft.PenRelease:
+			switch pointerEvent.Type {
+			case adatft.PointerRelease:
 				quitFlag = true
+			default:
+				continue
 			}
 		case pt.In(nextRect):
-			switch penEvent.Type {
-			case adatft.PenPress, adatft.PenDrag:
-				continue
-			case adatft.PenRelease:
+			switch pointerEvent.Type {
+			case adatft.PointerRelease:
 				animNum += 1
 				if animNum >= len(AnimationList) {
 					animNum %= len(AnimationList)
 				}
+			default:
+				continue
 			}
 		default:
-			AnimationList[animNum].animation.Handle(penEvent)
+			AnimationList[animNum].animation.Handle(pointerEvent)
 			continue
 		}
 		runFlag = false
@@ -109,17 +110,17 @@ func TouchHandler() {
 
 type Animation interface {
 	RefreshTime() time.Duration
-	Init(gc *gg.Context)
+	Init(gc *gg.Context, rect geom.Rectangle)
 	Animate(dt time.Duration)
 	Paint()
 	Clean()
-	Handle(ev adatft.PenEvent)
+	Handle(ev adatft.PointerEvent)
 }
 
-func ShowAnimation(gc *gg.Context, a Animation) {
+func ShowAnimation(gc *gg.Context, rect geom.Rectangle, a Animation) {
 	dt := a.RefreshTime()
 
-	a.Init(gc)
+	a.Init(gc, rect)
 	ticker := time.NewTicker(dt)
 	defer ticker.Stop()
 	for range ticker.C {
@@ -132,6 +133,7 @@ func ShowAnimation(gc *gg.Context, a Animation) {
 		adatft.PaintWatch.Start()
 		a.Paint()
 		adatft.PaintWatch.Stop()
+		pointer.Draw(gc)
 		Draw(gc, disp)
 	}
 	a.Clean()
@@ -162,7 +164,7 @@ var (
 var (
 	IntroText                           string = "Im Folgenden habe ich einige kleine Beispiele, Animationen oder Interaktionen zusammengestellt, um die Möglichkeiten des TFT-Displays mit Go zu demonstrieren Sämtliche Animationen werden direkt gerechnet. Die Beispiele laufen jeweils unbegrenzt, für den Wechsel zwischen den Beispielen, verwende die Pfeil-Buttons unten links und rechts."
 	disp                                *adatft.Display
-	touch                               *adatft.Touch
+	pointer                             *adagui.Pointer
 	gc                                  *gg.Context
 	pageNum                             int
 	animNum                             int
@@ -177,27 +179,38 @@ var (
 )
 
 func main() {
-	InitProfiling()
-
 	flag.IntVar(&animNum, "anim", 0, "Start with a given animation")
 	flag.Float64Var(&blurFactor, "blur", 1.0, "(Only for Anim 1) Blur factor [0,1] (1: no blur, 0: max blur).\nIn order to see something, choose a value < 0.1")
 	flag.StringVar(&msg, "text", "Hello, world!", "Sample text")
-	flag.Var(&rotation, "rotation", "Display rotation")
+	flag.Var(&rotation, "rotate", "Display rotation")
 	flag.Parse()
 
-	StartProfiling()
+	adagui.StartProfiling()
 
-	log.Printf("> OpenDisplay()\n")
+	log.Printf("> OpenDisplay()")
 	disp = adatft.OpenDisplay(rotation)
-	log.Printf(" > done\n")
+//	trans := disp.Matrix()
+	log.Printf(" > done")
 
-	//log.Printf("> OpenTouch()\n")
-	//touch = adatft.OpenTouch(rotation)
-	//log.Printf(" > done\n")
+	log.Printf("> OpenPointer()")
+	pointer = adagui.OpenPointer()
+	r := geom.Rectangle{Max: disp.DrawBounds().Size()}
+	pointer.SetPosRange(r)
+	pointer.SetWheelRange(0, 0, 30)
+	pointer.StartEvents()
+	log.Printf(" > done")
 
-	log.Printf("> NewContext()\n")
-	gc = gg.NewContext(adatft.Width, adatft.Height)
-	log.Printf(" > done\n")
+	log.Printf("> NewContext()")
+//	sz := disp.Bounds().Size().Int()
+	gc = disp.Canvas()
+//	gc.SetMatrix(trans)
+	log.Printf(" > done")
+
+	dispB := disp.DispBounds()
+	drawB := disp.DrawBounds()
+
+	log.Printf("dispB: %v", dispB)
+	log.Printf("drawB: %v", drawB)
 
 	w := float64(adatft.Width)/3.0
 	h := 64.0
@@ -208,18 +221,18 @@ func main() {
 	nextRect = geom.NewRectangleWH(2*w, ypos, w, h)
 
 	go SignalHandler()
-	//go TouchHandler()
+	go PointerHandler()
 
 	quitFlag = false
 	for !quitFlag {
 		runFlag = true
 		log.Printf("[%d] %s", animNum, AnimationList[animNum].description)
-		ShowAnimation(gc, AnimationList[animNum].animation)
+		ShowAnimation(gc, drawB, AnimationList[animNum].animation)
 		adatft.PrintStat()
 		adatft.ResetStat()
 	}
 
 	disp.Close()
-	touch.Close()
-	StopProfiling()
+	pointer.Close()
+	adagui.StopProfiling()
 }

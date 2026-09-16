@@ -3,7 +3,7 @@ package adagui
 import (
     "container/list"
     "log"
-    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/adagui/point"
     "github.com/stefan-muehlebach/adagui/props"
     "github.com/stefan-muehlebach/gg"
     "github.com/stefan-muehlebach/gg/geom"
@@ -267,7 +267,7 @@ func (m *Embed) Matrix() (*geom.Matrix) {
 // Typ einbetten.
 type LeafEmbed struct {
     Embed
-    touch.TouchEmbed
+    point.PointEmbed
 }
 
 func (m *LeafEmbed) Paint(gc *gg.Context) {

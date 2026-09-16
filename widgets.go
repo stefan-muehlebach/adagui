@@ -22,7 +22,7 @@ import (
     "log"
     "math"
     "github.com/stefan-muehlebach/adagui/binding"
-    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/adagui/point"
     "github.com/stefan-muehlebach/gg"
 //    "github.com/stefan-muehlebach/gg/color"
     "github.com/stefan-muehlebach/gg/fonts"
@@ -88,8 +88,8 @@ func NewSeparator(orient Orientation) (*Separator) {
 }
 
 func (s *Separator) Paint(gc *gg.Context) {
-    gc.SetStrokeColor(s.BarColor())
-    gc.SetStrokeWidth(s.LineWidth())
+    gc.SetLineColor(s.BarColor())
+    gc.SetLineWidth(s.LineWidth())
     gc.MoveTo(s.Bounds().W().AsCoord())
     gc.LineTo(s.Bounds().E().AsCoord())
     gc.Stroke()
@@ -195,8 +195,8 @@ func (l *Label) updateSize() {
 func (l *Label) Paint(gc *gg.Context) {
     Debugf(Painting, "type %T", l.Wrapper)
     gc.DrawRectangle(l.Bounds().AsCoord())
-    gc.SetStrokeColor(l.BorderColor())
-    gc.SetStrokeWidth(l.BorderWidth())
+    gc.SetLineColor(l.BorderColor())
+    gc.SetLineWidth(l.BorderWidth())
     gc.SetFillColor(l.Color())
     gc.FillStroke()
     gc.SetFontFace(l.fontFace)
@@ -207,8 +207,8 @@ func (l *Label) Paint(gc *gg.Context) {
 	/*
     // Only for debugging!
     // Markierungen um den Bereich fuer den Text
-    gc.SetStrokeColor(color.Crimson)
-    gc.SetStrokeWidth(2.0)
+    gc.SetLineColor(color.Crimson)
+    gc.SetLineWidth(2.0)
     pt0 := l.Bounds().Min
     pt1 := l.Bounds().Max
     // Links oben
@@ -261,26 +261,26 @@ func (b *Button) Paint(gc *gg.Context) {
             b.CornerRadius())
     if b.Pushed() {
         gc.SetFillColor(b.PushedColor())
-        gc.SetStrokeColor(b.PushedBorderColor())
-        gc.SetStrokeWidth(b.PushedBorderWidth())
+        gc.SetLineColor(b.PushedBorderColor())
+        gc.SetLineWidth(b.PushedBorderWidth())
     } else {
         if b.checked {
             gc.SetFillColor(b.SelectedColor())
-            gc.SetStrokeColor(b.SelectedBorderColor())
-            gc.SetStrokeWidth(b.SelectedBorderWidth())
+            gc.SetLineColor(b.SelectedBorderColor())
+            gc.SetLineWidth(b.SelectedBorderWidth())
         } else {
             gc.SetFillColor(b.Color())
-            gc.SetStrokeColor(b.BorderColor())
-            gc.SetStrokeWidth(b.BorderWidth())
+            gc.SetLineColor(b.BorderColor())
+            gc.SetLineWidth(b.BorderWidth())
         }
     }
     gc.FillStroke()
 }
 
-func (b *Button) OnInputEvent(evt touch.Event) {
+func (b *Button) OnInputEvent(evt point.Event) {
     //log.Printf("%T: %v", b, evt)
     b.PushEmbed.OnInputEvent(evt)
-    b.CallTouchFunc(evt)
+    b.CallPointFunc(evt)
 }
 
 // Ein TextButton verhaelt sich analog zum neutralen Button, stellt jedoch
@@ -443,10 +443,10 @@ func (b *ListButton) Paint(gc *gg.Context) {
 
     if b.Pushed() {
         gc.SetFillColor(b.PushedLineColor())
-        gc.SetStrokeColor(b.PushedLineColor())
+        gc.SetLineColor(b.PushedLineColor())
     } else {
         gc.SetFillColor(b.LineColor())
-        gc.SetStrokeColor(b.LineColor())
+        gc.SetLineColor(b.LineColor())
     }
     gc.SetLineCapButt()
     // Trennlinie zwischen Text und Pfeil (links)
@@ -480,14 +480,14 @@ func (b *ListButton) Paint(gc *gg.Context) {
     gc.FillStroke()
 }
 
-func (b *ListButton) OnInputEvent(evt touch.Event) {
+func (b *ListButton) OnInputEvent(evt point.Event) {
     //log.Printf("%T: %v", b, evt)
     b.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
-    case touch.TypePress, touch.TypeEnter:
+    case point.TypePress, point.TypeEnter:
         b.next()
     }
-    b.CallTouchFunc(evt)
+    b.CallPointFunc(evt)
 }
 
 func (b *ListButton) SetSelectedIndex(i int) {
@@ -565,11 +565,11 @@ func NewIconButtonWithData(imgFile string, btnData int, data binding.Int) (*Icon
     return b
 }
 
-func (b *IconButton) OnInputEvent(evt touch.Event) {
+func (b *IconButton) OnInputEvent(evt point.Event) {
     //log.Printf("%T: %v", b, evt)
     b.Button.OnInputEvent(evt)
     switch evt.Type {
-    case touch.TypeTap:
+    case point.TypeClick:
         if !b.checked {
             b.data.Set(b.btnData)
         } else {
@@ -633,17 +633,17 @@ func (b *TabButton) Paint(gc *gg.Context) {
             b.Size().X, b.Size().Y, b.CornerRadius())
     if b.Pushed() {
         gc.SetFillColor(b.PushedColor())
-        gc.SetStrokeColor(b.PushedBorderColor())
-        gc.SetStrokeWidth(b.PushedBorderWidth())
+        gc.SetLineColor(b.PushedBorderColor())
+        gc.SetLineWidth(b.PushedBorderWidth())
     } else {
         if b.checked {
             gc.SetFillColor(b.SelectedColor())
-            gc.SetStrokeColor(b.SelectedBorderColor())
-            gc.SetStrokeWidth(b.SelectedBorderWidth())
+            gc.SetLineColor(b.SelectedBorderColor())
+            gc.SetLineWidth(b.SelectedBorderWidth())
         } else {
             gc.SetFillColor(b.Color())
-            gc.SetStrokeColor(b.BorderColor())
-            gc.SetStrokeWidth(b.BorderWidth())
+            gc.SetLineColor(b.BorderColor())
+            gc.SetLineWidth(b.BorderWidth())
         }
     }
     gc.FillStroke()
@@ -662,11 +662,11 @@ func (b *TabButton) Paint(gc *gg.Context) {
     gc.DrawStringAnchored(b.label, mp.X, mp.Y, 0.5, 0.5)
 }
 
-func (b *TabButton) OnInputEvent(evt touch.Event) {
+func (b *TabButton) OnInputEvent(evt point.Event) {
     //log.Printf("%T: %v", b, evt)
     b.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
-    case touch.TypeTap:
+    case point.TypeClick:
         if !b.checked {
             b.data.Set(b.idx)
         }
@@ -739,19 +739,19 @@ func (c *Checkbox) Paint(gc *gg.Context) {
             c.CornerRadius())
     if c.Pushed() {
         gc.SetFillColor(c.PushedColor())
-        gc.SetStrokeColor(c.PushedBorderColor())
+        gc.SetLineColor(c.PushedBorderColor())
     } else {
         gc.SetFillColor(c.Color())
-        gc.SetStrokeColor(c.BorderColor())
+        gc.SetLineColor(c.BorderColor())
     }
-    gc.SetStrokeWidth(c.BorderWidth())
+    gc.SetLineWidth(c.BorderWidth())
     gc.FillStroke()
     if c.Checked() {
-        gc.SetStrokeWidth(c.LineWidth())
+        gc.SetLineWidth(c.LineWidth())
         if c.Pushed() {
-            gc.SetStrokeColor(c.PushedLineColor())
+            gc.SetLineColor(c.PushedLineColor())
         } else {
-            gc.SetStrokeColor(c.LineColor())
+            gc.SetLineColor(c.LineColor())
         }
         gc.MoveTo(4, 9)
         gc.LineTo(8, 14)
@@ -765,9 +765,9 @@ func (c *Checkbox) Paint(gc *gg.Context) {
     gc.DrawStringAnchored(c.label, x, y, 0.0, 0.5)
 }
 
-func (c *Checkbox) OnInputEvent(evt touch.Event) {
+func (c *Checkbox) OnInputEvent(evt point.Event) {
     c.Button.OnInputEvent(evt)
-    if evt.Type == touch.TypeTap {
+    if evt.Type == point.TypeClick {
         c.SetChecked(!c.Checked())
         c.Mark(MarkNeedsPaint)
     }
@@ -815,12 +815,12 @@ func (b *RadioButton) Paint(gc *gg.Context) {
     gc.DrawCircle(mp.X, mp.Y, 0.5*b.Width())
     if b.Pushed() {
         gc.SetFillColor(b.PushedColor())
-        gc.SetStrokeColor(b.PushedBorderColor())
+        gc.SetLineColor(b.PushedBorderColor())
     } else {
         gc.SetFillColor(b.Color())
-        gc.SetStrokeColor(b.BorderColor())
+        gc.SetLineColor(b.BorderColor())
     }
-    gc.SetStrokeWidth(b.BorderWidth())
+    gc.SetLineWidth(b.BorderWidth())
     gc.FillStroke()
     if b.checked {
         if b.Pushed() {
@@ -838,9 +838,9 @@ func (b *RadioButton) Paint(gc *gg.Context) {
     gc.DrawStringAnchored(b.label, x, y, 0.0, 0.5)
 }
 
-func (b *RadioButton) OnInputEvent(evt touch.Event) {
+func (b *RadioButton) OnInputEvent(evt point.Event) {
     b.Button.OnInputEvent(evt)
-    if evt.Type == touch.TypeTap {
+    if evt.Type == point.TypeClick {
         if b.checked == true {
             return
         }
@@ -960,29 +960,29 @@ func (s *Scrollbar) updateCtrl() {
 func (s *Scrollbar) Paint(gc *gg.Context) {
 //    var pt1, pt2 geom.Point
     if s.Pushed() {
-        gc.SetStrokeColor(s.PushedBarColor())
+        gc.SetLineColor(s.PushedBarColor())
     } else {
-        gc.SetStrokeColor(s.BarColor())
+        gc.SetLineColor(s.BarColor())
     }
-    gc.SetStrokeWidth(s.BarSize())
+    gc.SetLineWidth(s.BarSize())
     gc.DrawLine(s.barStart.X, s.barStart.Y, s.barEnd.X, s.barEnd.Y)
     gc.Stroke()
 
     if s.Pushed() {
-        gc.SetStrokeColor(s.PushedColor())
+        gc.SetLineColor(s.PushedColor())
     } else {
-        gc.SetStrokeColor(s.Color())
+        gc.SetLineColor(s.Color())
     }
-    gc.SetStrokeWidth(s.CtrlSize())
+    gc.SetLineWidth(s.CtrlSize())
     gc.DrawLine(s.ctrlStart.X, s.ctrlStart.Y, s.ctrlEnd.X, s.ctrlEnd.Y)
     gc.Stroke()
 }
 
-func (s *Scrollbar) OnInputEvent(evt touch.Event) {
+func (s *Scrollbar) OnInputEvent(evt point.Event) {
     //log.Printf("%T: %v", s, evt)
     s.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
-    case touch.TypePress:
+    case point.TypePress:
         if s.orient == Horizontal {
             if evt.Pos.X >= s.ctrlStart.X && evt.Pos.X <= s.ctrlEnd.X {
                 s.isDragging = true
@@ -998,7 +998,7 @@ func (s *Scrollbar) OnInputEvent(evt touch.Event) {
                 s.isDragging = false
             }
         }
-    case touch.TypeDrag:
+    case point.TypeDrag:
         if !s.isDragging {
             break
         }
@@ -1017,7 +1017,7 @@ func (s *Scrollbar) OnInputEvent(evt touch.Event) {
         s.SetValue(v)
         s.dragPos = evt.Pos
         s.Mark(MarkNeedsPaint)
-    case touch.TypeTap:
+    case point.TypeClick:
         v := s.Value()
         if s.orient == Horizontal {
             if evt.Pos.X < s.ctrlStart.X {
@@ -1036,7 +1036,7 @@ func (s *Scrollbar) OnInputEvent(evt touch.Event) {
         }
         s.SetValue(v)
         s.Mark(MarkNeedsPaint)
-    case touch.TypeDoubleTap:
+    case point.TypeDoubleClick:
         s.SetValue(s.initValue)
         s.Mark(MarkNeedsPaint)
     }
@@ -1121,20 +1121,20 @@ func (s *Slider) updateCtrl() {
 func (s *Slider) Paint(gc *gg.Context) {
     //log.Printf("Slider.Paint()")
     if s.Pushed() {
-        gc.SetStrokeColor(s.PushedBarColor())
+        gc.SetLineColor(s.PushedBarColor())
     } else {
-        gc.SetStrokeColor(s.BarColor())
+        gc.SetLineColor(s.BarColor())
     }
-    gc.SetStrokeWidth(s.BarSize())
+    gc.SetLineWidth(s.BarSize())
     gc.DrawLine(s.barStart.X, s.barStart.Y, s.barEnd.X, s.barEnd.Y)
     gc.Stroke()
 
     if s.Pushed() {
-        gc.SetStrokeColor(s.PushedColor())
+        gc.SetLineColor(s.PushedColor())
     } else {
-        gc.SetStrokeColor(s.Color())
+        gc.SetLineColor(s.Color())
     }
-    gc.SetStrokeWidth(s.CtrlSize())
+    gc.SetLineWidth(s.CtrlSize())
     if s.orient == Horizontal {
         gc.DrawLine(s.ctrlPos.X-0.5, s.ctrlPos.Y, s.ctrlPos.X+0.5, s.ctrlPos.Y)
     } else {
@@ -1191,10 +1191,10 @@ func (s *Slider) Factor() (float64) {
     return (s.Value()-s.minValue)/(s.maxValue-s.minValue)
 }
 
-func (s *Slider) OnInputEvent(evt touch.Event) {
+func (s *Slider) OnInputEvent(evt point.Event) {
     s.PushEmbed.OnInputEvent(evt)
     switch evt.Type {
-    case touch.TypeDrag:
+    case point.TypeDrag:
         v := 0.0
         r := s.Rect().Inset(0.5*s.CtrlSize(), 0.5*s.CtrlSize())
         if s.orient == Horizontal {
@@ -1204,7 +1204,7 @@ func (s *Slider) OnInputEvent(evt touch.Event) {
         }
         s.SetFactor(v)
         s.Mark(MarkNeedsPaint)
-    case touch.TypeDoubleTap:
+    case point.TypeDoubleClick:
         s.SetValue(s.initValue)
         s.Mark(MarkNeedsPaint)
     }

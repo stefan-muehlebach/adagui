@@ -2,7 +2,7 @@ package adagui
 
 import (
     "container/list"
-    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/adagui/point"
     "github.com/stefan-muehlebach/gg/geom"
     "github.com/stefan-muehlebach/gg"
 )
@@ -62,7 +62,7 @@ type Node interface {
     // gezeichnet werden muessen.
     Mark(m Marks)
     OnChildMarked(child Node, newMarks Marks)
-    OnInputEvent(evt touch.Event)
+    OnInputEvent(evt point.Event)
 
     // Retourniert true, falls sich der Punkt pt innerhalb oder auf dem
     // Node befindet und false andernfalls.

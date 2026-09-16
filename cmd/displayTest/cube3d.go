@@ -10,10 +10,12 @@ import (
 
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
+	"github.com/stefan-muehlebach/gg/geom"
 )
 
 type Cube3DAnim struct {
 	gc                            *gg.Context
+	rect geom.Rectangle
 	mBase, m                      Matrix
 	cube, cubeT                   *Cube
 	cloud, cloudT                 *Cloud
@@ -27,8 +29,9 @@ func (a *Cube3DAnim) RefreshTime() time.Duration {
 	return 30 * time.Millisecond
 }
 
-func (a *Cube3DAnim) Init(gc *gg.Context) {
+func (a *Cube3DAnim) Init(gc *gg.Context, rect geom.Rectangle) {
 	a.gc = gc
+	a.rect = rect
 
 	a.cube = NewCube(100.0, 5.0)
 	a.cubeT = &Cube{}
@@ -46,7 +49,7 @@ func (a *Cube3DAnim) Init(gc *gg.Context) {
 	a.beta = math.Pi / 18.0
 	a.dBeta = math.Pi / 126.0
 
-	a.mBase = Identity().Multiply(Scale(NewVector(1.0, -1.0, 1.0))).Multiply(Translate(NewVector(float64(adatft.Width/2), -float64(adatft.Height/2), 0.0)))
+	a.mBase = Identity().Multiply(Scale(NewVector(1.0, -1.0, 1.0))).Multiply(Translate(NewVector(rect.Dx()/2.0, -rect.Dy()/2.0, 0.0)))
 }
 
 func (a *Cube3DAnim) Animate(dt time.Duration) {}
@@ -67,16 +70,16 @@ func (a *Cube3DAnim) Paint() {
 	a.yAxisT = a.m.Transform(a.yAxis)
 	a.zAxisT = a.m.Transform(a.zAxis)
 
-	a.gc.SetStrokeWidth(4.0)
-	a.gc.SetStrokeColor(colors.Red)
+	a.gc.SetLineWidth(4.0)
+	a.gc.SetLineColor(colors.Red)
 	a.gc.DrawLine(a.zeroT.X, a.zeroT.Y, a.xAxisT.X, a.xAxisT.Y)
 	a.gc.Stroke()
 
-	a.gc.SetStrokeColor(colors.Green)
+	a.gc.SetLineColor(colors.Green)
 	a.gc.DrawLine(a.zeroT.X, a.zeroT.Y, a.yAxisT.X, a.yAxisT.Y)
 	a.gc.Stroke()
 
-	a.gc.SetStrokeColor(colors.Blue)
+	a.gc.SetLineColor(colors.Blue)
 	a.gc.DrawLine(a.zeroT.X, a.zeroT.Y, a.zAxisT.X, a.zAxisT.Y)
 	a.gc.Stroke()
 
@@ -86,7 +89,7 @@ func (a *Cube3DAnim) Paint() {
 
 func (a *Cube3DAnim) Clean() {}
 
-func (a *Cube3DAnim) Handle(evt adatft.PenEvent) {}
+func (a *Cube3DAnim) Handle(evt adatft.PointerEvent) {}
 
 // 3D-Animation ---------------------------------------------------------------
 /*
@@ -139,16 +142,16 @@ func Cube3DAnimation() {
 		yAxisT = m.Transform(yAxis)
 		zAxisT = m.Transform(zAxis)
 
-		gc.SetStrokeWidth(4.0)
-		gc.SetStrokeColor(colors.DarkRed)
+		gc.SetLineWidth(4.0)
+		gc.SetLineColor(colors.DarkRed)
 		gc.DrawLine(zeroT.X, zeroT.Y, xAxisT.X, xAxisT.Y)
 		gc.Stroke()
 
-		gc.SetStrokeColor(colors.DarkGreen)
+		gc.SetLineColor(colors.DarkGreen)
 		gc.DrawLine(zeroT.X, zeroT.Y, yAxisT.X, yAxisT.Y)
 		gc.Stroke()
 
-		gc.SetStrokeColor(colors.DarkBlue)
+		gc.SetLineColor(colors.DarkBlue)
 		gc.DrawLine(zeroT.X, zeroT.Y, zAxisT.X, zAxisT.Y)
 		gc.Stroke()
 
@@ -195,8 +198,8 @@ func (c *Cube) Transform(a Matrix, d *Cube) {
 }
 
 func (c *Cube) Draw(gc *gg.Context) {
-	gc.SetStrokeWidth(c.LineWidth)
-	gc.SetStrokeColor(c.StrokeColor)
+	gc.SetLineWidth(c.LineWidth)
+	gc.SetLineColor(c.StrokeColor)
 	gc.MoveTo(c.Pts[0].X, c.Pts[0].Y)
 	gc.LineTo(c.Pts[1].X, c.Pts[1].Y)
 	gc.LineTo(c.Pts[2].X, c.Pts[2].Y)

@@ -51,8 +51,8 @@ func NewRectangle(rect geom.Rectangle, color colors.RGBA,
 }
 
 func (r *Rectangle) Paint(gc *gg.Context) {
-	gc.SetStrokeWidth(StrokeWidth)
-	gc.SetStrokeColor(r.color)
+	gc.SetLineWidth(StrokeWidth)
+	gc.SetLineColor(r.color)
 	gc.SetFillColor(r.color.Alpha(0.3))
 	gc.DrawRectangle(r.Inset(StrokeWidth/2, StrokeWidth/2).AsCoord())
 	gc.FillStroke()
@@ -83,21 +83,21 @@ func NewIntroAnim() *IntroAnim {
 }
 
 func (a *IntroAnim) RefreshTime() time.Duration {
-	return time.Second
+	return 30 * time.Millisecond
 }
 
-func (a *IntroAnim) Init(gc *gg.Context) {
+func (a *IntroAnim) Init(gc *gg.Context, rect geom.Rectangle) {
 	a.gc = gc
 	face, _ := fonts.NewFace(fonts.LucidaBrightDemiboldItalic, 26.0)
-	rect := NewRectangle(prevRect, colors.DarkGreen, face, "Prev")
-	a.rectList = append(a.rectList, rect)
-//	rect = NewRectangle(geom.NewRectangleWH(480/5, 0, 3*480/5, 320/5),
+	r := NewRectangle(prevRect, colors.DarkGreen, face, "Prev")
+	a.rectList = append(a.rectList, r)
+//	r = NewRectangle(geom.NewRectangleWH(480/5, 0, 3*480/5, 320/5),
 //		colors.DarkBlue, face, "extra")
-//	a.rectList = append(a.rectList, rect)
-	rect = NewRectangle(quitRect, colors.DarkRed, face, "Quit")
-	a.rectList = append(a.rectList, rect)
-	rect = NewRectangle(nextRect, colors.DarkCyan, face, "Next")
-	a.rectList = append(a.rectList, rect)
+//	a.rectList = append(a.rectList, r)
+	r = NewRectangle(quitRect, colors.DarkRed, face, "Quit")
+	a.rectList = append(a.rectList, r)
+	r = NewRectangle(nextRect, colors.DarkCyan, face, "Next")
+	a.rectList = append(a.rectList, r)
 }
 
 func (a *IntroAnim) Animate(dt time.Duration) {}
@@ -112,4 +112,4 @@ func (a *IntroAnim) Paint() {
 
 func (a *IntroAnim) Clean() {}
 
-func (a *IntroAnim) Handle(evt adatft.PenEvent) {}
+func (a *IntroAnim) Handle(evt adatft.PointerEvent) {}

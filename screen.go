@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/stefan-muehlebach/adagui/touch"
+	"github.com/stefan-muehlebach/adagui/point"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg/geom"
 )
@@ -21,7 +21,7 @@ var (
 // Applikation geben.
 type Screen struct {
 	disp                     *adatft.Display
-	touch                    *adatft.Touch
+	point                    *Pointer
 	window                   *Window
 	paintTicker              *time.Ticker
 	paintCloseQ, eventCloseQ chan bool
@@ -30,7 +30,7 @@ type Screen struct {
 }
 
 // Mit NewScreen wird ein neues Screen-Objekt erzeugt und alle technischen
-// Objekte in Zusammenhang mit der Ansteuerung des Bildschirm und Touch-
+// Objekte in Zusammenhang mit der Ansteuerung des Bildschirm und Point-
 // Screens erzeugt. Aktuell darf es nur ein (1) solches Objekt geben - ein
 // mehrfaches Aufrufen von NewScreen führt zu einem Abbruch der Applikation.
 func NewScreen(rotation adatft.RotationType) *Screen {
@@ -39,7 +39,9 @@ func NewScreen(rotation adatft.RotationType) *Screen {
 	}
 	s := &Screen{}
 	s.disp = adatft.OpenDisplay(rotation)
-	s.touch = adatft.OpenTouch(rotation)
+	s.point = OpenPointer()
+	s.point.SetPosRange(geom.Rectangle{Max: s.disp.DrawBounds().Size()})
+	s.point.StartEvents()
 	s.paintTicker = time.NewTicker(refreshRate)
 	s.window = nil
 	s.paintCloseQ = make(chan bool)
@@ -83,7 +85,7 @@ func (s *Screen) Window() *Window {
 }
 
 // Mit SetWindow wird das übergebene Fenster zum sichtbaren und aktiven
-// Fenster. Nur aktive Fenster erhalten die Touch-Events vom Touchscreen und
+// Fenster. Nur aktive Fenster erhalten die Point-Events vom Pointscreen und
 // nur aktive Fenster werden dargestellt.
 func (s *Screen) SetWindow(w *Window) {
 	if s.window == w {
@@ -100,7 +102,7 @@ func (s *Screen) SetWindow(w *Window) {
 }
 
 // Mit Run schliesslich wird der MainEvent-Loop der Applikation gestartet,
-// das aktive Fenster wird dargestellt und mit Touch-Events beliefert.
+// das aktive Fenster wird dargestellt und mit Point-Events beliefert.
 // Wichtig: diese Methode kehrt nicht zurück, solange die Applikation läuft.
 // Ein Aufruf dieser Methode via Go-Routine ist nicht sinnvoll, da sonst
 // die Applikation gar nie richtig läuft (siehe auch Methode Quit).
@@ -147,8 +149,10 @@ func (s *Screen) Repaint() {
 		return
 	}
 	if s.window.Repaint() {
+		s.point.Draw(s.window.gc)
 		s.disp.Draw(s.window.gc.Image())
 	}
+	
 }
 
 func (s *Screen) paintThread() {
@@ -164,15 +168,15 @@ PAINT_LOOP:
 	s.wg.Done()
 }
 
-// In dieser Methode schliesslich spielt die Musik: vom Touch-Screen werden
+// In dieser Methode schliesslich spielt die Musik: vom Point-Screen werden
 // laufend Events empfangen, ggf. 'veredelt' (bspw. werden hier LongPress,
 // Tap oder DoubleTap Events generiert) und dem aktiven Fenster zur
-// Verarbeitung weitergeleitet. Die Positionsdaten aus den Touch-Events
+// Verarbeitung weitergeleitet. Die Positionsdaten aus den Point-Events
 // beziehen sich auf den gesamten Bildschirm. Die Transformation von
 // Koordianten in Objekt-relative Daten erfolgt im Objekt Window!
 // Gestoppt wird dieser Thread durch das Schliessen der Event-Queue.
 func (s *Screen) eventThread() {
-	var evt, tapEvt touch.Event
+	var evt, clkEvt point.Event
 	var seqNumber int = 0
 
 EVENT_LOOP:
@@ -180,17 +184,17 @@ EVENT_LOOP:
 		select {
 		case <-s.eventCloseQ:
 			break EVENT_LOOP
-		case tchEvt := <-s.touch.EventQ:
-			//fmt.Printf("[%d]: %10s: %v -> %v\n", tchEvt.Time.UnixMilli(),
-			//	tchEvt.Type, tchEvt.TouchRawPos, tchEvt.TouchPos)
-			switch tchEvt.Type {
-			case adatft.PenPress:
+		case ptrEvt := <-s.point.EventQ:
+			log.Printf("[%d]: %10s: %v", ptrEvt.Time.UnixMilli(),
+				ptrEvt.Type, ptrEvt)
+			switch ptrEvt.Type {
+			case adatft.PointerPress:
 				seqNumber++
-				evt.Type = touch.TypePress
+				evt.Type = point.TypePress
 				evt.SeqNumber = seqNumber
 				evt.LongPressed = false
 				evt.InitTime = time.Now()
-				evt.InitPos = geom.NewPoint(tchEvt.X, tchEvt.Y)
+				evt.InitPos = ptrEvt.Pos
 				evt.Time = evt.InitTime
 				evt.Pos = evt.InitPos
 
@@ -198,45 +202,45 @@ EVENT_LOOP:
 				// 'LongPress'.
 				//
 				go func(seqNr int) {
-					time.Sleep(touch.LongPressThreshold)
+					time.Sleep(point.LongPressThreshold)
 					if seqNr == seqNumber &&
-						evt.Type != touch.TypeRelease &&
-						evt.InitPos.Distance(evt.Pos) <= touch.NearThreshold {
+						evt.Type != point.TypeRelease &&
+						evt.InitPos.Distance(evt.Pos) <= point.NearThreshold {
 						evt.LongPressed = true
 						newEvent := evt
-						newEvent.Type = touch.TypeLongPress
+						newEvent.Type = point.TypeLongPress
 						newEvent.Time = time.Now()
 						s.window.eventQ <- newEvent
 					}
 				}(seqNumber)
 				s.window.eventQ <- evt
 
-			case adatft.PenDrag:
-				evt.Type = touch.TypeDrag
+			case adatft.PointerDrag:
+				evt.Type = point.TypeDrag
 				evt.Time = time.Now()
-				evt.Pos = geom.NewPoint(tchEvt.X, tchEvt.Y)
+				evt.Pos = ptrEvt.Pos
 				s.window.eventQ <- evt
 
-			case adatft.PenRelease:
-				evt.Type = touch.TypeRelease
+			case adatft.PointerRelease:
+				evt.Type = point.TypeRelease
 				evt.Time = time.Now()
-				evt.Pos = geom.NewPoint(tchEvt.X, tchEvt.Y)
+				evt.Pos = ptrEvt.Pos
 				s.window.eventQ <- evt
 
-				if evt.InitPos.Distance(evt.Pos) <= touch.NearThreshold {
+				if evt.InitPos.Distance(evt.Pos) <= point.NearThreshold {
 
 					// An dieser Stelle steht fest: es wurde ein korrekter Tap
 					// erkannt. Die Frage ist noch: war es ein DoubleTap?
-					if tapEvt.Type == touch.TypeTap &&
-						evt.Time.Sub(tapEvt.Time) < touch.DoubleTapDuration &&
-						evt.Pos.Distance(tapEvt.Pos) <= touch.NearThreshold {
-						tapEvt = evt
-						tapEvt.Type = touch.TypeDoubleTap
+					if clkEvt.Type == point.TypeClick &&
+						evt.Time.Sub(clkEvt.Time) < point.DoubleClickDuration &&
+						evt.Pos.Distance(clkEvt.Pos) <= point.NearThreshold {
+						clkEvt = evt
+						clkEvt.Type = point.TypeDoubleClick
 					} else {
-						tapEvt = evt
-						tapEvt.Type = touch.TypeTap
+						clkEvt = evt
+						clkEvt.Type = point.TypeClick
 					}
-					s.window.eventQ <- tapEvt
+					s.window.eventQ <- clkEvt
 				}
 			}
 		}

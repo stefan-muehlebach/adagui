@@ -7,6 +7,7 @@ import (
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
+	"github.com/stefan-muehlebach/gg/geom"
 )
 
 // CircleAnim --
@@ -17,6 +18,7 @@ const (
 
 type CircleAnim struct {
 	gc       *gg.Context
+	rect geom.Rectangle
 	circleList []*Circle
 }
 
@@ -24,15 +26,15 @@ func (a *CircleAnim) RefreshTime() time.Duration {
 	return 70 * time.Millisecond
 }
 
-func (a *CircleAnim) Init(gc *gg.Context) {
+func (a *CircleAnim) Init(gc *gg.Context, rect geom.Rectangle) {
 	a.gc = gc
-
+	a.rect = rect
 	a.circleList = make([]*Circle, numCircles)
 	for i := range numCircles {
-		a.circleList[i] = NewCircle(gc)
+		a.circleList[i] = NewCircle(a)
 		a.circleList[i].age = rand.Float64()
 	}
-	a.gc.SetStrokeWidth(3.0)
+	a.gc.SetLineWidth(3.0)
 	a.gc.SetLineCapRound()
 	a.gc.SetLineJoinRound()
 	a.gc.SetFillColor(colors.Black)
@@ -58,13 +60,13 @@ func (a *CircleAnim) Paint() {
 
 func (a *CircleAnim) Clean() {}
 
-func (a *CircleAnim) Handle(evt adatft.PenEvent) {
+func (a *CircleAnim) Handle(evt adatft.PointerEvent) {
 	switch evt.Type {
-	case adatft.PenPress, adatft.PenDrag:
-	case adatft.PenRelease:
+	case adatft.PointerPress, adatft.PointerDrag:
+	case adatft.PointerRelease:
 		a.circleList[0].Init()
-		a.circleList[0].mx = evt.X
-		a.circleList[0].my = evt.Y
+		a.circleList[0].mx = float64(evt.Pos.X)
+		a.circleList[0].my = float64(evt.Pos.Y)
 	}
 }
 
@@ -77,21 +79,21 @@ const (
 )
 
 type Circle struct {
-	gc *gg.Context
+	anim *CircleAnim
 	mx, my, rx, ry, drx, dry, age, dAge, t float64
 	color colors.RGBA
 }
 
-func NewCircle(gc *gg.Context) *Circle {
+func NewCircle(anim *CircleAnim) *Circle {
 	c := &Circle{}
-	c.gc = gc
+	c.anim = anim
 	c.Init()
 	return c
 }
 
 func (c *Circle) Init() {
-	c.mx = rand.Float64() * float64(c.gc.Width())
-	c.my = float64(c.gc.Height()/4) + rand.Float64() * float64(c.gc.Height()/2)
+	c.mx = rand.Float64() * float64(c.anim.rect.Dx())
+	c.my = float64(c.anim.rect.Dy()/4.0) + rand.Float64() * float64(c.anim.rect.Dy()/2.0)
 	c.rx, c.ry = 0.0, 0.0
 	c.drx = 0.1 * rand.NormFloat64() + 0.5
 	c.dry = c.drx * circleRatio
@@ -114,14 +116,14 @@ func (c *Circle) Animate(dt time.Duration) bool {
 }
 
 func (c *Circle) Paint() {
-	c.gc.SetStrokeColor(c.color.Alpha(1.0 - c.t*c.t))
+	c.anim.gc.SetLineColor(c.color.Alpha(1.0 - c.t*c.t))
 	rx, ry := c.rx, c.ry
 	for range numWaves {
 		if rx <= 0.0 {
 			break
 		}
-	    c.gc.DrawEllipse(c.mx, c.my, rx, ry)
-	    c.gc.Stroke()
+	    c.anim.gc.DrawEllipse(c.mx, c.my, rx, ry)
+	    c.anim.gc.Stroke()
 		rx = rx - waveStep
 		ry = ry - circleRatio*waveStep
 	}

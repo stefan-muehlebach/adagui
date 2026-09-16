@@ -4,12 +4,14 @@ import (
 	"math/rand"
 	"time"
 
+	"golang.org/x/image/font"
+
     "github.com/stefan-muehlebach/adatft"
 
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/fonts"
-	"golang.org/x/image/font"
+	"github.com/stefan-muehlebach/gg/geom"
 )
 
 var (
@@ -44,6 +46,7 @@ func uniRand(minVal, maxVal float64) float64 {
 
 type TextAnim struct {
 	gc       *gg.Context
+	rect geom.Rectangle
 	textList []*TextObject
 	fontList []*fonts.Font
 }
@@ -52,13 +55,14 @@ func (a *TextAnim) RefreshTime() time.Duration {
 	return 30 * time.Millisecond
 }
 
-func (a *TextAnim) Init(gc *gg.Context) {
+func (a *TextAnim) Init(gc *gg.Context, rect geom.Rectangle) {
 	a.gc = gc
+	a.rect = rect
 	a.textList = make([]*TextObject, numTextLines)
 	a.fontList = fontList
 	for i := range numTextLines {
 		t := float64(i) / float64(numTextLines-1)
-		a.textList[i] = NewTextObject(msg,
+		a.textList[i] = NewTextObject(a, msg,
 			a.fontList[i%len(a.fontList)],
 			normRand(meanFontSize, stddevFontSize),
 			colors.RandColor().Alpha(1.0-t*0.5))
@@ -68,7 +72,7 @@ func (a *TextAnim) Init(gc *gg.Context) {
 func (a *TextAnim) Animate(dt time.Duration) {
 	for _, txtObj := range a.textList {
 		if !txtObj.Animate(1.0) {
-			yPos := uniRand(20.0, float64(gc.Height())-20.0)
+			yPos := uniRand(20.0, a.rect.Dy()-20.0)
 			xVel := normRand(meanVel, stddevVel)
 			if rand.Float64() < 0.5 {
 				xVel *= -1.0
@@ -89,9 +93,10 @@ func (a *TextAnim) Paint() {
 
 func (a *TextAnim) Clean() {}
 
-func (a *TextAnim) Handle(evt adatft.PenEvent) {}
+func (a *TextAnim) Handle(evt adatft.PointerEvent) {}
 
 type TextObject struct {
+	anim *TextAnim
 	x, y          float64
 	txt           string
 	face          font.Face
@@ -100,9 +105,10 @@ type TextObject struct {
 	xVel, yVel    float64
 }
 
-func NewTextObject(txt string, fnt *fonts.Font, fontSize float64,
+func NewTextObject(anim *TextAnim, txt string, fnt *fonts.Font, fontSize float64,
 	color colors.RGBA) *TextObject {
 	o := &TextObject{}
+	o.anim = anim
 	o.txt = txt
 	o.face, _ = fonts.NewFace(fnt, fontSize)
 	o.color = color
@@ -115,7 +121,7 @@ func (o *TextObject) SetAnimParam(y, xVel float64) {
 	if xVel > 0.0 {
 		o.x = -o.width / 2.0
 	} else {
-		o.x = float64(gc.Width()) + o.width/2.0
+		o.x = o.anim.rect.Dx() + o.width/2.0
 	}
 	o.y = y
 	o.xVel = xVel
@@ -126,7 +132,7 @@ func (o *TextObject) Animate(t float64) bool {
 		return false
 	}
 	o.x += t * o.xVel
-	if o.x > float64(gc.Width())+o.width/2.0 || o.x < -o.width/2.0 {
+	if o.x > o.anim.rect.Dx()+o.width/2.0 || o.x < -o.width/2.0 {
 		return false
 	}
 	return true

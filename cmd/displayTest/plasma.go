@@ -9,6 +9,7 @@ import (
 
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
+	"github.com/stefan-muehlebach/gg/geom"
 )
 
 // The famous plasma animation ------------------------------------------------
@@ -23,13 +24,17 @@ var (
 const (
 	numThreads = 3
 	numShades  = 256
-	dispWidth  = 1.6
-	dispHeight = 1.2
+)
+
+var (
+	dispWidth, dispHeight float64
+	f          = 0.001666666666
 	adt        = 0.05
 )
 
 type PlasmaAnim struct {
 	gc      *gg.Context
+	rect geom.Rectangle
 	t       float64
 	pal     *Palette
 	orderQ  [numThreads]chan float64
@@ -42,13 +47,17 @@ func (a *PlasmaAnim) RefreshTime() time.Duration {
 	return 30 * time.Millisecond
 }
 
-func (a *PlasmaAnim) Init(gc *gg.Context) {
+func (a *PlasmaAnim) Init(gc *gg.Context, rect geom.Rectangle) {
 	a.gc = gc
+	a.rect = rect
+
+ 	dispWidth = f * a.rect.Dx()
+ 	dispHeight = f * a.rect.Dy()
 
 	for i := 0; i < numThreads; i++ {
 		a.orderQ[i] = make(chan float64)
 		a.doneQ[i] = make(chan bool)
-		a.valFlds[i] = NewValField(gc.Width(), gc.Height(),
+		a.valFlds[i] = NewValField(int(a.rect.Dx()), int(a.rect.Dy()),
 			-dispWidth/2.0, dispWidth/2.0,
 			dispHeight/2.0, -dispHeight/2.0,
 			ColorFuncList[i])
@@ -79,8 +88,8 @@ func (a *PlasmaAnim) Animate(dt time.Duration) {
 func (a *PlasmaAnim) Paint() {
 	pixIdx := 0
 	valIdx := 0
-	for row := 0; row < a.gc.Height(); row++ {
-		for col := 0; col < a.gc.Width(); col++ {
+	for row := 0; row < int(a.rect.Dy()); row++ {
+		for col := 0; col < int(a.rect.Dx()); col++ {
 			v1 := a.valFlds[0].Vals[valIdx]
 			v2 := a.valFlds[1].Vals[valIdx]
 			v3 := a.valFlds[2].Vals[valIdx]
@@ -102,7 +111,7 @@ func (a *PlasmaAnim) Clean() {
 	}
 }
 
-func (a *PlasmaAnim) Handle(evt adatft.PenEvent) {
+func (a *PlasmaAnim) Handle(evt adatft.PointerEvent) {
 }
 
 func UpdateThread(valFld *ValFieldType, orderQ chan float64, doneQ chan bool) {

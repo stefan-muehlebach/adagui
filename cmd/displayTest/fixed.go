@@ -5,19 +5,22 @@ import (
 	"image/color"
 	"time"
 
-    "github.com/stefan-muehlebach/adatft"
-
-	"github.com/stefan-muehlebach/gg"
 	"golang.org/x/image/draw"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/math/fixed"
+
+    "github.com/stefan-muehlebach/adatft"
+
+	"github.com/stefan-muehlebach/gg"
+	"github.com/stefan-muehlebach/gg/geom"
 )
 
 //-----------------------------------------------------------------------------
 
 type FixedFontAnim struct {
 	gc       *gg.Context
+	rect geom.Rectangle
 	drawer   *font.Drawer
 	faceList []*basicfont.Face
 	text     string
@@ -40,8 +43,9 @@ func (a *FixedFontAnim) RefreshTime() time.Duration {
 	return time.Second
 }
 
-func (a *FixedFontAnim) Init(gc *gg.Context) {
+func (a *FixedFontAnim) Init(gc *gg.Context, rect geom.Rectangle) {
 	a.gc = gc
+	a.rect = rect
 	a.drawer.Dst = gc.Image().(draw.Image)
 	a.drawer.Src = image.NewUniform(a.col)
 	a.gc.SetFillColor(color.Black)
@@ -64,5 +68,5 @@ func (a *FixedFontAnim) Paint() {
 func (a *FixedFontAnim) Clean() {
 }
 
-func (a *FixedFontAnim) Handle(evt adatft.PenEvent) {
+func (a *FixedFontAnim) Handle(evt adatft.PointerEvent) {
 }

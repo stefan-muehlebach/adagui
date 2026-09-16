@@ -12,7 +12,7 @@ package adagui
 import (
 	"container/list"
 	"github.com/stefan-muehlebach/adagui/binding"
-	"github.com/stefan-muehlebach/adagui/touch"
+	"github.com/stefan-muehlebach/adagui/point"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/geom"
 	"golang.org/x/image/draw"
@@ -28,7 +28,7 @@ import (
 // SetPos platziert werden und bleiben an dieser Stelle.
 type ContainerEmbed struct {
 	Embed
-	touch.TouchEmbed
+	point.PointEmbed
 	ChildList *list.List
 	Layout    LayoutManager
 }
@@ -199,8 +199,8 @@ func (p *Panel) Paint(gc *gg.Context) {
 
 	gc.DrawRectangle(p.LocalBounds().AsCoord())
 	gc.SetFillColor(p.Color())
-	gc.SetStrokeColor(p.BorderColor())
-	gc.SetStrokeWidth(p.BorderWidth())
+	gc.SetLineColor(p.BorderColor())
+	gc.SetLineWidth(p.BorderWidth())
 	gc.FillStroke()
 
 	if p.Image != nil {
@@ -246,8 +246,8 @@ func (p *ScrollPanel) Paint(gc *gg.Context) {
 	gc.DrawRectangle(p.LocalBounds().AsCoord())
 	gc.ClipPreserve()
 	gc.SetFillColor(p.Color())
-	gc.SetStrokeColor(p.BorderColor())
-	gc.SetStrokeWidth(p.BorderWidth())
+	gc.SetLineColor(p.BorderColor())
+	gc.SetLineWidth(p.BorderWidth())
 	gc.FillStroke()
 	p.ContainerEmbed.Paint(gc)
 	gc.ResetClip()

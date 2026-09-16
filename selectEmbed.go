@@ -2,7 +2,7 @@ package adagui
 
 import (
     "github.com/stefan-muehlebach/adagui/binding"
-    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/adagui/point"
 )
 
 // Mit diesem Embed erhaelt ein Widget die Moeglichkeit, "ausgewaehlt"
@@ -34,13 +34,13 @@ func (e *SelectEmbed) Selected() (bool) {
 }
 
 // Muss vom umschliessenden Widget aufgerufen werden.
-func (e *SelectEmbed) OnInputEvent(evt touch.Event) {
+func (e *SelectEmbed) OnInputEvent(evt point.Event) {
     Debugf(Events, "evt: %v", evt)
     if e.node == nil {
         return
     }
     switch evt.Type {
-    case touch.TypeTap:
+    case point.TypeClick:
         e.BindVar.Set(!e.BindVar.Get())
     }
 }

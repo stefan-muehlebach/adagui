@@ -15,7 +15,8 @@ import (
 	"github.com/stefan-muehlebach/adagui"
 	"github.com/stefan-muehlebach/adagui/binding"
 	"github.com/stefan-muehlebach/adagui/props"
-	"github.com/stefan-muehlebach/adagui/touch"
+	"github.com/stefan-muehlebach/adagui/point"
+	//"github.com/stefan-muehlebach/adagui/touch"
 	"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/fonts"
@@ -45,7 +46,7 @@ func main() {
 	var rotation adatft.RotationType = adatft.Rotate270
 	var propFileName string
 
-	flag.Var(&rotation, "rotation", "display rotation")
+	flag.Var(&rotation, "rotate", "display rotation")
 	flag.StringVar(&propFileName, "props", "", "name of a user specific property file")
 	flag.Parse()
 
@@ -153,11 +154,11 @@ func WidgetPanel01() adagui.Node {
 
 	grpBtn := adagui.NewGroupPL(grpMain, adagui.NewHBoxLayout())
 	txtBtn01 := adagui.NewTextButton("Open")
-	txtBtn01.SetOnTap(func (evt touch.Event) {
+	txtBtn01.SetOnClick(func (evt point.Event) {
 		log.Printf("You tapped on the 'Open' button")
 	})
 	txtBtn02 := adagui.NewTextButton("Execute")
-	txtBtn02.SetOnTap(func (evt touch.Event) {
+	txtBtn02.SetOnClick(func (evt point.Event) {
 		log.Printf("You tapped on the 'Execute' button")
 	})
 	txtBtn02.SetFont(fonts.LucidaCalligraphyBold)
@@ -168,7 +169,7 @@ func WidgetPanel01() adagui.Node {
 	txtBtn02.SetPushedBorderWidth(5.0)
 	txtBtn02.SetPushedBorderColor(colors.Gold)
 	txtBtn03 := adagui.NewTextButton("Quit")
-	txtBtn03.SetOnTap(func (evt touch.Event) {
+	txtBtn03.SetOnClick(func (evt point.Event) {
 		screen.Quit()
 	})
 	grpBtn.Add(txtBtn01, txtBtn02, adagui.NewSpacer(), txtBtn03)
@@ -385,10 +386,10 @@ func ScrolledColorPanel() adagui.Node {
 			tile.SetPushedBorderWidth(borderWidth+2.0)
 			tile.SetSelectedBorderWidth(borderWidth)
 
-			tile.SetOnTap(func(evt touch.Event) {
+			tile.SetOnClick(func(evt point.Event) {
 				log.Printf("'%s', group '%s'", colorInfo.name, colorInfo.group)
 			})
-			tile.SetOnDoubleTap(func(evt touch.Event) {
+			tile.SetOnDoubleClick(func(evt point.Event) {
 				tile.Remove()
 				panel.Mark(adagui.MarkNeedsPaint)
 			})
@@ -588,13 +589,13 @@ func NewPanel(w, h float64) *adagui.Panel {
 	p := adagui.NewPanel(w, h)
 	p.IsClipping = true
 
-	p.SetOnLongPress(func(evt touch.Event) {
+	p.SetOnLongPress(func(evt point.Event) {
 		c = NewCircle(1.0)
 		c.SetPos(evt.Pos)
 		p.Add(c)
 		p.Mark(adagui.MarkNeedsPaint)
 	})
-	p.SetOnDrag(func(evt touch.Event) {
+	p.SetOnDrag(func(evt point.Event) {
 		if !evt.LongPressed {
 			return
 		}
@@ -602,7 +603,7 @@ func NewPanel(w, h float64) *adagui.Panel {
 		c.SetRadius(r)
 		p.Mark(adagui.MarkNeedsPaint)
 	})
-	p.SetOnTap(func(evt touch.Event) {
+	p.SetOnClick(func(evt point.Event) {
 		r := 30.0 + 10.0*rand.Float64()
 		c = NewCircle(r)
 		c.SetPos(evt.Pos)
@@ -623,18 +624,18 @@ func NewCircle(r float64) *adagui.Circle {
 	c.SetPushedColor(col.Alpha(0.5))
 	c.SetSelectedColor(col.Alpha(0.5))
 
-	c.SetOnPress(func(evt touch.Event) {
+	c.SetOnPress(func(evt point.Event) {
 		dp = evt.Pos.Sub(c.Pos())
 		c.Mark(adagui.MarkNeedsPaint)
 	})
-	c.SetOnDrag(func(evt touch.Event) {
+	c.SetOnDrag(func(evt point.Event) {
 		c.SetPos(evt.Pos.Sub(dp))
 		c.Mark(adagui.MarkNeedsPaint)
 	})
-	c.SetOnRelease(func(evt touch.Event) {
+	c.SetOnRelease(func(evt point.Event) {
 		c.Mark(adagui.MarkNeedsPaint)
 	})
-	c.SetOnLongPress(func(evt touch.Event) {
+	c.SetOnLongPress(func(evt point.Event) {
 		if !c.IsAtFront() {
 			c.ToFront()
 		} else {
@@ -642,7 +643,7 @@ func NewCircle(r float64) *adagui.Circle {
 		}
 		c.Mark(adagui.MarkNeedsPaint)
 	})
-	c.SetOnDoubleTap(func(evt touch.Event) {
+	c.SetOnDoubleClick(func(evt point.Event) {
 		p := c.Wrappee().Parent
 		c.Remove()
 		p.Mark(adagui.MarkNeedsPaint)

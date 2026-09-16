@@ -10,10 +10,12 @@ import (
 
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
+	"github.com/stefan-muehlebach/gg/geom"
 )
 
 type SBBAnim struct {
 	gc           *gg.Context
+	rect	geom.Rectangle
 	imgList      []image.Image
 	imgFileList  []string
 	rotationList []float64
@@ -22,13 +24,14 @@ type SBBAnim struct {
 }
 
 func (a *SBBAnim) RefreshTime() time.Duration {
-	return time.Second
+	return 30 * time.Millisecond
 }
 
-func (a *SBBAnim) Init(gc *gg.Context) {
+func (a *SBBAnim) Init(gc *gg.Context, rect geom.Rectangle) {
 	var err error
 
 	a.gc = gc
+	a.rect = rect
 	a.c1 = 1.0 / 60.0
 	a.c2 = 1.0 / 12.0
 	a.c3 = 2.0 * math.Pi
@@ -48,8 +51,8 @@ func (a *SBBAnim) Init(gc *gg.Context) {
 		}
 	}
 	a.rotationList = make([]float64, len(a.imgFileList))
-	a.xm = float64(gc.Width()) / 2.0
-	a.ym = float64(gc.Height()) / 2.0
+	a.xm = a.rect.Dx() / 2.0
+	a.ym = a.rect.Dy() / 2.0
 
 	a.gc.SetFillColor(colors.DeepSkyBlue)
 	a.gc.Clear()
@@ -79,4 +82,4 @@ func (a *SBBAnim) Paint() {
 
 func (a *SBBAnim) Clean() {}
 
-func (a *SBBAnim) Handle(evt adatft.PenEvent) {}
+func (a *SBBAnim) Handle(evt adatft.PointerEvent) {}

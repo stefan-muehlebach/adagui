@@ -7,8 +7,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/stefan-muehlebach/adagui/touch"
-	"github.com/stefan-muehlebach/adatft"
+	"github.com/stefan-muehlebach/adagui/point"
+	//"github.com/stefan-muehlebach/adatft"
 	"github.com/stefan-muehlebach/gg"
 	"github.com/stefan-muehlebach/gg/colors"
 	"github.com/stefan-muehlebach/gg/geom"
@@ -30,7 +30,7 @@ type Window struct {
 	Color       colors.RGBA
 	s           *Screen
 	gc          *gg.Context
-	eventQ      chan touch.Event
+	eventQ      chan point.Event
 	eventCloseQ chan bool
 	wg          sync.WaitGroup
 	root        Node
@@ -43,12 +43,13 @@ type Window struct {
 func newWindow(s *Screen) *Window {
 	w := &Window{}
 	w.s = s
-	width := adatft.Width
-	height := adatft.Height
-	w.Rect = geom.NewRectangleWH(0.0, 0.0, float64(width), float64(height))
+	//width := s.disp.DrawBounds.Dx().Int()
+	//height := s.disp.DrawBounds.Dy().Int()
+	w.Rect = geom.Rectangle{Max: s.disp.DrawBounds().Size()}
 	w.Color = colors.Black
-	w.gc = gg.NewContext(width, height)
-	w.eventQ = make(chan touch.Event)
+	w.gc = s.disp.Canvas()
+	//w.gc = gg.NewContext(width, height)
+	w.eventQ = make(chan point.Event)
 	w.eventCloseQ = make(chan bool)
 	w.wg.Add(1)
 	w.stage = StageAlive
@@ -132,14 +133,14 @@ LOOP:
 			//fmt.Printf("Window.eventThread() got called on eventCloseQ\n")
 			break LOOP
 		case evt := <-w.eventQ:
-			//fmt.Printf("Window.eventThread() new event received\n")
+			log.Printf("Window.eventThread() new event received\n")
 			// Ist kein root-Element vorhanden, dann wird das Event nicht weiter
 			// verarbeitet und die Go-Routine wartet auf das naechste Event.
 			if w.root == nil {
 				continue
 			}
 			Debugf(Events, "event received: %v", evt)
-			if evt.Type == touch.TypePress {
+			if evt.Type == point.TypePress {
 				target = w.root.SelectTarget(evt.Pos)
 				Debugf(Events, "new target    : %T", target)
 				onTarget = true
@@ -151,12 +152,12 @@ LOOP:
 			evt.Pos = target.Screen2Local(evt.Pos)
 			Debugf(Events, "relative pos  : %v", evt.Pos)
 
-			if evt.Type == touch.TypeDrag {
+			if evt.Type == point.TypeDrag {
 				if !target.Contains(evt.Pos) {
 					if onTarget {
 						onTarget = false
 						newEvent := evt
-						newEvent.Type = touch.TypeLeave
+						newEvent.Type = point.TypeLeave
 						w.mutex.Lock()
 						target.OnInputEvent(newEvent)
 						w.mutex.Unlock()
@@ -165,7 +166,7 @@ LOOP:
 					if !onTarget {
 						onTarget = true
 						newEvent := evt
-						newEvent.Type = touch.TypeEnter
+						newEvent.Type = point.TypeEnter
 						w.mutex.Lock()
 						target.OnInputEvent(newEvent)
 						w.mutex.Unlock()

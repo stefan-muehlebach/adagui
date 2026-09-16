@@ -2,7 +2,7 @@ package adagui
 
 import (
     "github.com/stefan-muehlebach/adagui/binding"
-    "github.com/stefan-muehlebach/adagui/touch"
+    "github.com/stefan-muehlebach/adagui/point"
 )
 
 // Mit diesem Embed erhaelt ein Widget die Moeglichkeit, "gedrueckt"
@@ -31,14 +31,14 @@ func (e *PushEmbed) Pushed() (bool) {
 }
 
 // Muss vom umschliessenden Widget aufgerufen werden.
-func (e *PushEmbed) OnInputEvent(evt touch.Event) {
+func (e *PushEmbed) OnInputEvent(evt point.Event) {
     Debugf(Events, "evt: %v", evt)
     switch evt.Type {
-    case touch.TypePress, touch.TypeEnter:
+    case point.TypePress, point.TypeEnter:
         e.pushed.Set(true)
-    case touch.TypeRelease, touch.TypeLeave:
+    case point.TypeRelease, point.TypeLeave:
         e.pushed.Set(false)
-    case touch.TypeDrag:
+    case point.TypeDrag:
         e.pushed.Set(true)
     }
 }
